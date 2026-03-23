@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from collections.abc import Iterator
-from enum import StrEnum
 from pathlib import Path
 
 _DATA_DIR: Path = Path("data")
 _FRAGMENTS_DIR: Path = Path("fragments")
+_VOICE_SAMPLES: Path = Path("voice_samples")
+
 
 def ensure_directory(dir: Path) -> None:
     dir.mkdir(parents=True, exist_ok=True)
@@ -21,3 +21,5 @@ def fragments_path() -> Path:
     return _FRAGMENTS_DIR
 
 
+def voice_samples_path() -> Path:
+    return data_path() / _VOICE_SAMPLES
