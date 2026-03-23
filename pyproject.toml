@@ -1,0 +1,65 @@
+[project]
+name = "session-summarizer"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Erik Saltwell", email = "erik.saltwell@gmail.com" },
+]
+requires-python = ">=3.11"
+dependencies = ["python-dotenv>=1.2.1", "rich>=14.2.0", "typer>=0.21.1"]
+
+[project.scripts]
+session-summarizer = "session_summarizer.console:main.app"
+
+[build-system]
+requires = ["uv_build>=0.9.25,<0.10.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.19.1",
+    "pre-commit>=4.5.1",
+    "pytest>=9.0.2",
+    "ruff>=0.14.13",
+    "ssort>=0.16.0",
+]
+
+
+[tool.pytest.ini_options]
+testpaths = ["tests/unit"]
+addopts = "-q -s"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = []
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.mypy]
+python_version = "3.11"
+warn_unused_configs = true
+
+# Reasonable signal without going full-strict
+check_untyped_defs = true
+disallow_incomplete_defs = true
+disallow_untyped_defs = false
+
+no_implicit_optional = true
+warn_return_any = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_unreachable = true
+
+# Keep third-party stubs explicit (we'll add types-* as needed)
+ignore_missing_imports = true
+
+# Nice for CLI apps with a src/ layout
+mypy_path = ["src"]
+packages = ["session_summarizer"]
