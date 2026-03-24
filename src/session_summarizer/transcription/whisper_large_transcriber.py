@@ -3,6 +3,7 @@ from __future__ import annotations
 import gc
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from ..protocols import LoggingProtocol
 from ..protocols.transcriber_protocol import TranscriptionResult, TranscriptionSegment
@@ -30,7 +31,7 @@ class WhisperLargeTranscriber:
 
         try:
             logger.report_message(f"[blue]Transcribing {audio_path.name}...[/blue]")
-            result = model.transcribe(str(audio_path), fp16=(self.device == "cuda"), verbose=False)
+            result: Any = model.transcribe(str(audio_path), fp16=(self.device == "cuda"), verbose=False)
 
             segments = [
                 TranscriptionSegment(
