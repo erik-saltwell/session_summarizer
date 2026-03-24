@@ -13,6 +13,20 @@
             "args": "test"
         },
         {
+            "name": "-transcribe",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "transcribe",
+                "--session",
+                "short",
+                "--engine",
+                "canary",
+            ]
+        },
+        {
             "name": "-clean",
             "type": "debugpy",
             "request": "launch",

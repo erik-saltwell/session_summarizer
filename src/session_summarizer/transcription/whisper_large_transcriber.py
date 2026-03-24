@@ -11,11 +11,7 @@ from ..protocols.transcriber_protocol import TranscriptionResult, TranscriptionS
 
 @dataclass
 class WhisperLargeTranscriber:
-    """Transcriber using OpenAI Whisper (openai-whisper package).
-
-    Produces segment-level timestamps. For word-level timestamps use WhisperXTranscriber.
-    Install: uv add --group whisper openai-whisper
-    """
+    """Transcriber using OpenAI Whisper (openai-whisper package)."""
 
     model_size: str = "large"
     device: str = "cuda"

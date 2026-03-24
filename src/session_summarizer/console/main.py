@@ -15,6 +15,7 @@ from ..commands.clean_original_audio import CleanOriginalAudioCommand
 from ..commands.transcribe_audio import TranscribeAudioCommand
 from ..protocols import CompositeLogger, LoggingProtocol
 from ..transcription import CanaryQwenTranscriber, WhisperLargeTranscriber
+from ..utils import flush_gpu_memory
 from ..utils.logging_config import configure_logging
 from .console_validation import _validate_directory_name
 from .file_logging_protocol import FileLogger
@@ -23,6 +24,7 @@ from .rich_logging_protocol import RichConsoleLogger
 load_dotenv()
 configure_logging()
 
+flush_gpu_memory()
 
 app = typer.Typer(
     name="session-summarizer",
