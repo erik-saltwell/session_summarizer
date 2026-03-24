@@ -4,12 +4,18 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 authors = [{ name = "Erik Saltwell", email = "erik.saltwell@gmail.com" }]
-requires-python = ">=3.11"
+requires-python = "==3.12.3"
 dependencies = [
     "clearvoice>=0.1.2",
     "python-dotenv>=1.2.1",
     "rich>=14.2.0",
     "typer>=0.21.1",
+    "whisperx>=3.1.1",
+    "nemo_toolkit[asr]",
+    "torch==2.10.0",
+    "torchvision==0.25.0",
+    "torchaudio==2.10.0",
+    "ml-dtypes>=0.5,<0.6",
 ]
 
 [project.scripts]
@@ -28,6 +34,24 @@ dev = [
     "ruff>=0.14.13",
     "ssort>=0.16.0",
 ]
+whisper = [
+    "openai-whisper>=20250625",
+]
+
+[tool.uv]
+environments = [
+    "sys_platform == 'linux' and implementation_name == 'cpython' and python_full_version >= '3.12' and python_full_version < '3.13'",
+]
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cu128" }]
+torchvision = [{ index = "pytorch-cu128" }]
+torchaudio = [{ index = "pytorch-cu128" }]
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
 
 
 [tool.pytest.ini_options]
@@ -35,7 +59,7 @@ testpaths = ["tests/unit"]
 addopts = "-q -s"
 
 [tool.ruff]
-target-version = "py311"
+target-version = "py312"
 line-length = 120
 
 [tool.ruff.lint]
@@ -47,7 +71,7 @@ quote-style = "double"
 indent-style = "space"
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 warn_unused_configs = true
 
 # Reasonable signal without going full-strict

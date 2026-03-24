@@ -8,11 +8,13 @@ import typer
 from dotenv import load_dotenv
 from rich.console import Console
 
-from session_summarizer.protocols import command_protocol
+from session_summarizer.protocols import command_protocol, transcriber_protocol
 from session_summarizer.utils import common_paths
 
 from ..commands.clean_original_audio import CleanOriginalAudioCommand
+from ..commands.transcribe_audio import TranscribeAudioCommand
 from ..protocols import CompositeLogger, LoggingProtocol
+from ..transcription import CanaryQwenTranscriber, WhisperLargeTranscriber
 from ..utils.logging_config import configure_logging
 from .console_validation import _validate_directory_name
 from .file_logging_protocol import FileLogger
@@ -51,6 +53,32 @@ def clean_audio(session: str = typer.Option(..., "--session", "-s", help="ID of 
 
     command: command_protocol.CommmandProtocol = CleanOriginalAudioCommand(session)
     command.execute(logger)
+
+
+_ENGINE_CHOICES = ["whisper", "canary"]
+
+
+@app.command("transcribe")
+def transcribe(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to transcribe"),
+    engine: str = typer.Option("whisper", "--engine", "-e", help=f"Transcription engine: {', '.join(_ENGINE_CHOICES)}"),
+    model_size: str = typer.Option("large", "--model-size", help="Whisper/WhisperX model size (e.g. large, large-v2)"),
+    device: str = typer.Option("cuda", "--device", help="Torch device (cuda or cpu)"),
+) -> None:
+    """Transcribe normalized_audio.wav for a session, writing transcript.json."""
+    if engine not in _ENGINE_CHOICES:
+        raise typer.BadParameter(f"--engine must be one of: {', '.join(_ENGINE_CHOICES)}")
+
+    _validate_directory_name(str(common_paths.session_path(session)))
+    logger: LoggingProtocol = create_logger()
+
+    transcriber: transcriber_protocol.TranscriberProtocol
+    if engine == "canary":
+        transcriber = CanaryQwenTranscriber(device=device)
+    else:
+        transcriber = WhisperLargeTranscriber(model_size=model_size, device=device)
+
+    TranscribeAudioCommand(session_id=session, transcriber=transcriber).execute(logger)
 
 
 @app.command("test")

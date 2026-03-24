@@ -66,27 +66,27 @@ To get a local copy up and running follow these simple example steps.
 
 ### Prerequisites
 
-* Python 3.11 or higher
-* ffmpeg (for audio processing)
-  * **macOS**: `brew install ffmpeg`
-  * **Ubuntu/Debian**: `sudo apt-get install ffmpeg`
-  * **Windows**: Download from [ffmpeg.org](https://ffmpeg.org/download.html) or use `choco install ffmpeg`
+#### 1. Install Ubuntu system packages
 
-### Installation
+```bash
+sudo apt update
+sudo apt install -y libsndfile1 ffmpeg build-essential
+uv sync
+```
 
-1. Clone the repo
-   ```sh
-   git clone https://github.com/erik-saltwell/session_summarizer.git
-   cd session_summarizer
-   ```
-2. Install dependencies using uv
-   ```sh
-   uv sync
-   ```
-3. Run the application
-   ```sh
-   session-summarizer --help
-   ```
+#### 8. Quick verification
+
+```bash
+python - <<'PY'
+import torch
+print("torch:", torch.__version__)
+print("cuda available:", torch.cuda.is_available())
+
+import nemo.collections.asr as nemo_asr
+print("NeMo ASR import OK")
+PY
+```
+
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
