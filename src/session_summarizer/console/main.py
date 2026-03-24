@@ -8,8 +8,13 @@ import typer
 from dotenv import load_dotenv
 from rich.console import Console
 
+from session_summarizer.protocols import command_protocol
+from session_summarizer.utils import common_paths
+
+from ..commands.clean_original_audio import CleanOriginalAudioCommand
 from ..protocols import CompositeLogger, LoggingProtocol
 from ..utils.logging_config import configure_logging
+from .console_validation import _validate_directory_name
 from .file_logging_protocol import FileLogger
 from .rich_logging_protocol import RichConsoleLogger
 
@@ -36,6 +41,16 @@ def create_logger() -> LoggingProtocol:
 def seconds_since(start: datetime) -> float:
     return (datetime.now() - start).total_seconds()
 
+
+@app.command("clean-audio")
+def clean_audio(session: str = typer.Option(..., "--session", "-s", help="ID of the session to process")) -> None:
+    """Simple smoke command."""
+    _validate_directory_name(str(common_paths.session_path(session)))
+    common_paths.ensure_directory(common_paths.session_path(session))
+    logger: LoggingProtocol = create_logger()
+
+    command: command_protocol.CommmandProtocol = CleanOriginalAudioCommand(session)
+    command.execute(logger)
 
 
 @app.command("test")

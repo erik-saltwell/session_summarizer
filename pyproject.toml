@@ -3,11 +3,14 @@ name = "session-summarizer"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-authors = [
-    { name = "Erik Saltwell", email = "erik.saltwell@gmail.com" },
-]
+authors = [{ name = "Erik Saltwell", email = "erik.saltwell@gmail.com" }]
 requires-python = ">=3.11"
-dependencies = ["python-dotenv>=1.2.1", "rich>=14.2.0", "typer>=0.21.1"]
+dependencies = [
+    "clearvoice>=0.1.2",
+    "python-dotenv>=1.2.1",
+    "rich>=14.2.0",
+    "typer>=0.21.1",
+]
 
 [project.scripts]
 session-summarizer = "session_summarizer.console:main.app"
@@ -20,6 +23,7 @@ build-backend = "uv_build"
 dev = [
     "mypy>=1.19.1",
     "pre-commit>=4.5.1",
+    "pyright>=1.1.0",
     "pytest>=9.0.2",
     "ruff>=0.14.13",
     "ssort>=0.16.0",

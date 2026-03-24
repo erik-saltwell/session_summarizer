@@ -13,6 +13,18 @@
             "args": "test"
         },
         {
+            "name": "-clean",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "clean-audio",
+                "--session",
+                "short",
+            ]
+        },
+        {
             "name": "custom args",
             "type": "debugpy",
             "request": "launch",
