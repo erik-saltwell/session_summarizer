@@ -14,6 +14,7 @@ class audio_processing_step(StrEnum):
     cleaned_audio = "cleaned_audio.wav"
     normalized_audio = "normalized_audio.wav"
     transcript = "transcript.json"
+    word_alignments = "word_alignments.json"
 
 
 def ensure_directory(dir: Path) -> None:

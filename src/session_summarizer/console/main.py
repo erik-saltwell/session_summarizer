@@ -11,6 +11,8 @@ from rich.console import Console
 from session_summarizer.protocols import command_protocol, transcriber_protocol
 from session_summarizer.utils import common_paths
 
+from ..alignment import ParakeetCTCAligner
+from ..commands.align_audio import AlignAudioCommand
 from ..commands.clean_original_audio import CleanOriginalAudioCommand
 from ..commands.transcribe_audio import TranscribeAudioCommand
 from ..protocols import CompositeLogger, LoggingProtocol
@@ -81,6 +83,20 @@ def transcribe(
         transcriber = WhisperLargeTranscriber(model_size=model_size, device=device)
 
     TranscribeAudioCommand(session_id=session, transcriber=transcriber).execute(logger)
+
+
+@app.command("align-words")
+def align_words(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to align"),
+    device: str = typer.Option("cuda", "--device", help="Torch device (cuda or cpu)"),
+    batch_size: int = typer.Option(4, "--batch-size", help="Batch size for CTC alignment"),
+) -> None:
+    """Align words from transcript.json against normalized_audio.wav, writing word_alignments.json."""
+    _validate_directory_name(str(common_paths.session_path(session)))
+    logger: LoggingProtocol = create_logger()
+
+    aligner = ParakeetCTCAligner(device=device, batch_size=batch_size)
+    AlignAudioCommand(session_id=session, aligner=aligner).execute(logger)
 
 
 @app.command("test")

@@ -1,4 +1,4 @@
-  
+
 **TTRPG Session Transcriber**
 
 Architectural Design Document
@@ -58,7 +58,7 @@ The cascaded approach is deliberately chosen over end-to-end alternatives. While
 | **Phase 1** | Speaker Enrollment | Extract embeddings from voice samples using WeSpeaker/TitaNet. Build identity database. | \~1 GB |
 | **Phase 2** | Transcription | Chunk audio into 40s segments. Transcribe with Canary Qwen 2.5B (SALM). Produces punctuated English text. | \~8 GB |
 | **Phase 3** | Forced Alignment | Align transcript to audio using NeMo Forced Aligner \+ Parakeet CTC. Produces word-level timestamps. | \~2–3 GB |
-| **Phase 4** | Speaker Diarization | Segment audio into speaker-homogeneous regions using pyannote.audio with oracle speaker count. | \~1.6 GB |
+| **Phase 4** | Speaker Diarization | Segment audio into speaker-homogeneous regions using nemo with oracle speaker count. | \~1.6 GB |
 | **Phase 5** | Identity Resolution | Match anonymous clusters to enrolled players via cosine similarity \+ Hungarian algorithm. | \~1 GB |
 | **Phase 6** | Fusion & Post-Processing | Merge word timestamps with speaker segments. Optional DiarizationLM semantic correction. | \~8 GB (opt) |
 | **Phase 7** | Output Formatting | Render final markdown transcript with timestamps, speaker names, and turn grouping. | CPU only |
