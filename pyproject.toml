@@ -34,6 +34,7 @@ dev = [
     "pytest>=9.0.2",
     "ruff>=0.14.13",
     "ssort>=0.16.0",
+    "types-pyyaml>=6.0.12.20250915",
 ]
 
 [tool.uv]
