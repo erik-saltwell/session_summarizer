@@ -14,7 +14,9 @@ from session_summarizer.utils import common_paths
 from ..alignment import ParakeetCTCAligner
 from ..commands.align_audio import AlignAudioCommand
 from ..commands.clean_original_audio import CleanOriginalAudioCommand
+from ..commands.diarize_audio import DiarizeAudioCommand
 from ..commands.transcribe_audio import TranscribeAudioCommand
+from ..diarization import MsddDiarizer
 from ..protocols import CompositeLogger, LoggingProtocol
 from ..transcription import CanaryQwenTranscriber, WhisperLargeTranscriber
 from ..utils import flush_gpu_memory
@@ -97,6 +99,20 @@ def align_words(
 
     aligner = ParakeetCTCAligner(device=device, batch_size=batch_size)
     AlignAudioCommand(session_id=session, aligner=aligner).execute(logger)
+
+
+@app.command("diarize")
+def diarize(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to diarize"),
+    number_of_speakers: int = typer.Option(..., "--number-of-speakers", help="Exact number of speakers in the audio"),
+    device: str = typer.Option("cuda", "--device", help="Torch device (cuda or cpu)"),
+) -> None:
+    """Diarize normalized_audio.wav using MSDD, writing diarization.json."""
+    _validate_directory_name(str(common_paths.session_path(session)))
+    logger: LoggingProtocol = create_logger()
+
+    diarizer = MsddDiarizer(device=device, num_speakers=number_of_speakers)
+    DiarizeAudioCommand(session_id=session, diarizer=diarizer).execute(logger)
 
 
 @app.command("test")

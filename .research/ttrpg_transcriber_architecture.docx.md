@@ -145,45 +145,6 @@ SpeakerLM (Alibaba, 2025\) is a single multimodal LLM ingesting raw audio plus e
 
 # **5\. Implementation Guide**
 
-## **5.1 Project Structure**
-
-ttrpg-transcriber/
-
-├── pyproject.toml
-
-├── config/
-
-│   ├── default.yaml
-
-│   └── session\_manifest.yaml
-
-├── src/ttrpg\_transcriber/
-
-│   ├── cli.py             \# CLI entry point
-
-│   ├── pipeline.py        \# Pipeline orchestrator
-
-│   ├── gpu.py             \# VRAM lifecycle manager
-
-│   ├── preprocessing/     \# Phase 0
-
-│   ├── enrollment/        \# Phase 1
-
-│   ├── transcription/     \# Phase 2 (Canary Qwen)
-
-│   ├── alignment/         \# Phase 3 (NFA)
-
-│   ├── diarization/       \# Phase 4 (pyannote)
-
-│   ├── identity/          \# Phase 5
-
-│   ├── fusion/            \# Phase 6
-
-│   └── output/            \# Phase 7
-
-├── voices/                \# Enrollment samples
-
-└── tests/
 
 ## **5.2 Implementation Order**
 
