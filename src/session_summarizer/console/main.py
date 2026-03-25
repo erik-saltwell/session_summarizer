@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from importlib.metadata import PackageNotFoundError, metadata
 from importlib.metadata import version as dist_version
+from pathlib import Path
 
 import typer
 from dotenv import load_dotenv
@@ -15,9 +16,11 @@ from ..alignment import ParakeetCTCAligner
 from ..commands.align_audio import AlignAudioCommand
 from ..commands.clean_original_audio import CleanOriginalAudioCommand
 from ..commands.diarize_audio import DiarizeAudioCommand
+from ..commands.register_speaker import RegisterSpeakerCommand
 from ..commands.transcribe_audio import TranscribeAudioCommand
 from ..diarization import MsddDiarizer
 from ..protocols import CompositeLogger, LoggingProtocol
+from ..speaker import ERes2NetV2Embedder
 from ..transcription import CanaryQwenTranscriber, WhisperLargeTranscriber
 from ..utils import flush_gpu_memory
 from ..utils.logging_config import configure_logging
@@ -113,6 +116,27 @@ def diarize(
 
     diarizer = MsddDiarizer(device=device, num_speakers=number_of_speakers)
     DiarizeAudioCommand(session_id=session, diarizer=diarizer).execute(logger)
+
+
+@app.command("register-speaker")
+def register_speaker(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session"),
+    speaker_name: str = typer.Option(..., "--speaker-name", help="Name to register for this speaker"),
+    wav_file: Path = typer.Option(..., "--wav-file", help="Path to a WAV file containing this speaker's voice"),  # noqa: B008
+    device: str = typer.Option("cuda", "--device", help="Torch device (cuda or cpu)"),
+) -> None:
+    """Extract an ERes2NetV2 embedding for a speaker and save to registered_speakers.yaml."""
+    _validate_directory_name(str(common_paths.session_path(session)))
+    common_paths.ensure_directory(common_paths.session_path(session))
+    logger: LoggingProtocol = create_logger()
+
+    embedder = ERes2NetV2Embedder(device=device)
+    RegisterSpeakerCommand(
+        session_id=session,
+        speaker_name=speaker_name,
+        wav_file=wav_file,
+        embedder=embedder,
+    ).execute(logger)
 
 
 @app.command("test")

@@ -16,6 +16,7 @@ dependencies = [
     "torchvision==0.25.0",
     "torchaudio==2.10.0",
     "ml-dtypes>=0.5,<0.6",
+    "modelscope",
 ]
 
 [project.scripts]
