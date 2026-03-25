@@ -6,6 +6,7 @@ from pathlib import Path
 _DATA_DIR: Path = Path("data")
 _FRAGMENTS_DIR: Path = Path("fragments")
 _VOICE_SAMPLES: Path = Path("voice_samples")
+_REGISTERED_SPEAKERS_FILE = "registered_speakers.yaml"
 
 
 class audio_processing_step(StrEnum):
@@ -42,3 +43,21 @@ def audio_file_from_step(step: audio_processing_step, session_id: str) -> Path:
 
 def voice_samples_path() -> Path:
     return data_path() / _VOICE_SAMPLES
+
+
+def speakers_file(session_id: str) -> Path:
+    file_path: Path = session_path(session_id) / _REGISTERED_SPEAKERS_FILE
+    if not file_path.exists():
+        file_path = voice_samples_path() / _REGISTERED_SPEAKERS_FILE
+    return file_path
+
+
+def build_speakers_file_path(session_id: str | None) -> Path:
+    if session_id is None:
+        return voice_samples_path() / _REGISTERED_SPEAKERS_FILE
+    else:
+        return session_path(session_id) / _REGISTERED_SPEAKERS_FILE
+
+
+def voice_sample_wav_file(speaker_name: str) -> Path:
+    return voice_samples_path() / (speaker_name + ".wav")

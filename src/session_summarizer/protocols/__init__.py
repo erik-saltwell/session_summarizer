@@ -1,4 +1,5 @@
 from .command_protocol import CommmandProtocol
+from .embedding_factory import EmbeddingFactory
 from .logging_protocol import (
     CompositeLogger,
     LoggingProtocol,
@@ -22,4 +23,5 @@ __all__ = [
     "TranscriberProtocol",
     "TranscriptionResult",
     "TranscriptionSegment",
+    "EmbeddingFactory",
 ]
