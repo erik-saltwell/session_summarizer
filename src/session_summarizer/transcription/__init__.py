@@ -1,4 +1,5 @@
 from .canary_qwen_transcriber import CanaryQwenTranscriber
-from .whisper_large_transcriber import WhisperLargeTranscriber
+from .parakeet_ctc_aligner import ParakeetCTCAligner
+from .transcription_document import TranscriptionDocument, TranscriptionPhrase
 
-__all__ = ["WhisperLargeTranscriber", "CanaryQwenTranscriber"]
+__all__ = ["ParakeetCTCAligner", "CanaryQwenTranscriber", "TranscriptionPhrase", "TranscriptionDocument"]

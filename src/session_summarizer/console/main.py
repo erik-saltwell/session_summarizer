@@ -11,7 +11,6 @@ from rich.console import Console
 from session_summarizer.protocols import command_protocol, transcriber_protocol
 from session_summarizer.utils import common_paths
 
-from ..alignment import ParakeetCTCAligner
 from ..commands.align_audio import AlignAudioCommand
 from ..commands.clean_original_audio import CleanOriginalAudioCommand
 from ..commands.diarize_audio import DiarizeAudioCommand
@@ -20,7 +19,7 @@ from ..commands.test_command import TestCommand
 from ..commands.transcribe_audio import TranscribeAudioCommand
 from ..diarization import MsddDiarizer
 from ..protocols import CompositeLogger, LoggingProtocol
-from ..transcription import CanaryQwenTranscriber, WhisperLargeTranscriber
+from ..transcription import CanaryQwenTranscriber, ParakeetCTCAligner
 from ..utils import flush_gpu_memory
 from ..utils.logging_config import configure_logging
 from .console_validation import _validate_directory_name
@@ -81,10 +80,7 @@ def transcribe(
     logger: LoggingProtocol = create_logger()
 
     transcriber: transcriber_protocol.TranscriberProtocol
-    if engine == "canary":
-        transcriber = CanaryQwenTranscriber(device=device)
-    else:
-        transcriber = WhisperLargeTranscriber(model_size=model_size, device=device)
+    transcriber = CanaryQwenTranscriber(device=device)
 
     TranscribeAudioCommand(session_id=session, transcriber=transcriber).execute(logger)
 

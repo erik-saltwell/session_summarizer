@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import json
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 
 import session_summarizer.utils.common_paths as common_paths
 
@@ -27,12 +26,3 @@ class TranscribeAudioCommand:
             common_paths.audio_processing_step.transcript,
             self.session_id,
         )
-
-        self.logger.report_message(f"[blue]Transcribing {audio_path}...[/blue]")
-        result = self.transcriber.transcribe(audio_path, logger)
-
-        output_path.write_text(
-            json.dumps(asdict(result), indent=2, ensure_ascii=False),
-            encoding="utf-8",
-        )
-        self.logger.report_message(f"[green]Transcript written to {output_path}[/green]")

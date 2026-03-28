@@ -5,7 +5,7 @@ from pathlib import Path
 
 import session_summarizer.utils.common_paths as common_paths
 
-from ..helpers.sound_cleaning_helper import (
+from ..audio.sound_cleaning_helper import (
     convert_to_48k_wav,
     enhance_with_mossformer2,
     measure_loudness,
