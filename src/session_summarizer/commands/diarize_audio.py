@@ -20,8 +20,8 @@ class DiarizeAudioCommand:
     def execute(self, logger: LoggingProtocol) -> None:
         self.logger = logger
 
-        audio_path = common_paths.audio_file_from_step(audio_processing_step.normalized_audio, self.session_id)
-        output_path = common_paths.audio_file_from_step(audio_processing_step.diarization, self.session_id)
+        _audio_path = common_paths.audio_file_from_step(audio_processing_step.normalized_audio, self.session_id)
+        _output_path = common_paths.audio_file_from_step(audio_processing_step.diarization, self.session_id)
         return
 
         # if not audio_path.exists():

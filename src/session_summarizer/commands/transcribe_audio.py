@@ -18,11 +18,11 @@ class TranscribeAudioCommand:
 
     def execute(self, logger: LoggingProtocol) -> None:
         self.logger = logger
-        audio_path = common_paths.audio_file_from_step(
+        _audio_path = common_paths.audio_file_from_step(
             common_paths.audio_processing_step.normalized_audio,
             self.session_id,
         )
-        output_path = common_paths.audio_file_from_step(
+        _output_path = common_paths.audio_file_from_step(
             common_paths.audio_processing_step.transcript,
             self.session_id,
         )
