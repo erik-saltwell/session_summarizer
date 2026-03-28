@@ -229,6 +229,4 @@ __marimo__/
 
 # Keep data directory scaffolding, ignore generated data files
 /data/*
-!/data/.gitkeep
-!/data/test_meeting
 /checkpoints/
