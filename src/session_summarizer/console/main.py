@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from datetime import datetime
 from importlib.metadata import PackageNotFoundError, metadata
 from importlib.metadata import version as dist_version
 
@@ -8,16 +7,11 @@ import typer
 from dotenv import load_dotenv
 from rich.console import Console
 
-from session_summarizer.protocols import command_protocol, transcriber_protocol
+from session_summarizer.protocols import transcriber_protocol
 from session_summarizer.utils import common_paths
 
-from ..commands.align_audio import AlignAudioCommand
-from ..commands.clean_original_audio import CleanOriginalAudioCommand
-from ..commands.diarize_audio import DiarizeAudioCommand
 from ..commands.register_speaker import RegisterSpeakerCommand
-from ..commands.test_command import TestCommand
 from ..commands.transcribe_audio import TranscribeAudioCommand
-from ..diarization import MsddDiarizer
 from ..protocols import CompositeLogger, LoggingProtocol
 from ..transcription import CanaryQwenTranscriber, ParakeetCTCAligner
 from ..utils import flush_gpu_memory
@@ -47,70 +41,20 @@ def create_logger() -> LoggingProtocol:
     return CompositeLogger([console_logger, file_logger])
 
 
-def seconds_since(start: datetime) -> float:
-    return (datetime.now() - start).total_seconds()
-
-
-@app.command("clean-audio")
-def clean_audio(session: str = typer.Option(..., "--session", "-s", help="ID of the session to process")) -> None:
-    """Simple smoke command."""
-    _validate_directory_name(str(common_paths.session_path(session)))
-    common_paths.ensure_directory(common_paths.session_path(session))
-    logger: LoggingProtocol = create_logger()
-
-    command: command_protocol.CommmandProtocol = CleanOriginalAudioCommand(session)
-    command.execute(logger)
-
-
-_ENGINE_CHOICES = ["whisper", "canary"]
-
-
 @app.command("transcribe")
 def transcribe(
     session: str = typer.Option(..., "--session", "-s", help="ID of the session to transcribe"),
-    engine: str = typer.Option("whisper", "--engine", "-e", help=f"Transcription engine: {', '.join(_ENGINE_CHOICES)}"),
-    model_size: str = typer.Option("large", "--model-size", help="Whisper/WhisperX model size (e.g. large, large-v2)"),
     device: str = typer.Option("cuda", "--device", help="Torch device (cuda or cpu)"),
 ) -> None:
-    """Transcribe normalized_audio.wav for a session, writing transcript.json."""
-    if engine not in _ENGINE_CHOICES:
-        raise typer.BadParameter(f"--engine must be one of: {', '.join(_ENGINE_CHOICES)}")
+    """Clean audio and transcribe a session, writing transcript.json."""
 
     _validate_directory_name(str(common_paths.session_path(session)))
     logger: LoggingProtocol = create_logger()
 
-    transcriber: transcriber_protocol.TranscriberProtocol
-    transcriber = CanaryQwenTranscriber(device=device)
+    transcriber: transcriber_protocol.TranscriberProtocol = CanaryQwenTranscriber(device=device)
+    aligner = ParakeetCTCAligner(device=device)
 
-    TranscribeAudioCommand(session_id=session, transcriber=transcriber).execute(logger)
-
-
-@app.command("align-words")
-def align_words(
-    session: str = typer.Option(..., "--session", "-s", help="ID of the session to align"),
-    device: str = typer.Option("cuda", "--device", help="Torch device (cuda or cpu)"),
-    batch_size: int = typer.Option(4, "--batch-size", help="Batch size for CTC alignment"),
-) -> None:
-    """Align words from transcript.json against normalized_audio.wav, writing word_alignments.json."""
-    _validate_directory_name(str(common_paths.session_path(session)))
-    logger: LoggingProtocol = create_logger()
-
-    aligner = ParakeetCTCAligner(device=device, batch_size=batch_size)
-    AlignAudioCommand(session_id=session, aligner=aligner).execute(logger)
-
-
-@app.command("diarize")
-def diarize(
-    session: str = typer.Option(..., "--session", "-s", help="ID of the session to diarize"),
-    number_of_speakers: int = typer.Option(..., "--number-of-speakers", help="Exact number of speakers in the audio"),
-    device: str = typer.Option("cuda", "--device", help="Torch device (cuda or cpu)"),
-) -> None:
-    """Diarize normalized_audio.wav using MSDD, writing diarization.json."""
-    _validate_directory_name(str(common_paths.session_path(session)))
-    logger: LoggingProtocol = create_logger()
-
-    diarizer = MsddDiarizer(device=device, num_speakers=number_of_speakers)
-    DiarizeAudioCommand(session_id=session, diarizer=diarizer).execute(logger)
+    TranscribeAudioCommand(session_id=session, transcriber=transcriber, aligner=aligner).execute(logger)
 
 
 @app.command("register-speaker")
@@ -134,14 +78,6 @@ def register_speaker(
         speaker_name=speaker_name,
         device=device,
     ).execute(logger)
-
-
-@app.command("test")
-def test() -> None:
-    """Simple smoke command."""
-    logger: LoggingProtocol = create_logger()
-    cmd: TestCommand = TestCommand()
-    cmd.execute(logger)
 
 
 def _version_callback(value: bool) -> None:

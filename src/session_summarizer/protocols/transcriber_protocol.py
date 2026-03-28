@@ -12,6 +12,7 @@ class TranscriptionSegment:
     text: str
     start: float  # seconds
     end: float  # seconds
+    confidence: float  # acoustic confidence [0.0, 1.0]
 
 
 @dataclass

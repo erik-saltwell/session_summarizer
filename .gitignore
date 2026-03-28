@@ -228,6 +228,7 @@ __marimo__/
 *.vsix
 
 # Keep data directory scaffolding, ignore generated data files
-/data/
+/data/*
 !/data/.gitkeep
+!/data/test_meeting
 /checkpoints/

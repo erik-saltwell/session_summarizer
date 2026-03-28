@@ -13,11 +13,27 @@ class WordAlignment:
     word: str
     start: float  # seconds
     end: float  # seconds
+    confidence: float  # acoustic confidence [0.0, 1.0]
 
 
 @dataclass
 class AlignmentResult:
     words: list[WordAlignment]
+
+
+def _map_confidence_by_time(
+    salm_words: list[WordAlignment],
+    parakeet_timestamps: list[dict],
+    parakeet_confidence: list[float],
+) -> None:
+    """Mutate salm_words in place, setting confidence from overlapping Parakeet words (min)."""
+    for sw in salm_words:
+        overlapping = [
+            conf
+            for pw, conf in zip(parakeet_timestamps, parakeet_confidence, strict=False)
+            if pw["end"] > sw.start and pw["start"] < sw.end
+        ]
+        sw.confidence = min(overlapping) if overlapping else 0.0
 
 
 @dataclass
@@ -45,6 +61,11 @@ class ParakeetCTCAligner:
         try:
             import torch
             from nemo.collections.asr.models import ASRModel
+            from nemo.collections.asr.parts.submodules.ctc_decoding import CTCBPEDecodingConfig
+            from nemo.collections.asr.parts.utils.asr_confidence_utils import (
+                ConfidenceConfig,
+                ConfidenceMethodConfig,
+            )
             from nemo.collections.asr.parts.utils.rnnt_utils import Hypothesis
             from nemo.collections.asr.parts.utils.timestamp_utils import (
                 get_forced_aligned_timestamps_with_external_model,
@@ -56,6 +77,18 @@ class ParakeetCTCAligner:
         ctc_model: Any = ASRModel.from_pretrained(model_name=self.model_name)
         ctc_model.to(self.device)
         ctc_model.eval()
+
+        confidence_cfg = ConfidenceConfig(
+            preserve_word_confidence=True,
+            aggregation="min",
+            method_cfg=ConfidenceMethodConfig(name="max_prob"),
+        )
+        decoding_cfg = CTCBPEDecodingConfig(
+            preserve_alignments=True,
+            compute_timestamps=True,
+            confidence_cfg=confidence_cfg,
+        )
+        ctc_model.change_decoding_strategy(decoding_cfg)
 
         try:
             logger.report_message("[blue]Running forced alignment...[/blue]")
@@ -79,8 +112,18 @@ class ParakeetCTCAligner:
                             word=str(entry["word"]),
                             start=float(entry["start"]),
                             end=float(entry["end"]),
+                            confidence=0.0,  # overwritten by _map_confidence_by_time below
                         )
                     )
+
+            logger.report_message("[blue]Running free transcription pass for confidence scores...[/blue]")
+            parakeet_hypotheses: Any = ctc_model.transcribe([str(audio_path)], return_hypotheses=True)
+            parakeet_hyp: Any = parakeet_hypotheses[0]
+            parakeet_word_timestamps: list[dict] = (
+                parakeet_hyp.timestamp.get("word", []) if parakeet_hyp.timestamp else []
+            )
+            parakeet_word_confidence: list[float] = parakeet_hyp.word_confidence or []
+            _map_confidence_by_time(words, parakeet_word_timestamps, parakeet_word_confidence)
 
             logger.report_message(f"[green]Alignment complete: {len(words)} words aligned.[/green]")
             return AlignmentResult(words=words)

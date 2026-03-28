@@ -119,6 +119,7 @@ def _build_segments(
                 text=text,
                 start=float(chunk_start_s),
                 end=float(chunk_start_s) + chunk_len,
+                confidence=0.0,  # overwritten after alignment
             )
         )
     return segments
