@@ -1,23 +1,30 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Annotated
 
 import yaml
-from attr import dataclass
+from pydantic import BaseModel, Field, field_validator
 
 _SETTINGS_FILE = "settings.yaml"
 
 
-@dataclass
-class session_settings:
-    attendees: list[str]  # names of all speakers present in the session; must be non-empty
+class SessionSettings(BaseModel, frozen=True):
+    attendees: Annotated[
+        list[str],
+        Field(min_length=1, description="Names of all speakers present in the session"),
+    ]
 
-    def __attrs_post_init__(self) -> None:
-        if not self.attendees:
-            raise ValueError("attendees must contain at least one name")
-        for name in self.attendees:
-            if not isinstance(name, str) or not name.strip():
-                raise ValueError(f"each attendee name must be a non-empty string, got {name!r}")
+    @field_validator("attendees")
+    @classmethod
+    def _attendee_names_must_be_non_empty(cls, names: list[str]) -> list[str]:
+        for i, name in enumerate(names):
+            stripped = name.strip()
+            if not stripped:
+                raise ValueError(
+                    f"attendees[{i}] is blank — every attendee name must be a non-empty string, got {name!r}"
+                )
+        return names
 
     @property
     def number_of_speakers(self) -> int:
@@ -25,17 +32,25 @@ class session_settings:
         return len(self.attendees)
 
     @classmethod
-    def load(cls, path: Path) -> session_settings:
+    def load(cls, path: Path) -> SessionSettings:
         with path.open("r", encoding="utf-8") as f:
             data: dict = yaml.safe_load(f) or {}
         return cls(**data)
 
     @classmethod
-    def load_cascading(cls, session_id: str) -> session_settings:
+    def load_cascading(cls, session_id: str) -> SessionSettings:
         from session_summarizer.utils.common_paths import data_dir, session_dir
 
         base_file = data_dir() / _SETTINGS_FILE
         session_file = session_dir(session_id) / _SETTINGS_FILE
+
+        if not base_file.exists() and not session_file.exists():
+            raise FileNotFoundError(
+                f"No settings file found — looked in:\n"
+                f"  {base_file}\n"
+                f"  {session_file}\n"
+                f"Place a {_SETTINGS_FILE} in either location."
+            )
 
         base: dict = {}
         if base_file.exists():
@@ -48,3 +63,7 @@ class session_settings:
                 override = yaml.safe_load(f) or {}
 
         return cls(**{**base, **override})
+
+
+# Backwards-compatible alias
+session_settings = SessionSettings

@@ -39,6 +39,9 @@ class RegisterSpeakerCommand:
     session_id: str | None = None
     logger: LoggingProtocol = NullLogger()
 
+    def name(self) -> str:
+        return "Register Single Speaker"
+
     def execute(self, logger: LoggingProtocol) -> None:
         self.logger = logger
         wav_file: Path = common_paths.voice_sample_wav_file(self.speaker_name)

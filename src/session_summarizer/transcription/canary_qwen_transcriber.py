@@ -150,9 +150,15 @@ class CanaryQwenTranscriber:
         except ImportError as e:
             raise ImportError("NeMo and soundfile are required: pip install nemo_toolkit[asr] soundfile") from e
 
+        import torch
+
         logger.report_message(f"[blue]Loading Canary Qwen model {self.model_name}...[/blue]")
+        torch.backends.cudnn.benchmark = False
         model = SALM.from_pretrained(self.model_name)
+        model.to(self.device)
         model.eval()
+        gc.collect()
+        torch.cuda.empty_cache()
 
         try:
             audio_data, sample_rate = sf.read(str(audio_path), dtype="float32")
@@ -168,10 +174,11 @@ class CanaryQwenTranscriber:
             logger.report_message(f"[blue]Processing {len(chunks)} chunks...[/blue]")
 
             chunk_texts: list[str] = []
-            with logger.progress("Transcribing chunks", total=len(chunks)) as progress:
+            with torch.inference_mode(), logger.progress("Transcribing chunks", total=len(chunks)) as progress:
                 for chunk_audio, _chunk_start, is_first, is_last in chunks:
                     chunk_text = _transcribe_chunk(model, chunk_audio, sample_rate, is_first, is_last)
                     chunk_texts.append(chunk_text)
+                    torch.cuda.empty_cache()
                     progress.advance(1)
 
             full_text = _stitch_chunks(chunk_texts)

@@ -1,3 +1,3 @@
-from session_summarizer.settings.session_settings import session_settings
+from session_summarizer.settings.session_settings import SessionSettings, session_settings
 
-__all__ = ["session_settings"]
+__all__ = ["SessionSettings", "session_settings"]

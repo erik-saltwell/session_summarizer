@@ -10,7 +10,7 @@ from rich.console import Console
 from session_summarizer.protocols import transcriber_protocol
 from session_summarizer.utils import common_paths
 
-from ..commands.register_speaker import RegisterSpeakerCommand
+from ..commands.register_speakers import RegisterSpeakersCommand
 from ..commands.transcribe_audio import TranscribeAudioCommand
 from ..logging import CompositeLogger, FileLogger, RichConsoleLogger
 from ..protocols import LoggingProtocol
@@ -55,27 +55,11 @@ def transcribe(
     TranscribeAudioCommand(session_id=session, transcriber=transcriber, aligner=aligner).execute(logger)
 
 
-@app.command("register-speaker")
-def register_speaker(
-    speaker_name: str = typer.Option(..., "--speaker-name", help="Name to register for this speaker"),
-    session: str | None = typer.Option(
-        None, "--session", "-s", help="ID of the session (if omitted, saves to voice_samples/registered_speakers.yaml)"
-    ),
-    device: str = typer.Option("cuda", "--device", help="Torch device (cuda or cpu)"),
-) -> None:
-    """Extract an ERes2NetV2 embedding for a speaker and save to registered_speakers.yaml."""
-    if session is not None:
-        _validate_directory_name(str(common_paths.session_dir(session)))
-        common_paths.ensure_directory(common_paths.session_dir(session))
-    else:
-        common_paths.ensure_directory(common_paths.voice_samples_dir())
+@app.command("register-speakers")
+def register_speakers() -> None:
+    """Register all speakers from voice_samples directory into registered_speakers.yaml."""
     logger: LoggingProtocol = create_logger()
-
-    RegisterSpeakerCommand(
-        session_id=session,
-        speaker_name=speaker_name,
-        device=device,
-    ).execute(logger)
+    RegisterSpeakersCommand().execute(logger)
 
 
 def _version_callback(value: bool) -> None:
