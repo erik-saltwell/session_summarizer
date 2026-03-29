@@ -2,20 +2,18 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 import pytest
 from rich.console import Console
 
-from session_summarizer.commands.register_speaker import RegisterSpeakerCommand
+from session_summarizer.commands.register_speakers import RegisterSpeakersCommand
 from session_summarizer.logging import CompositeLogger, FileLogger, RichConsoleLogger
 from session_summarizer.protocols.logging_protocol import LoggingProtocol
 from session_summarizer.utils import common_paths
 
 from .temp_session import TempSession
 
-DEVICE = os.environ.get("TEST_DEVICE", "cuda")
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 _LOG_FILE = PROJECT_ROOT / "logs" / "test_register_speaker.log"
 
@@ -28,14 +26,10 @@ def logger() -> LoggingProtocol:
 
 def test_register_speaker_fee013(logger: LoggingProtocol) -> None:
     """Register speaker FEE013 and assert the embedding is written to YAML."""
-    with TempSession() as session:
-        RegisterSpeakerCommand(
-            speaker_name="FEE013",
-            session_id=session.session_id,
-            device=DEVICE,
-        ).execute(logger)
+    with TempSession():
+        RegisterSpeakersCommand().execute(logger)
 
-        yaml_path = common_paths.build_speakers_file_path(session.session_id)
+        yaml_path = common_paths.build_speakers_file_path()
         assert yaml_path.exists(), f"Speakers file was not created at {yaml_path}"
 
         import yaml

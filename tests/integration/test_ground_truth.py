@@ -35,7 +35,6 @@ from session_summarizer.commands.transcribe_audio import TranscribeAudioCommand
 from session_summarizer.logging import CompositeLogger, FileLogger, RichConsoleLogger
 from session_summarizer.protocols.logging_protocol import LoggingProtocol
 from session_summarizer.protocols.transcriber_protocol import TranscriptionResult, TranscriptionSegment
-from session_summarizer.transcription import CanaryQwenTranscriber, ParakeetCTCAligner
 from session_summarizer.utils import common_paths, flush_gpu_memory
 
 from .temp_session import TempSession
@@ -333,21 +332,15 @@ def generate_report(
 def test_transcription_accuracy() -> None:
     logfile_path = common_paths.generate_logfile_path()
     test_logger: LoggingProtocol = CompositeLogger([RichConsoleLogger(Console()), FileLogger(logfile_path)])
-    processing_device = "cuda"
-
     with TempSession() as session:
         session.copy_in(common_paths.test_recording_path())
 
-        global_yaml = common_paths.build_speakers_file_path(None)
+        global_yaml = common_paths.build_speakers_file_path()
         if not global_yaml.exists():
-            RegisterSpeakersCommand(device=processing_device).execute(test_logger)
+            RegisterSpeakersCommand().execute(test_logger)
             flush_gpu_memory()
 
-        TranscribeAudioCommand(
-            session_id=session.session_id,
-            transcriber=CanaryQwenTranscriber(device=processing_device),
-            aligner=ParakeetCTCAligner(device=processing_device),
-        ).execute(test_logger)
+        TranscribeAudioCommand(session_id=session.session_id).execute(test_logger)
 
         flush_gpu_memory()
 
