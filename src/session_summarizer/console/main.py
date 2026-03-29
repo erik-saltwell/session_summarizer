@@ -110,35 +110,53 @@ attendees:
 #
 # Example:
 #   audio_file: meeting_2025-03-29.m4a
-audio_file: recording.m4a
+audio_file: original.m4a
 
 
 # ---------------------------------------------------------------------------
-# cleaned_audio_file  (optional, default: cleaned_audio.wav)
+# cleaned_audio_file  (REQUIRED)
 # ---------------------------------------------------------------------------
 # Where the noise-reduced audio is written (or read from, if it already
 # exists). Relative paths are resolved from this file's directory.
-#
-# cleaned_audio_file: cleaned_audio.wav
+cleaned_audio_file: cleaned_audio.wav
 
 
 # ---------------------------------------------------------------------------
-# transcript_file  (optional, default: transcript.json)
+# transcript_file  (REQUIRED)
 # ---------------------------------------------------------------------------
 # Where the transcript JSON is written (or read from, if it already exists).
 # Relative paths are resolved from this file's directory.
-#
-# transcript_file: transcript.json
+transcript_file: transcript.json
 
 
 # ---------------------------------------------------------------------------
-# device  (optional, default: cuda)
+# aligned_transcript_path  (REQUIRED)
+# ---------------------------------------------------------------------------
+# Where the word-aligned transcript is written (or read from, if it already
+# exists). Word alignment maps each word to a precise start/end timestamp
+# using CTC forced alignment — more accurate than segment-level timing.
+# Relative paths are resolved from this file's directory.
+aligned_transcript_path: aligned_transcript.json
+
+
+# ---------------------------------------------------------------------------
+# confidence_transcript_path  (REQUIRED)
+# ---------------------------------------------------------------------------
+# Where the transcript annotated with per-word confidence scores is written
+# (or read from, if it already exists). Confidence scores (0.0–1.0) indicate
+# how certain the model was about each word; useful for post-processing,
+# review prioritisation, and filtering low-confidence segments.
+# Relative paths are resolved from this file's directory.
+confidence_transcript_path: confidence_transcript.json
+
+
+# ---------------------------------------------------------------------------
+# device  (REQUIRED)
 # ---------------------------------------------------------------------------
 # Compute device for model inference. Allowed values:
 #   cuda  — use the GPU (requires a CUDA-capable NVIDIA GPU)
 #   cpu   — use the CPU (much slower, but works everywhere)
-#
-# device: cuda
+device: cuda
 """
 
 

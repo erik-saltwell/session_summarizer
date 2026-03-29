@@ -22,18 +22,29 @@ class SessionSettings(BaseModel, frozen=True):
         Path,
         Field(description="Path to the audio file for the session"),
     ]
-    cleaned_audio_file: Path = Field(
-        default=Path("cleaned_audio.wav"),
-        description="Path to the cleaned audio file (created during processing)",
-    )
-    transcript_file: Path = Field(
-        default=Path("transcript.json"),
-        description="Path to the transcript JSON file (created during processing)",
-    )
-    device: Literal["cpu", "cuda"] = Field(
-        default="cuda",
-        description="Device for model inference — 'cpu' or 'cuda'",
-    )
+    cleaned_audio_file: Annotated[
+        Path,
+        Field(description="Path to the cleaned audio file (created during processing)"),
+    ]
+    transcript_file: Annotated[
+        Path,
+        Field(description="Path to the transcript JSON file (created during processing)"),
+    ]
+    aligned_transcript_path: Annotated[
+        Path,
+        Field(description="Path to the word-aligned transcript JSON (created during processing)"),
+    ]
+    confidence_transcript_path: Annotated[
+        Path,
+        Field(
+            description="Path to the transcript JSON annotated with per-word confidence scores"
+            " (created during processing)"
+        ),
+    ]
+    device: Annotated[
+        Literal["cpu", "cuda"],
+        Field(description="Device for model inference — 'cpu' or 'cuda'"),
+    ]
 
     @field_validator("attendees")
     @classmethod
@@ -62,7 +73,13 @@ class SessionSettings(BaseModel, frozen=True):
 
     @staticmethod
     def _resolve_paths(data: dict, base_dir: Path) -> None:
-        for key in ("audio_file", "cleaned_audio_file", "transcript_file"):
+        for key in (
+            "audio_file",
+            "cleaned_audio_file",
+            "transcript_file",
+            "aligned_transcript_path",
+            "confidence_transcript_path",
+        ):
             raw = data.get(key)
             if raw is None:
                 continue

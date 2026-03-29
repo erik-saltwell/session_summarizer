@@ -19,79 +19,110 @@ def valid_audio_file(tmp_path: Path) -> Path:
     return p
 
 
+def _required_fields(audio_file: Path | str) -> dict:
+    """Return a complete set of required fields for constructing a SessionSettings."""
+    return {
+        "attendees": ["Alice"],
+        "audio_file": audio_file,
+        "cleaned_audio_file": Path("cleaned_audio.wav"),
+        "transcript_file": Path("transcript.json"),
+        "aligned_transcript_path": Path("aligned_transcript.json"),
+        "confidence_transcript_path": Path("confidence_transcript.json"),
+        "device": "cuda",
+    }
+
+
+def _required_yaml_fields(audio_file: str) -> dict:
+    """Return a complete set of required fields for writing to a YAML file."""
+    return {
+        "attendees": ["Alice"],
+        "audio_file": audio_file,
+        "cleaned_audio_file": "cleaned_audio.wav",
+        "transcript_file": "transcript.json",
+        "aligned_transcript_path": "aligned_transcript.json",
+        "confidence_transcript_path": "confidence_transcript.json",
+        "device": "cuda",
+    }
+
+
+class TestAllFieldsRequired:
+    def test_missing_cleaned_audio_file_raises(self, valid_audio_file: Path) -> None:
+        fields = _required_fields(valid_audio_file)
+        del fields["cleaned_audio_file"]
+        with pytest.raises(ValidationError, match="cleaned_audio_file"):
+            SessionSettings(**fields)
+
+    def test_missing_transcript_file_raises(self, valid_audio_file: Path) -> None:
+        fields = _required_fields(valid_audio_file)
+        del fields["transcript_file"]
+        with pytest.raises(ValidationError, match="transcript_file"):
+            SessionSettings(**fields)
+
+    def test_missing_aligned_transcript_path_raises(self, valid_audio_file: Path) -> None:
+        fields = _required_fields(valid_audio_file)
+        del fields["aligned_transcript_path"]
+        with pytest.raises(ValidationError, match="aligned_transcript_path"):
+            SessionSettings(**fields)
+
+    def test_missing_confidence_transcript_path_raises(self, valid_audio_file: Path) -> None:
+        fields = _required_fields(valid_audio_file)
+        del fields["confidence_transcript_path"]
+        with pytest.raises(ValidationError, match="confidence_transcript_path"):
+            SessionSettings(**fields)
+
+    def test_missing_device_raises(self, valid_audio_file: Path) -> None:
+        fields = _required_fields(valid_audio_file)
+        del fields["device"]
+        with pytest.raises(ValidationError, match="device"):
+            SessionSettings(**fields)
+
+
 class TestAudioFileValidation:
     def test_unsupported_suffix_raises(self, tmp_path: Path) -> None:
         bad_file = tmp_path / "recording.xyz"
         bad_file.touch()
         with pytest.raises(ValidationError, match="Unsupported audio format"):
-            SessionSettings(attendees=["Alice"], audio_file=bad_file)
+            SessionSettings(**{**_required_fields(bad_file)})
 
     def test_missing_absolute_file_raises(self, tmp_path: Path) -> None:
         missing = tmp_path / "does_not_exist.m4a"
         with pytest.raises(ValidationError, match="Audio file does not exist"):
-            SessionSettings(attendees=["Alice"], audio_file=missing)
+            SessionSettings(**{**_required_fields(missing)})
 
     def test_valid_absolute_file_succeeds(self, valid_audio_file: Path) -> None:
-        settings = SessionSettings(attendees=["Alice"], audio_file=valid_audio_file)
+        settings = SessionSettings(**_required_fields(valid_audio_file))
         assert settings.audio_file == valid_audio_file
 
     def test_relative_path_skips_existence_check(self) -> None:
-        settings = SessionSettings(attendees=["Alice"], audio_file=Path("some_file.wav"))
+        settings = SessionSettings(**_required_fields(Path("some_file.wav")))
         assert settings.audio_file == Path("some_file.wav")
 
     @pytest.mark.parametrize("suffix", sorted(SUPPORTED_AUDIO_SUFFIXES))
     def test_all_supported_suffixes(self, tmp_path: Path, suffix: str) -> None:
         audio = tmp_path / f"recording{suffix}"
         audio.touch()
-        settings = SessionSettings(attendees=["Alice"], audio_file=audio)
+        settings = SessionSettings(**_required_fields(audio))
         assert settings.audio_file == audio
 
     def test_suffix_check_is_case_insensitive(self, tmp_path: Path) -> None:
         audio = tmp_path / "recording.M4A"
         audio.touch()
-        settings = SessionSettings(attendees=["Alice"], audio_file=audio)
+        settings = SessionSettings(**_required_fields(audio))
         assert settings.audio_file == audio
 
 
-class TestCleanedAudioAndTranscriptDefaults:
-    def test_defaults_are_relative_paths(self, valid_audio_file: Path) -> None:
-        settings = SessionSettings(attendees=["Alice"], audio_file=valid_audio_file)
-        assert settings.cleaned_audio_file == Path("cleaned_audio.wav")
-        assert settings.transcript_file == Path("transcript.json")
-
-    def test_custom_cleaned_audio_file(self, valid_audio_file: Path) -> None:
-        settings = SessionSettings(
-            attendees=["Alice"],
-            audio_file=valid_audio_file,
-            cleaned_audio_file=Path("my_clean.wav"),
-        )
-        assert settings.cleaned_audio_file == Path("my_clean.wav")
-
-    def test_custom_transcript_file(self, valid_audio_file: Path) -> None:
-        settings = SessionSettings(
-            attendees=["Alice"],
-            audio_file=valid_audio_file,
-            transcript_file=Path("my_transcript.json"),
-        )
-        assert settings.transcript_file == Path("my_transcript.json")
-
-
 class TestDeviceValidation:
-    def test_defaults_to_cuda(self, valid_audio_file: Path) -> None:
-        settings = SessionSettings(attendees=["Alice"], audio_file=valid_audio_file)
-        assert settings.device == "cuda"
-
     def test_accepts_cpu(self, valid_audio_file: Path) -> None:
-        settings = SessionSettings(attendees=["Alice"], audio_file=valid_audio_file, device="cpu")
+        settings = SessionSettings(**{**_required_fields(valid_audio_file), "device": "cpu"})
         assert settings.device == "cpu"
 
     def test_accepts_cuda(self, valid_audio_file: Path) -> None:
-        settings = SessionSettings(attendees=["Alice"], audio_file=valid_audio_file, device="cuda")
+        settings = SessionSettings(**{**_required_fields(valid_audio_file), "device": "cuda"})
         assert settings.device == "cuda"
 
     def test_rejects_invalid_device(self, valid_audio_file: Path) -> None:
         with pytest.raises(ValidationError, match="Input should be 'cpu' or 'cuda'"):
-            SessionSettings(attendees=["Alice"], audio_file=valid_audio_file, device="tpu")  # type: ignore[arg-type]
+            SessionSettings(**{**_required_fields(valid_audio_file), "device": "tpu"})  # type: ignore[arg-type]
 
 
 class TestLoad:
@@ -99,7 +130,7 @@ class TestLoad:
         audio = tmp_path / "my_audio.flac"
         audio.touch()
         settings_file = tmp_path / "settings.yaml"
-        settings_file.write_text(yaml.dump({"attendees": ["Alice", "Bob"], "audio_file": "my_audio.flac"}))
+        settings_file.write_text(yaml.dump({**_required_yaml_fields("my_audio.flac"), "attendees": ["Alice", "Bob"]}))
 
         settings = SessionSettings.load(settings_file)
         assert settings.audio_file == audio.resolve()
@@ -109,12 +140,12 @@ class TestLoad:
         audio = tmp_path / "abs_audio.wav"
         audio.touch()
         settings_file = tmp_path / "settings.yaml"
-        settings_file.write_text(yaml.dump({"attendees": ["Alice"], "audio_file": str(audio)}))
+        settings_file.write_text(yaml.dump(_required_yaml_fields(str(audio))))
 
         settings = SessionSettings.load(settings_file)
         assert settings.audio_file == audio
 
-    def test_load_resolves_cleaned_audio_and_transcript(self, tmp_path: Path) -> None:
+    def test_load_resolves_all_paths(self, tmp_path: Path) -> None:
         audio = tmp_path / "recording.m4a"
         audio.touch()
         settings_file = tmp_path / "settings.yaml"
@@ -125,6 +156,9 @@ class TestLoad:
                     "audio_file": "recording.m4a",
                     "cleaned_audio_file": "clean.wav",
                     "transcript_file": "out.json",
+                    "aligned_transcript_path": "aligned.json",
+                    "confidence_transcript_path": "confidence.json",
+                    "device": "cuda",
                 }
             )
         )
@@ -132,21 +166,25 @@ class TestLoad:
         settings = SessionSettings.load(settings_file)
         assert settings.cleaned_audio_file == (tmp_path / "clean.wav").resolve()
         assert settings.transcript_file == (tmp_path / "out.json").resolve()
-
-    def test_load_uses_defaults_when_not_specified(self, tmp_path: Path) -> None:
-        audio = tmp_path / "recording.m4a"
-        audio.touch()
-        settings_file = tmp_path / "settings.yaml"
-        settings_file.write_text(yaml.dump({"attendees": ["Alice"], "audio_file": "recording.m4a"}))
-
-        settings = SessionSettings.load(settings_file)
-        assert settings.cleaned_audio_file == Path("cleaned_audio.wav")
-        assert settings.transcript_file == Path("transcript.json")
+        assert settings.aligned_transcript_path == (tmp_path / "aligned.json").resolve()
+        assert settings.confidence_transcript_path == (tmp_path / "confidence.json").resolve()
 
     def test_load_missing_audio_file_key_raises(self, tmp_path: Path) -> None:
         settings_file = tmp_path / "settings.yaml"
-        settings_file.write_text(yaml.dump({"attendees": ["Alice"]}))
+        fields = _required_yaml_fields("recording.m4a")
+        del fields["audio_file"]
+        settings_file.write_text(yaml.dump(fields))
         with pytest.raises(ValidationError, match="audio_file"):
+            SessionSettings.load(settings_file)
+
+    def test_load_missing_device_raises(self, tmp_path: Path) -> None:
+        audio = tmp_path / "recording.m4a"
+        audio.touch()
+        settings_file = tmp_path / "settings.yaml"
+        fields = _required_yaml_fields("recording.m4a")
+        del fields["device"]
+        settings_file.write_text(yaml.dump(fields))
+        with pytest.raises(ValidationError, match="device"):
             SessionSettings.load(settings_file)
 
 
@@ -160,7 +198,7 @@ class TestLoadCascading:
         audio.touch()
 
         base_yaml = tmp_path / "settings.yaml"
-        base_yaml.write_text(yaml.dump({"attendees": ["Alice"], "audio_file": "base.mp3"}))
+        base_yaml.write_text(yaml.dump(_required_yaml_fields("base.mp3")))
 
         session_yaml = session_dir / "settings.yaml"
         session_yaml.write_text(yaml.dump({"audio_file": "override.mp3"}))
