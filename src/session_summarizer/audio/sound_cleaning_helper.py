@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import gc
 import json
 import re
 from pathlib import Path
 
+import torch
 from clearvoice import ClearVoice
 
 from ..utils import run_command
@@ -41,6 +43,20 @@ def enhance_with_mossformer2(model_input_wav: Path, enhanced_wav_path: Path) -> 
 
     output_wav = clearvoice(input_path=str(model_input_wav), online_write=False)
     clearvoice.write(output_wav, output_path=str(enhanced_wav_path))
+
+    # Explicitly tear down the GPU model while we still hold a reference.
+    # ClearVoice's network_wrapper (nn.Module) keeps the model on GPU; relying
+    # on GC after this function returns is unreliable and leaves ~8 GB stranded.
+    for model in clearvoice.models:
+        if hasattr(model, "model") and model.model is not None:
+            model.model.cpu()
+            model.model = None
+        model.data = {}
+        model.result = {}
+    del output_wav, clearvoice
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
 
 
 def measure_loudness(

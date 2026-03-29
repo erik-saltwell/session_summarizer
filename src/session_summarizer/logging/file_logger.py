@@ -9,13 +9,7 @@ from rich.console import Console
 from rich.table import Table, box
 from rich.traceback import Traceback
 
-from ..protocols import (
-    LoggingProtocol,
-    ProgressTask,
-    StatusHandle,
-    _NullProgress,
-    _NullStatus,
-)
+from ..protocols import LoggingProtocol, ProgressTask, StatusHandle, _NullProgress, _NullStatus
 
 
 class FileLogger(LoggingProtocol):
@@ -95,12 +89,14 @@ class FileLogger(LoggingProtocol):
             self._console.print("")
         self._flush()
 
-    # ----- status/progress (no-ops for file output) -----
+    # ----- status/progress -----
 
     @contextmanager
     def status(self, message: str) -> Iterator[StatusHandle]:
+        self.report_message(message)
         yield _NullStatus()
 
     @contextmanager
-    def progress(self, description: str, total: int | None = None) -> Iterator[ProgressTask]:
+    def progress(self, description: str, total: int | None = None) -> Iterator[ProgressTask]:  # noqa: ARG002
+        self.report_message(description)
         yield _NullProgress()

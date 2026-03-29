@@ -32,10 +32,10 @@ class session_settings:
 
     @classmethod
     def load_cascading(cls, session_id: str) -> session_settings:
-        from session_summarizer.utils.common_paths import data_path, session_path
+        from session_summarizer.utils.common_paths import data_dir, session_dir
 
-        base_file = data_path() / _SETTINGS_FILE
-        session_file = session_path(session_id) / _SETTINGS_FILE
+        base_file = data_dir() / _SETTINGS_FILE
+        session_file = session_dir(session_id) / _SETTINGS_FILE
 
         base: dict = {}
         if base_file.exists():

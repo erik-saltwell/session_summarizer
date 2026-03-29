@@ -1,7 +1,6 @@
 from .command_protocol import CommmandProtocol
 from .embedding_factory import EmbeddingFactory
 from .logging_protocol import (
-    CompositeLogger,
     LoggingProtocol,
     NullLogger,
     ProgressTask,
@@ -16,7 +15,6 @@ __all__ = [
     "ProgressTask",
     "StatusHandle",
     "CommmandProtocol",
-    "CompositeLogger",
     "_NullProgress",
     "_NullStatus",
     "NullLogger",

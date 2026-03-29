@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import StrEnum
 from pathlib import Path
 
-from .common_paths import fragments_path
+from .common_paths import fragments_dir
 
 
 class FragmentID(StrEnum):
@@ -18,7 +18,7 @@ class FragmentID(StrEnum):
 
 def get_fragment_path(fragment_id: FragmentID) -> Path:
     """Return the directory path where the given fragment file is stored."""
-    return fragments_path()
+    return fragments_dir()
 
 
 def get_fragment(fragment_id: FragmentID) -> str:

@@ -32,12 +32,9 @@ class TranscribeAudioCommand:
     aligner: ParakeetCTCAligner | None = None
     logger: LoggingProtocol = NullLogger()
 
-    def _report(self, message: str) -> None:
-        self.logger.report_message(f"[blue]{message}[/blue]")
-
     def execute(self, logger: LoggingProtocol) -> None:
         self.logger = logger
-        session = common_paths.session_path(self.session_id)
+        session = common_paths.session_dir(self.session_id)
 
         original = session / "original.m4a"
         wav_48k = session / "wav_48k.wav"
@@ -45,17 +42,17 @@ class TranscribeAudioCommand:
         normalized_audio = session / "normalized_audio.wav"
         transcript_path = session / "transcript.json"
 
-        self._report("converting to 48k wav...")
-        convert_to_48k_wav(original, wav_48k)
+        with self.logger.status("Converting to 48k WAV..."):
+            convert_to_48k_wav(original, wav_48k)
 
-        self._report("enhancing with MossFormer2...")
-        enhance_with_mossformer2(wav_48k, cleaned_audio)
+        with self.logger.status("Enhancing with MossFormer2..."):
+            enhance_with_mossformer2(wav_48k, cleaned_audio)
 
-        self._report("measuring loudness...")
-        stats = measure_loudness(cleaned_audio)
+        with self.logger.status("Measuring loudness..."):
+            stats = measure_loudness(cleaned_audio)
 
-        self._report("normalizing to 16k mono...")
-        normalize_and_export_16k_mono(cleaned_audio, normalized_audio, stats)
+        with self.logger.status("Normalizing to 16k mono..."):
+            normalize_and_export_16k_mono(cleaned_audio, normalized_audio, stats)
 
         result: TranscriptionResult = self.transcriber.transcribe(normalized_audio, logger)
 

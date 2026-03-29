@@ -12,13 +12,12 @@ from session_summarizer.utils import common_paths
 
 from ..commands.register_speaker import RegisterSpeakerCommand
 from ..commands.transcribe_audio import TranscribeAudioCommand
-from ..protocols import CompositeLogger, LoggingProtocol
+from ..logging import CompositeLogger, FileLogger, RichConsoleLogger
+from ..protocols import LoggingProtocol
 from ..transcription import CanaryQwenTranscriber, ParakeetCTCAligner
 from ..utils import flush_gpu_memory
 from ..utils.logging_config import configure_logging
 from .console_validation import _validate_directory_name
-from .file_logging_protocol import FileLogger
-from .rich_logging_protocol import RichConsoleLogger
 
 load_dotenv()
 configure_logging()
@@ -31,13 +30,12 @@ app = typer.Typer(
     help="CLI for session-summarizer",
 )
 
-LOG_FILENAME: str = "session_summarizer.log"
-
 
 def create_logger() -> LoggingProtocol:
     console = Console()
     console_logger: RichConsoleLogger = RichConsoleLogger(console)
-    file_logger: FileLogger = FileLogger(LOG_FILENAME, verbose_training=True)
+    logfile_path = common_paths.generate_logfile_path()
+    file_logger: FileLogger = FileLogger(logfile_path, verbose_training=True)
     return CompositeLogger([console_logger, file_logger])
 
 
@@ -48,7 +46,7 @@ def transcribe(
 ) -> None:
     """Clean audio and transcribe a session, writing transcript.json."""
 
-    _validate_directory_name(str(common_paths.session_path(session)))
+    _validate_directory_name(str(common_paths.session_dir(session)))
     logger: LoggingProtocol = create_logger()
 
     transcriber: transcriber_protocol.TranscriberProtocol = CanaryQwenTranscriber(device=device)
@@ -67,10 +65,10 @@ def register_speaker(
 ) -> None:
     """Extract an ERes2NetV2 embedding for a speaker and save to registered_speakers.yaml."""
     if session is not None:
-        _validate_directory_name(str(common_paths.session_path(session)))
-        common_paths.ensure_directory(common_paths.session_path(session))
+        _validate_directory_name(str(common_paths.session_dir(session)))
+        common_paths.ensure_directory(common_paths.session_dir(session))
     else:
-        common_paths.ensure_directory(common_paths.voice_samples_path())
+        common_paths.ensure_directory(common_paths.voice_samples_dir())
     logger: LoggingProtocol = create_logger()
 
     RegisterSpeakerCommand(

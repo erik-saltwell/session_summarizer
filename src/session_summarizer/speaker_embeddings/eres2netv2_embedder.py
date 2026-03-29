@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+import torch
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 
@@ -29,7 +30,8 @@ class ERes2NetV2EmbeddingFactory(EmbeddingFactory):
 
     def extract(self, audio_path: Path, logger: LoggingProtocol) -> list[float]:
         logger.report_message("[blue]Extracting speaker embedding...[/blue]")
-        result: Any = self._pipe([str(audio_path.resolve())], output_emb=True)
+        with torch.no_grad():
+            result: Any = self._pipe([str(audio_path.resolve())], output_emb=True)
         # result['embs'] is a numpy array of shape [N, 192]; take the first (and only) row
         emb = result["embs"][0]
         embedding: list[float] = [float(x) for x in emb]
