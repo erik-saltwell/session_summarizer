@@ -227,6 +227,13 @@ __marimo__/
 # Built Visual Studio Code Extensions
 *.vsix
 
+# Large personal voice sample WAV files (use test samples in voice_samples/ instead)
+voice_samples/andrew.wav
+voice_samples/erik.wav
+voice_samples/jason.wav
+voice_samples/jen.wav
+voice_samples/john.wav
+
 # Keep data directory scaffolding, ignore generated data files
 /data/*
 /checkpoints/
