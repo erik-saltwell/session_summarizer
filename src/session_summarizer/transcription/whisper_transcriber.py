@@ -3,6 +3,7 @@ from __future__ import annotations
 import gc
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from ..protocols import LoggingProtocol
 from ..protocols.transcriber_protocol import TranscriptionResult, TranscriptionSegment
@@ -46,7 +47,8 @@ class WhisperTranscriber:
                     word_timestamps=True,
                 )
 
-            whisper_segments: list[dict] = list(raw.get("segments", []))  # type: ignore[arg-type]
+            raw_segments: Any = raw.get("segments", [])
+            whisper_segments: list[dict] = list(raw_segments)
             logger.report_message(f"[blue]Whisper returned {len(whisper_segments)} segments.[/blue]")
 
             segments: list[TranscriptionSegment] = []
