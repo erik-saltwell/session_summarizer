@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import gc
-from dataclasses import dataclass
+import json
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Self
 
 from ..protocols import LoggingProtocol
 
@@ -13,12 +14,25 @@ class WordAlignment:
     word: str
     start: float  # seconds
     end: float  # seconds
-    confidence: float  # acoustic confidence [0.0, 1.0]
+    confidence: float = 0.0  # acoustic confidence [0.0, 1.0]
 
 
 @dataclass
 class AlignmentResult:
     words: list[WordAlignment]
+
+    def save(self, path: Path) -> None:
+        path.write_text(
+            json.dumps(asdict(self), indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
+
+    @classmethod
+    def load(cls, path: Path) -> Self:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return cls(
+            words=[WordAlignment(**w) for w in data.get("words", [])],
+        )
 
 
 def _map_confidence_by_time(

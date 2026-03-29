@@ -7,7 +7,9 @@ import typer
 from dotenv import load_dotenv
 from rich.console import Console
 
+from session_summarizer.commands.align_transcript import AlignTranscriptCommand
 from session_summarizer.commands.clean_audio_command import CleanAudioCommand
+from session_summarizer.commands.clean_session import CleanSessionCommand
 from session_summarizer.commands.transcribe_audio import TranscribeAudioCommand
 from session_summarizer.utils import common_paths
 
@@ -58,6 +60,16 @@ def transcribe(
     command.execute(logger)
 
 
+@app.command("align")
+def align(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to transcribe"),
+) -> None:
+    confirm_session(session)
+    logger: LoggingProtocol = create_logger()
+    command: AlignTranscriptCommand = AlignTranscriptCommand(session)
+    command.execute(logger)
+
+
 @app.command("clean")
 def clean(
     session: str = typer.Option(..., "--session", "-s", help="ID of the session to clean"),
@@ -65,6 +77,17 @@ def clean(
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
     command: CleanAudioCommand = CleanAudioCommand(session)
+    command.execute(logger)
+
+
+@app.command("clean-session")
+def clean_session(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to clean"),
+) -> None:
+    """Delete all generated files in a session folder, keeping settings.yaml and the original audio."""
+    confirm_session(session)
+    logger: LoggingProtocol = create_logger()
+    command: CleanSessionCommand = CleanSessionCommand(session)
     command.execute(logger)
 
 
