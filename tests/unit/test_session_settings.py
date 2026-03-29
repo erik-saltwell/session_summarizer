@@ -122,7 +122,7 @@ class TestDeviceValidation:
 
     def test_rejects_invalid_device(self, valid_audio_file: Path) -> None:
         with pytest.raises(ValidationError, match="Input should be 'cpu' or 'cuda'"):
-            SessionSettings(**{**_required_fields(valid_audio_file), "device": "tpu"})  # type: ignore[arg-type]
+            SessionSettings(**{**_required_fields(valid_audio_file), "device": "tpu"})
 
 
 class TestLoad:
