@@ -68,6 +68,97 @@ def clean(
     command.execute(logger)
 
 
+_SAMPLE_SETTINGS = """\
+# ============================================================================
+# Session Summarizer — settings.yaml
+# ============================================================================
+#
+# This file configures a session-summarizer run. It can live in two places:
+#
+#   1. data/settings.yaml           — shared defaults for every session
+#   2. data/<session-id>/settings.yaml — per-session overrides
+#
+# When both exist, per-session values override the shared defaults.
+# ============================================================================
+
+
+# ---------------------------------------------------------------------------
+# attendees  (REQUIRED)
+# ---------------------------------------------------------------------------
+# A list of speaker names expected in the session. This drives diarization
+# (the number of speakers the model should look for) and labels in the final
+# transcript. Every entry must be a non-empty string.
+#
+# Example:
+#   attendees:
+#     - Alice
+#     - Bob
+#     - Charlie
+attendees:
+  - Speaker1
+  - Speaker2
+
+
+# ---------------------------------------------------------------------------
+# audio_file  (REQUIRED)
+# ---------------------------------------------------------------------------
+# Path to the original recording. Supported formats:
+#   .m4a  .mp3  .wav  .flac  .ogg  .opus  .wma  .aac  .webm
+#
+# Relative paths are resolved from the directory that contains this file.
+# Absolute paths are used as-is (and must point to an existing file).
+#
+# Example:
+#   audio_file: meeting_2025-03-29.m4a
+audio_file: recording.m4a
+
+
+# ---------------------------------------------------------------------------
+# cleaned_audio_file  (optional, default: cleaned_audio.wav)
+# ---------------------------------------------------------------------------
+# Where the noise-reduced audio is written (or read from, if it already
+# exists). Relative paths are resolved from this file's directory.
+#
+# cleaned_audio_file: cleaned_audio.wav
+
+
+# ---------------------------------------------------------------------------
+# transcript_file  (optional, default: transcript.json)
+# ---------------------------------------------------------------------------
+# Where the transcript JSON is written (or read from, if it already exists).
+# Relative paths are resolved from this file's directory.
+#
+# transcript_file: transcript.json
+
+
+# ---------------------------------------------------------------------------
+# device  (optional, default: cuda)
+# ---------------------------------------------------------------------------
+# Compute device for model inference. Allowed values:
+#   cuda  — use the GPU (requires a CUDA-capable NVIDIA GPU)
+#   cpu   — use the CPU (much slower, but works everywhere)
+#
+# device: cuda
+"""
+
+
+@app.command("generate-sample-settings")
+def generate_sample_settings() -> None:
+    """Generate a well-documented sample settings.yaml in the data directory."""
+    console = Console()
+    target = common_paths.data_dir() / "settings.yaml"
+
+    if target.exists():
+        console.print(f"[red]Settings file already exists: {target}[/red]")
+        console.print("[dim]Remove or rename it first if you want a fresh sample.[/dim]")
+        raise typer.Exit(1)
+
+    common_paths.ensure_directory(common_paths.data_dir())
+    target.write_text(_SAMPLE_SETTINGS, encoding="utf-8")
+    console.print(f"[green]Sample settings written to {target}[/green]")
+    console.print("[dim]Edit the file to match your session before running other commands.[/dim]")
+
+
 @app.command("register-speakers")
 def register_speakers() -> None:
     """Register all speakers from voice_samples directory into registered_speakers.yaml."""

@@ -29,6 +29,16 @@
             ]
         },
         {
+            "name": "-gen-settings",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "generate-sample-settings",
+            ]
+        },
+        {
             "name": "-register",
             "type": "debugpy",
             "request": "launch",
