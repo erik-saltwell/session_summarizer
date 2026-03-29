@@ -46,7 +46,7 @@ class WhisperTranscriber:
                     word_timestamps=True,
                 )
 
-            whisper_segments: list[dict] = raw.get("segments", [])
+            whisper_segments: list[dict] = list(raw.get("segments", []))  # type: ignore[arg-type]
             logger.report_message(f"[blue]Whisper returned {len(whisper_segments)} segments.[/blue]")
 
             segments: list[TranscriptionSegment] = []
