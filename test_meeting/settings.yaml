@@ -1,0 +1,30 @@
+# ============================================================================
+# Session Summarizer — settings.yaml
+# ============================================================================
+#
+# This file configures a session-summarizer run. It can live in two places:
+#
+#   1. data/settings.yaml           — shared defaults for every session
+#   2. data/<session-id>/settings.yaml — per-session overrides
+#
+# When both exist, per-session values override the shared defaults.
+# ============================================================================
+
+
+# ---------------------------------------------------------------------------
+# attendees  (REQUIRED)
+# ---------------------------------------------------------------------------
+# A list of speaker names expected in the session. This drives diarization
+# (the number of speakers the model should look for) and labels in the final
+# transcript. Every entry must be a non-empty string.
+#
+# Example:
+#   attendees:
+#     - Alice
+#     - Bob
+#     - Charlie
+attendees:
+  - FEE013
+  - FEE016
+  - MEE014
+  - MEO015
