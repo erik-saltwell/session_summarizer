@@ -22,27 +22,18 @@ class SessionSettings(BaseModel, frozen=True):
         Path,
         Field(description="Path to the audio file for the session"),
     ]
-    cleaned_audio_file: Annotated[
-        Path,
-        Field(
-            default=Path("cleaned_audio.wav"),
-            description="Path to the cleaned audio file (created during processing)",
-        ),
-    ]
-    transcript_file: Annotated[
-        Path,
-        Field(
-            default=Path("transcript.json"),
-            description="Path to the transcript JSON file (created during processing)",
-        ),
-    ]
-    device: Annotated[
-        Literal["cpu", "cuda"],
-        Field(
-            default="cuda",
-            description="Device for model inference — 'cpu' or 'cuda'",
-        ),
-    ]
+    cleaned_audio_file: Path = Field(
+        default=Path("cleaned_audio.wav"),
+        description="Path to the cleaned audio file (created during processing)",
+    )
+    transcript_file: Path = Field(
+        default=Path("transcript.json"),
+        description="Path to the transcript JSON file (created during processing)",
+    )
+    device: Literal["cpu", "cuda"] = Field(
+        default="cuda",
+        description="Device for model inference — 'cpu' or 'cuda'",
+    )
 
     @field_validator("attendees")
     @classmethod
