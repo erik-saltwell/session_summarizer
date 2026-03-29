@@ -7,17 +7,16 @@ import typer
 from dotenv import load_dotenv
 from rich.console import Console
 
-from session_summarizer.protocols import transcriber_protocol
+from session_summarizer.commands.clean_audio_command import CleanAudioCommand
+from session_summarizer.commands.transcribe_audio import TranscribeAudioCommand
 from session_summarizer.utils import common_paths
 
 from ..commands.register_speakers import RegisterSpeakersCommand
-from ..commands.transcribe_audio import TranscribeAudioCommand
 from ..logging import CompositeLogger, FileLogger, RichConsoleLogger
 from ..protocols import LoggingProtocol
-from ..transcription import CanaryQwenTranscriber, ParakeetCTCAligner
 from ..utils import flush_gpu_memory
 from ..utils.logging_config import configure_logging
-from .console_validation import _validate_directory_name
+from .console_validation import _validate_directory_exists
 
 load_dotenv()
 configure_logging()
@@ -39,20 +38,34 @@ def create_logger() -> LoggingProtocol:
     return CompositeLogger([console_logger, file_logger])
 
 
+def confirm_session(session_id: str) -> None:
+    session_dir = common_paths.session_dir(session_id)
+    errors: list[str] = _validate_directory_exists(session_dir)
+    if errors and len(errors) > 0:
+        console: Console = Console()
+        for error in errors:
+            console.print(f"[red]Error: {error}[/red]")
+        raise typer.Exit(1)
+
+
 @app.command("transcribe")
 def transcribe(
     session: str = typer.Option(..., "--session", "-s", help="ID of the session to transcribe"),
-    device: str = typer.Option("cuda", "--device", help="Torch device (cuda or cpu)"),
 ) -> None:
-    """Clean audio and transcribe a session, writing transcript.json."""
-
-    _validate_directory_name(str(common_paths.session_dir(session)))
+    confirm_session(session)
     logger: LoggingProtocol = create_logger()
+    command: TranscribeAudioCommand = TranscribeAudioCommand(session)
+    command.execute(logger)
 
-    transcriber: transcriber_protocol.TranscriberProtocol = CanaryQwenTranscriber(device=device)
-    aligner = ParakeetCTCAligner(device=device)
 
-    TranscribeAudioCommand(session_id=session, transcriber=transcriber, aligner=aligner).execute(logger)
+@app.command("clean")
+def clean(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to clean"),
+) -> None:
+    confirm_session(session)
+    logger: LoggingProtocol = create_logger()
+    command: CleanAudioCommand = CleanAudioCommand(session)
+    command.execute(logger)
 
 
 @app.command("register-speakers")

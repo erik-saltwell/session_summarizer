@@ -68,11 +68,8 @@ def speakers_file(session_id: str) -> Path:
     return file_path
 
 
-def build_speakers_file_path(session_id: str | None) -> Path:
-    if session_id is None:
-        return voice_samples_dir() / _REGISTERED_SPEAKERS_FILE
-    else:
-        return session_dir(session_id) / _REGISTERED_SPEAKERS_FILE
+def build_speakers_file_path() -> Path:
+    return voice_samples_dir() / _REGISTERED_SPEAKERS_FILE
 
 
 def voice_sample_wav_file(speaker_name: str) -> Path:

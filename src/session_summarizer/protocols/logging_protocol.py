@@ -5,6 +5,10 @@ from contextlib import AbstractContextManager, contextmanager
 from typing import Any, Protocol, runtime_checkable
 
 
+class GpuLogger(Protocol):
+    def report_gpu_usage(self, label: str) -> None: ...
+
+
 class StatusHandle(Protocol):
     """Protocol for a handle to an active status spinner or indicator."""
 

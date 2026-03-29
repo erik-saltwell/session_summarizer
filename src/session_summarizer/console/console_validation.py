@@ -25,6 +25,27 @@ def _validate_file_exists(path: Path, label: str) -> list[str]:
     return errors
 
 
+def _validate_directory_exists(path: Path) -> list[str]:
+    """Validate that a path exists, is a file, and is writable.
+
+    Args:
+        path: Path to validate.
+        label: Label used in error messages.
+
+    Returns:
+        List of validation error messages.
+    """
+
+    errors: list[str] = []
+    if not path.exists():
+        errors.append(f"{path} does not exist.")
+        return errors
+    if not path.is_dir():
+        errors.append(f"{path} is not a directory.")
+        return errors
+    return errors
+
+
 def _validate_writable_file(path: Path, label: str) -> list[str]:
     """Validate that a path is writable or can be created in its directory.
 

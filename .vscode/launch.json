@@ -5,26 +5,6 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "--test",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "session_summarizer",
-            "console": "integratedTerminal",
-            "args": "test"
-        },
-        {
-            "name": "-register",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "session_summarizer",
-            "console": "integratedTerminal",
-            "args": [
-                "register-speaker",
-                "--speaker-name",
-                "andrew",
-            ]
-        },
-        {
             "name": "-transcribe",
             "type": "debugpy",
             "request": "launch",
@@ -33,9 +13,7 @@
             "args": [
                 "transcribe",
                 "--session",
-                "short",
-                "--engine",
-                "canary",
+                "test",
             ]
         },
         {
@@ -45,9 +23,21 @@
             "module": "session_summarizer",
             "console": "integratedTerminal",
             "args": [
-                "clean-audio",
+                "clean",
                 "--session",
-                "short",
+                "test",
+            ]
+        },
+        {
+            "name": "-register",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "register-speakers",
+                "--speaker-name",
+                "andrew",
             ]
         },
         {

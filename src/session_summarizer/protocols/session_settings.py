@@ -1,18 +1,47 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal, Self
 
 import yaml
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 _SETTINGS_FILE = "settings.yaml"
+
+SUPPORTED_AUDIO_SUFFIXES: frozenset[str] = frozenset(
+    {".m4a", ".mp3", ".wav", ".flac", ".ogg", ".opus", ".wma", ".aac", ".webm"}
+)
 
 
 class SessionSettings(BaseModel, frozen=True):
     attendees: Annotated[
         list[str],
         Field(min_length=1, description="Names of all speakers present in the session"),
+    ]
+    audio_file: Annotated[
+        Path,
+        Field(description="Path to the audio file for the session"),
+    ]
+    cleaned_audio_file: Annotated[
+        Path,
+        Field(
+            default=Path("cleaned_audio.wav"),
+            description="Path to the cleaned audio file (created during processing)",
+        ),
+    ]
+    transcript_file: Annotated[
+        Path,
+        Field(
+            default=Path("transcript.json"),
+            description="Path to the transcript JSON file (created during processing)",
+        ),
+    ]
+    device: Annotated[
+        Literal["cpu", "cuda"],
+        Field(
+            default="cuda",
+            description="Device for model inference — 'cpu' or 'cuda'",
+        ),
     ]
 
     @field_validator("attendees")
@@ -26,15 +55,36 @@ class SessionSettings(BaseModel, frozen=True):
                 )
         return names
 
+    @model_validator(mode="after")
+    def _validate_audio_file(self) -> Self:
+        path = self.audio_file
+        if path.suffix.lower() not in SUPPORTED_AUDIO_SUFFIXES:
+            raise ValueError(f"Unsupported audio format {path.suffix!r}. Supported: {sorted(SUPPORTED_AUDIO_SUFFIXES)}")
+        if path.is_absolute() and not path.exists():
+            raise ValueError(f"Audio file does not exist: {path}")
+        return self
+
     @property
     def number_of_speakers(self) -> int:
         """Derived from the length of attendees; used by the diarizer."""
         return len(self.attendees)
 
+    @staticmethod
+    def _resolve_paths(data: dict, base_dir: Path) -> None:
+        for key in ("audio_file", "cleaned_audio_file", "transcript_file"):
+            raw = data.get(key)
+            if raw is None:
+                continue
+            p = Path(raw)
+            if not p.is_absolute():
+                p = (base_dir / p).resolve()
+            data[key] = p
+
     @classmethod
     def load(cls, path: Path) -> SessionSettings:
         with path.open("r", encoding="utf-8") as f:
             data: dict = yaml.safe_load(f) or {}
+        cls._resolve_paths(data, path.parent)
         return cls(**data)
 
     @classmethod
@@ -62,7 +112,9 @@ class SessionSettings(BaseModel, frozen=True):
             with session_file.open("r", encoding="utf-8") as f:
                 override = yaml.safe_load(f) or {}
 
-        return cls(**{**base, **override})
+        merged = {**base, **override}
+        cls._resolve_paths(merged, session_dir(session_id))
+        return cls(**merged)
 
 
 # Backwards-compatible alias

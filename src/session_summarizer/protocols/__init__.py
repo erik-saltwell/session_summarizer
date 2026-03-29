@@ -1,6 +1,7 @@
 from .command_protocol import CommmandProtocol
 from .embedding_factory import EmbeddingFactory
 from .logging_protocol import (
+    GpuLogger,
     LoggingProtocol,
     NullLogger,
     ProgressTask,
@@ -8,6 +9,7 @@ from .logging_protocol import (
     _NullProgress,
     _NullStatus,
 )
+from .session_settings import SessionSettings
 from .transcriber_protocol import TranscriberProtocol, TranscriptionResult, TranscriptionSegment
 
 __all__ = [
@@ -22,4 +24,6 @@ __all__ = [
     "TranscriptionResult",
     "TranscriptionSegment",
     "EmbeddingFactory",
+    "SessionSettings",
+    "GpuLogger",
 ]
