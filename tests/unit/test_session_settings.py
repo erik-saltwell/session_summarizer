@@ -19,6 +19,17 @@ def valid_audio_file(tmp_path: Path) -> Path:
     return p
 
 
+_VAD_FIELDS: dict = {
+    "model_name": "vad_multilingual_frame_marblenet",
+    "onset": 0.7,
+    "offset": 0.4,
+    "min_duration_on": 0.3,
+    "min_duration_off": 0.3,
+    "pad_onset": 0.1,
+    "pad_offset": 0.1,
+}
+
+
 def _required_fields(audio_file: Path | str) -> dict:
     """Return a complete set of required fields for constructing a SessionSettings."""
     return {
@@ -29,6 +40,12 @@ def _required_fields(audio_file: Path | str) -> dict:
         "aligned_transcript_path": Path("aligned_transcript.json"),
         "confidence_transcript_path": Path("confidence_transcript.json"),
         "device": "cuda",
+        "vad_segments_path": Path("vad_segments.json"),
+        "min_segment_length_short": 10.0,
+        "max_segment_length_short": 60.0,
+        "min_segment_length_long": 30.0,
+        "max_segment_length_long": 300.0,
+        "vad": _VAD_FIELDS,
     }
 
 
@@ -42,6 +59,12 @@ def _required_yaml_fields(audio_file: str) -> dict:
         "aligned_transcript_path": "aligned_transcript.json",
         "confidence_transcript_path": "confidence_transcript.json",
         "device": "cuda",
+        "vad_segments_path": "vad_segments.json",
+        "min_segment_length_short": 10.0,
+        "max_segment_length_short": 60.0,
+        "min_segment_length_long": 30.0,
+        "max_segment_length_long": 300.0,
+        "vad": _VAD_FIELDS,
     }
 
 
@@ -159,6 +182,12 @@ class TestLoad:
                     "aligned_transcript_path": "aligned.json",
                     "confidence_transcript_path": "confidence.json",
                     "device": "cuda",
+                    "vad_segments_path": "vad_segments.json",
+                    "min_segment_length_short": 10.0,
+                    "max_segment_length_short": 60.0,
+                    "min_segment_length_long": 30.0,
+                    "max_segment_length_long": 300.0,
+                    "vad": _VAD_FIELDS,
                 }
             )
         )
