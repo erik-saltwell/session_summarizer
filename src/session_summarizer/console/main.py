@@ -10,6 +10,7 @@ from rich.console import Console
 from session_summarizer.commands.align_transcript import AlignTranscriptCommand
 from session_summarizer.commands.clean_audio_command import CleanAudioCommand
 from session_summarizer.commands.clean_session import CleanSessionCommand
+from session_summarizer.commands.compute_vad_segments import ComputeVadSegmentsCommand
 from session_summarizer.commands.score_confidence import ScoreConfidenceCommand
 from session_summarizer.commands.transcribe_audio import TranscribeAudioCommand
 from session_summarizer.utils import common_paths
@@ -88,6 +89,17 @@ def clean_audio(
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
     command: CleanAudioCommand = CleanAudioCommand(session)
+    command.execute(logger)
+
+
+@app.command("compute-vad-segments")
+def compute_vad_segments(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to segment"),
+) -> None:
+    """Run VAD on cleaned audio and compute optimal cut points for chunked processing."""
+    confirm_session(session)
+    logger: LoggingProtocol = create_logger()
+    command: ComputeVadSegmentsCommand = ComputeVadSegmentsCommand(session)
     command.execute(logger)
 
 
@@ -191,6 +203,81 @@ confidence_transcript_path: confidence_transcript.json
 #   cuda  — use the GPU (requires a CUDA-capable NVIDIA GPU)
 #   cpu   — use the CPU (much slower, but works everywhere)
 device: cuda
+
+
+# ---------------------------------------------------------------------------
+# vad_segments_path  (optional — default: vad_segments.json)
+# ---------------------------------------------------------------------------
+# Where the VAD-based segment plan is written. This JSON file contains
+# silence-aware cut points that downstream commands use to process long
+# audio in chunks without splitting mid-speech.
+# Relative paths are resolved from this file's directory.
+# vad_segments_path: vad_segments.json
+
+
+# ---------------------------------------------------------------------------
+# min_segment_length / max_segment_length  (optional — defaults: 30 / 120)
+# ---------------------------------------------------------------------------
+# Bounds (in seconds) for each audio chunk produced by VAD segmentation.
+#
+#   min_segment_length — chunks shorter than this are merged with neighbours.
+#       Lower values give finer granularity but increase overhead per chunk.
+#       Default: 30
+#
+#   max_segment_length — no chunk will exceed this duration. If continuous
+#       speech runs longer than this with no silence gap, a hard cut is made.
+#       Must be large enough for your ASR model's context window.
+#       Default: 120
+#
+# min_segment_length: 30
+# max_segment_length: 120
+
+
+# ---------------------------------------------------------------------------
+# vad  (optional — VAD model hyperparameters)
+# ---------------------------------------------------------------------------
+# Controls the NeMo Voice Activity Detection model used to find speech and
+# silence boundaries. The defaults work well for typical meeting recordings;
+# tune these if you see too many false speech detections (lower onset) or
+# missed speech (raise onset / lower offset).
+#
+#   model_name       — pretrained NeMo VAD model to use.
+#                      Default: vad_multilingual_frame_marblenet
+#
+#   onset            — probability threshold to START a speech region (0.0–1.0).
+#                      Higher = fewer false positives, may miss quiet speech.
+#                      Default: 0.7
+#
+#   offset           — probability threshold to END a speech region (0.0–1.0).
+#                      Lower = speech regions extend further into trailing silence.
+#                      Must be ≤ onset for proper hysteresis.
+#                      Default: 0.4
+#
+#   min_duration_on  — speech regions shorter than this (seconds) are discarded.
+#                      Filters out clicks, coughs, and transient noise.
+#                      Default: 0.3
+#
+#   min_duration_off — silence regions shorter than this (seconds) are bridged
+#                      (treated as speech). Prevents choppy segmentation from
+#                      brief pauses within sentences.
+#                      Default: 0.3
+#
+#   pad_onset        — seconds of audio to include BEFORE each speech onset.
+#                      Captures plosive consonants and breath that precede speech.
+#                      Default: 0.1
+#
+#   pad_offset       — seconds of audio to include AFTER each speech offset.
+#                      Captures word-final sounds and natural trailing silence.
+#                      Default: 0.1
+#
+# vad:
+#   model_name: vad_multilingual_frame_marblenet
+#   onset: 0.7
+#   offset: 0.4
+#   min_duration_on: 0.3
+#   min_duration_off: 0.3
+#   pad_onset: 0.1
+#   pad_offset: 0.1
 """
 
 

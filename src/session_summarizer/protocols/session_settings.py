@@ -13,6 +13,39 @@ SUPPORTED_AUDIO_SUFFIXES: frozenset[str] = frozenset(
 )
 
 
+class VadSettings(BaseModel, frozen=True):
+    """Hyperparameters for NeMo VAD post-processing."""
+
+    model_name: str = Field(
+        default="vad_multilingual_frame_marblenet",
+        description="Pretrained NeMo VAD model name",
+    )
+    onset: float = Field(
+        default=0.7,
+        description="Speech onset probability threshold (0.0–1.0)",
+    )
+    offset: float = Field(
+        default=0.4,
+        description="Speech offset probability threshold (0.0–1.0)",
+    )
+    min_duration_on: float = Field(
+        default=0.3,
+        description="Minimum speech segment duration in seconds",
+    )
+    min_duration_off: float = Field(
+        default=0.3,
+        description="Minimum silence segment duration in seconds",
+    )
+    pad_onset: float = Field(
+        default=0.1,
+        description="Padding added before speech onset in seconds",
+    )
+    pad_offset: float = Field(
+        default=0.1,
+        description="Padding added after speech offset in seconds",
+    )
+
+
 class SessionSettings(BaseModel, frozen=True):
     attendees: Annotated[
         list[str],
@@ -46,6 +79,36 @@ class SessionSettings(BaseModel, frozen=True):
         Field(description="Device for model inference — 'cpu' or 'cuda'"),
     ]
 
+    # --- VAD segment computation (all optional with sensible defaults) ---
+    vad_segments_path: Annotated[
+        Path,
+        Field(
+            default=Path("vad_segments.json"),
+            description="Path to the VAD segments JSON output (created during processing)",
+        ),
+    ]
+    min_segment_length: Annotated[
+        float,
+        Field(
+            default=30.0,
+            description="Minimum audio segment length in seconds for VAD-based chunking",
+        ),
+    ]
+    max_segment_length: Annotated[
+        float,
+        Field(
+            default=120.0,
+            description="Maximum audio segment length in seconds for VAD-based chunking",
+        ),
+    ]
+    vad: Annotated[
+        VadSettings,
+        Field(
+            default_factory=VadSettings,
+            description="VAD model and post-processing hyperparameters",
+        ),
+    ]
+
     @field_validator("attendees")
     @classmethod
     def _attendee_names_must_be_non_empty(cls, names: list[str]) -> list[str]:
@@ -64,6 +127,11 @@ class SessionSettings(BaseModel, frozen=True):
             raise ValueError(f"Unsupported audio format {path.suffix!r}. Supported: {sorted(SUPPORTED_AUDIO_SUFFIXES)}")
         if path.is_absolute() and not path.exists():
             raise ValueError(f"Audio file does not exist: {path}")
+        if self.min_segment_length >= self.max_segment_length:
+            raise ValueError(
+                f"min_segment_length ({self.min_segment_length}) must be less than "
+                f"max_segment_length ({self.max_segment_length})"
+            )
         return self
 
     @property
@@ -79,6 +147,7 @@ class SessionSettings(BaseModel, frozen=True):
             "transcript_file",
             "aligned_transcript_path",
             "confidence_transcript_path",
+            "vad_segments_path",
         ):
             raw = data.get(key)
             if raw is None:

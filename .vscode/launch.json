@@ -5,6 +5,18 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "-segment",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "compute-vad-segments",
+                "--session",
+                "test",
+            ]
+        },
+        {
             "name": "-score-confidence",
             "type": "debugpy",
             "request": "launch",
