@@ -45,34 +45,36 @@ class ParakeetCTCWordAligner:
         ctc_model: Any = ASRModel.from_pretrained(model_name=self.model_name)
         ctc_model.to(self.device)
         ctc_model.eval()
+        ctc_model.bfloat16()
 
         try:
-            logger.report_message("[blue]Running forced alignment...[/blue]")
-            hypothesis = Hypothesis(score=0.0, y_sequence=[], text=full_text)
+            with torch.inference_mode():
+                logger.report_message("[blue]Running forced alignment...[/blue]")
+                hypothesis = Hypothesis(score=0.0, y_sequence=[], text=full_text)
 
-            aligned: Any = get_forced_aligned_timestamps_with_external_model(
-                audio=[str(audio_path)],
-                external_ctc_model=ctc_model,
-                main_model_predictions=[hypothesis],
-                batch_size=self.batch_size,
-                viterbi_device=torch.device(self.device),
-                timestamp_type="all",
-            )
+                aligned: Any = get_forced_aligned_timestamps_with_external_model(
+                    audio=[str(audio_path)],
+                    external_ctc_model=ctc_model,
+                    main_model_predictions=[hypothesis],
+                    batch_size=self.batch_size,
+                    viterbi_device=torch.device(self.device),
+                    timestamp_type="all",
+                )
 
-            words: list[WordAlignment] = []
-            timestamp: Any = aligned[0].timestamp if aligned else None
-            if timestamp and "word" in timestamp:
-                for entry in timestamp["word"]:
-                    words.append(
-                        WordAlignment(
-                            word=str(entry["word"]),
-                            start=float(entry["start"]),
-                            end=float(entry["end"]),
+                words: list[WordAlignment] = []
+                timestamp: Any = aligned[0].timestamp if aligned else None
+                if timestamp and "word" in timestamp:
+                    for entry in timestamp["word"]:
+                        words.append(
+                            WordAlignment(
+                                word=str(entry["word"]),
+                                start=float(entry["start"]),
+                                end=float(entry["end"]),
+                            )
                         )
-                    )
 
-            logger.report_message(f"[green]Alignment complete: {len(words)} words aligned.[/green]")
-            return AlignmentResult(words=words)
+                logger.report_message(f"[green]Alignment complete: {len(words)} words aligned.[/green]")
+                return AlignmentResult(words=words)
 
         finally:
             del ctc_model

@@ -45,7 +45,7 @@ class SessionProcessingCommand(ABC, CommmandProtocol):
         if not session_dir.exists():
             raise FileNotFoundError(f"Could not find directory: {session_dir}")
         settings: SessionSettings = SessionSettings.load_cascading(self.session_id)
-        self.report_message(f"Processing commang: {self.name()}")
+        self.report_message(f"Processing command: {self.name()}")
         start = time.perf_counter()
         try:
             self.process_session(settings, session_dir)

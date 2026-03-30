@@ -60,24 +60,11 @@ def _rebuild_segments_from_alignment(alignment: AlignmentResult) -> list[Transcr
 def align_transcript(
     settings: SessionSettings,
     session_dir: Path,
-    use_cache_if_present: bool,
+    transcription: TranscriptionResult,
     gpu_logger: GpuLogger,
     logger: LoggingProtocol,
 ) -> AlignmentResult:
-    original_path: Path = session_dir / settings.transcript_file
-    final_path: Path = session_dir / settings.aligned_transcript_path
-
-    logger.report_message(f"[blue]Word aligning transcription at {original_path}[/blue]")
-    if final_path.exists():
-        logger.report_message(f"[yellow]{final_path} already exists, returning cached instance.[/yellow]")
-        return AlignmentResult.load(final_path)
-
-    if not original_path.exists():
-        raise FileNotFoundError(original_path)
-
-    result: TranscriptionResult
-    with logger.status("Loading transcription"):
-        result = TranscriptionResult.load(original_path)
+    logger.report_message("[blue]Word aligning transcription.[/blue]")
 
     gpu_logger.report_gpu_usage("before processing")
 
@@ -86,7 +73,9 @@ def align_transcript(
         aligner = ParakeetCTCWordAligner(device=settings.device)
         gpu_logger.report_gpu_usage("Created aligner")
 
-    alignment: AlignmentResult = aligner.align(session_dir / settings.cleaned_audio_file, result.full_text, logger)
+    alignment: AlignmentResult = aligner.align(
+        session_dir / settings.cleaned_audio_file, transcription.full_text, logger
+    )
     gpu_logger.report_gpu_usage("after alignment")
 
     # with logger.status("Rebuilding segments from alignment."):
