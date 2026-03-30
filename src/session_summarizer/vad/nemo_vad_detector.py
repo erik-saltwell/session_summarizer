@@ -154,7 +154,7 @@ class NemoVadDetector:
 
         app_logger.report_message(f"[blue]Loading VAD model: {self.model_name}[/blue]")
         model = EncDecFrameClassificationModel.from_pretrained(model_name=self.model_name)
-        model = model.to(self.device)
+        model = model.to(self.device)  # pyright: ignore
         model.eval()
 
         try:
