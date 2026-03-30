@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from ..protocols import LoggingProtocol
-from .parakeet_ctc_aligner import AlignmentResult, WordAlignment
+from .parakeet_ctc_confidence_scorer import AlignmentResult, WordAlignment
 
 
 @dataclass

@@ -5,13 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "-validate-transcribers",
+            "name": "-score-confidence",
             "type": "debugpy",
             "request": "launch",
             "module": "session_summarizer",
             "console": "integratedTerminal",
             "args": [
-                "validate-transcribers",
+                "score-confidence",
                 "--session",
                 "test",
             ]

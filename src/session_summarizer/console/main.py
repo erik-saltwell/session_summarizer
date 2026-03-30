@@ -10,6 +10,7 @@ from rich.console import Console
 from session_summarizer.commands.align_transcript import AlignTranscriptCommand
 from session_summarizer.commands.clean_audio_command import CleanAudioCommand
 from session_summarizer.commands.clean_session import CleanSessionCommand
+from session_summarizer.commands.score_confidence import ScoreConfidenceCommand
 from session_summarizer.commands.transcribe_audio import TranscribeAudioCommand
 from session_summarizer.utils import common_paths
 
@@ -67,6 +68,16 @@ def align_transcription(
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
     command: AlignTranscriptCommand = AlignTranscriptCommand(session)
+    command.execute(logger)
+
+
+@app.command("score-confidence")
+def score_confidence(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to transcribe"),
+) -> None:
+    confirm_session(session)
+    logger: LoggingProtocol = create_logger()
+    command: ScoreConfidenceCommand = ScoreConfidenceCommand(session)
     command.execute(logger)
 
 

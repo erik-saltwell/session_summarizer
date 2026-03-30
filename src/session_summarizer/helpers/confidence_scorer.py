@@ -6,10 +6,9 @@ from ..protocols import (
     GpuLogger,
     LoggingProtocol,
     SessionSettings,
-    TranscriptionResult,
     TranscriptionSegment,
 )
-from ..transcription import AlignmentResult, ParakeetCTCWordAligner
+from ..transcription import AlignmentResult, ParakeetCTCConfidenceScorer
 
 _PAUSE_THRESHOLD_S = 0.5  # gap between words that triggers a new segment
 _MAX_SEGMENT_DURATION_S = 3.0  # hard cap on segment length
@@ -57,31 +56,32 @@ def _rebuild_segments_from_alignment(alignment: AlignmentResult) -> list[Transcr
     return segments
 
 
-def align_transcript(
+def score_confidence(
     settings: SessionSettings,
     session_dir: Path,
-    transcription: TranscriptionResult,
+    aligned_transcription: AlignmentResult,
     use_cache_if_present: bool,
     gpu_logger: GpuLogger,
     logger: LoggingProtocol,
 ) -> AlignmentResult:
-    logger.report_message("[blue]Word aligning transcription.[/blue]")
-    final_path: Path = session_dir / settings.aligned_transcript_path
+    logger.report_message("[blue]Creating confidence scores.[/blue]")
+    final_path: Path = session_dir / settings.confidence_transcript_path
     if final_path.exists() and use_cache_if_present:
         logger.report_message(f"[yellow]{final_path} already exists, returning cached instance.[/yellow]")
         return AlignmentResult.load(final_path)
 
     gpu_logger.report_gpu_usage("before processing")
 
-    aligner: ParakeetCTCWordAligner
-    with logger.status("Creating aligner."):
-        aligner = ParakeetCTCWordAligner(device=settings.device)
+    scorer: ParakeetCTCConfidenceScorer
+    with logger.status("Creating scorer."):
+        scorer = ParakeetCTCConfidenceScorer(device=settings.device)
         gpu_logger.report_gpu_usage("Created aligner")
 
-    alignment: AlignmentResult = aligner.align(
-        session_dir / settings.cleaned_audio_file, transcription.full_text, logger
-    )
+    scored_alignment: AlignmentResult
+    with logger.status("Scoring confidence."):
+        scored_alignment = scorer.score(session_dir / settings.cleaned_audio_file, aligned_transcription, logger)
+
     gpu_logger.report_gpu_usage("after alignment")
 
     logger.report_message("[blue]Alignment complete.[/blue]")
-    return alignment
+    return scored_alignment
