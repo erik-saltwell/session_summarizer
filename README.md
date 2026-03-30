@@ -74,6 +74,11 @@ sudo apt install -y libsndfile1 ffmpeg build-essential
 uv sync
 ```
 
+#### 2. Install en_core_web_sm :
+```bash
+uv run python -m spacy download en_core_web_sm
+```
+
 #### 8. Quick verification
 
 ```bash
@@ -86,6 +91,7 @@ import nemo.collections.asr as nemo_asr
 print("NeMo ASR import OK")
 PY
 ```
+
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
