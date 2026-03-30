@@ -218,78 +218,82 @@ device: cuda
 
 
 # ---------------------------------------------------------------------------
-# vad_segments_path  (optional — default: vad_segments.json)
+# vad_segments_path
 # ---------------------------------------------------------------------------
 # Where the VAD-based segment plan is written. This JSON file contains
 # silence-aware cut points that downstream commands use to process long
 # audio in chunks without splitting mid-speech.
 # Relative paths are resolved from this file's directory.
-# vad_segments_path: vad_segments.json
+vad_segments_path: vad_segments.json
 
 
 # ---------------------------------------------------------------------------
-# min_segment_length / max_segment_length  (optional — defaults: 30 / 120)
+# min_segment_length_short / max_segment_length_short
 # ---------------------------------------------------------------------------
-# Bounds (in seconds) for each audio chunk produced by VAD segmentation.
+# Bounds (in seconds) for SHORT audio chunks used by Canary transcription.
+# Canary processes audio in ~40 s internal windows, so keeping segments short
+# reduces latency and avoids feeding the model more context than it needs.
 #
-#   min_segment_length — chunks shorter than this are merged with neighbours.
-#       Lower values give finer granularity but increase overhead per chunk.
-#       Default: 30
-#
-#   max_segment_length — no chunk will exceed this duration. If continuous
+#   min_segment_length_short — chunks shorter than this are merged with neighbours.
+#   max_segment_length_short — no chunk will exceed this duration. If continuous
 #       speech runs longer than this with no silence gap, a hard cut is made.
-#       Must be large enough for your ASR model's context window.
-#       Default: 120
-#
-# min_segment_length: 30
-# max_segment_length: 120
+min_segment_length_short: 10
+max_segment_length_short: 60
 
 
 # ---------------------------------------------------------------------------
-# vad  (optional — VAD model hyperparameters)
+# min_segment_length_long / max_segment_length_long
+# ---------------------------------------------------------------------------
+# Bounds (in seconds) for LONG audio chunks used by operations that load large
+# models (e.g. diarization, speaker embedding). Longer segments mean fewer
+# model load/unload cycles, reducing overhead — but segments that are too long
+# can exhaust GPU memory (OOM). Tune max_segment_length_long down if you see
+# CUDA out-of-memory errors, or up if your GPU has headroom to spare.
+#
+#   min_segment_length_long — chunks shorter than this are merged with neighbours.
+#   max_segment_length_long — no chunk will exceed this duration. A hard cut is
+#       made when no silence gap falls within the window.
+min_segment_length_long: 30
+max_segment_length_long: 300
+
+
+# ---------------------------------------------------------------------------
+# vad  (VAD model hyperparameters)
 # ---------------------------------------------------------------------------
 # Controls the NeMo Voice Activity Detection model used to find speech and
-# silence boundaries. The defaults work well for typical meeting recordings;
+# silence boundaries. The values below work well for typical meeting recordings;
 # tune these if you see too many false speech detections (lower onset) or
 # missed speech (raise onset / lower offset).
 #
 #   model_name       — pretrained NeMo VAD model to use.
-#                      Default: vad_multilingual_frame_marblenet
 #
 #   onset            — probability threshold to START a speech region (0.0–1.0).
 #                      Higher = fewer false positives, may miss quiet speech.
-#                      Default: 0.7
 #
 #   offset           — probability threshold to END a speech region (0.0–1.0).
 #                      Lower = speech regions extend further into trailing silence.
 #                      Must be ≤ onset for proper hysteresis.
-#                      Default: 0.4
 #
 #   min_duration_on  — speech regions shorter than this (seconds) are discarded.
 #                      Filters out clicks, coughs, and transient noise.
-#                      Default: 0.3
 #
 #   min_duration_off — silence regions shorter than this (seconds) are bridged
 #                      (treated as speech). Prevents choppy segmentation from
 #                      brief pauses within sentences.
-#                      Default: 0.3
 #
 #   pad_onset        — seconds of audio to include BEFORE each speech onset.
 #                      Captures plosive consonants and breath that precede speech.
-#                      Default: 0.1
 #
 #   pad_offset       — seconds of audio to include AFTER each speech offset.
 #                      Captures word-final sounds and natural trailing silence.
-#                      Default: 0.1
-#
-# vad:
-#   model_name: vad_multilingual_frame_marblenet
-#   onset: 0.7
-#   offset: 0.4
-#   min_duration_on: 0.3
-#   min_duration_off: 0.3
-#   pad_onset: 0.1
-#   pad_offset: 0.1
+vad:
+  model_name: vad_multilingual_frame_marblenet
+  onset: 0.7
+  offset: 0.4
+  min_duration_on: 0.3
+  min_duration_off: 0.3
+  pad_onset: 0.1
+  pad_offset: 0.1
 """
 
 
@@ -298,11 +302,6 @@ def generate_sample_settings() -> None:
     """Generate a well-documented sample settings.yaml in the data directory."""
     console = Console()
     target = common_paths.data_dir() / "settings.yaml"
-
-    if target.exists():
-        console.print(f"[red]Settings file already exists: {target}[/red]")
-        console.print("[dim]Remove or rename it first if you want a fresh sample.[/dim]")
-        raise typer.Exit(1)
 
     common_paths.ensure_directory(common_paths.data_dir())
     target.write_text(_SAMPLE_SETTINGS, encoding="utf-8")

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Literal
 
 from ..protocols import (
     GpuLogger,
@@ -16,8 +17,15 @@ def compute_vad_segments(
     use_cache_if_present: bool,
     gpu_logger: GpuLogger,
     logger: LoggingProtocol,
+    mode: Literal["short", "long"] = "short",
 ) -> SegmentSplitResult:
-    """Run VAD on cleaned audio and compute optimal cut points for chunked processing."""
+    """Run VAD on cleaned audio and compute optimal cut points for chunked processing.
+
+    Args:
+        mode: "short" uses min/max_segment_length_short (for Canary transcription);
+              "long" uses min/max_segment_length_long (for OOM-sensitive operations
+              such as diarization).
+    """
     final_path: Path = session_dir / settings.vad_segments_path
     if final_path.exists() and use_cache_if_present:
         logger.report_message(f"[yellow]{final_path} already exists, returning cached instance.[/yellow]")
@@ -41,11 +49,18 @@ def compute_vad_segments(
     vad_result = detector.detect(session_dir / settings.cleaned_audio_file, logger)
     gpu_logger.report_gpu_usage("after VAD")
 
+    if mode == "short":
+        min_length = settings.min_segment_length_short
+        max_length = settings.max_segment_length_short
+    else:
+        min_length = settings.min_segment_length_long
+        max_length = settings.max_segment_length_long
+
     with logger.status("Computing segment cut points."):
         result = compute_segments(
             vad_result,
-            min_length=settings.min_segment_length,
-            max_length=settings.max_segment_length,
+            min_length=min_length,
+            max_length=max_length,
         )
 
     logger.report_message(
