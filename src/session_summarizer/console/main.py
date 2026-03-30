@@ -60,8 +60,8 @@ def transcribe(
     command.execute(logger)
 
 
-@app.command("align")
-def align(
+@app.command("align-transcription")
+def align_transcription(
     session: str = typer.Option(..., "--session", "-s", help="ID of the session to transcribe"),
 ) -> None:
     confirm_session(session)
@@ -70,8 +70,8 @@ def align(
     command.execute(logger)
 
 
-@app.command("clean")
-def clean(
+@app.command("clean-audio")
+def clean_audio(
     session: str = typer.Option(..., "--session", "-s", help="ID of the session to clean"),
 ) -> None:
     confirm_session(session)
