@@ -13,6 +13,7 @@ from session_summarizer.commands.clean_session import CleanSessionCommand
 from session_summarizer.commands.compute_vad_segments import ComputeVadSegmentsCommand
 from session_summarizer.commands.score_confidence import ScoreConfidenceCommand
 from session_summarizer.commands.transcribe_audio import TranscribeAudioCommand
+from session_summarizer.commands.validate_transcribers import ValidateTranscribersCommand
 from session_summarizer.utils import common_paths
 
 from ..commands.register_speakers import RegisterSpeakersCommand
@@ -100,6 +101,17 @@ def compute_vad_segments(
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
     command: ComputeVadSegmentsCommand = ComputeVadSegmentsCommand(session)
+    command.execute(logger)
+
+
+@app.command("validate-transcribers")
+def validate_transcribers(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to use for validation"),
+) -> None:
+    """Transcribe test audio with every registered transcriber and compare accuracy metrics."""
+    confirm_session(session)
+    logger: LoggingProtocol = create_logger()
+    command: ValidateTranscribersCommand = ValidateTranscribersCommand(session)
     command.execute(logger)
 
 

@@ -10,7 +10,6 @@ from mathspell import analyze_text
 from session_summarizer.protocols.logging_protocol import LoggingProtocol
 from session_summarizer.protocols.session_settings import SessionSettings
 from session_summarizer.protocols.transcriber_protocol import TranscriptionResult
-from session_summarizer.utils import common_paths
 
 
 @dataclass
@@ -28,7 +27,7 @@ def _get_cleaned_text(result: TranscriptionResult) -> str:
 def validate_transcriber(
     settings: SessionSettings, session_dir: Path, transcription_result: TranscriptionResult, logger: LoggingProtocol
 ) -> TranscriptionValidationResult:
-    ground_truth: str = _get_cleaned_text(TranscriptionResult.load(common_paths.test_transcript_path()))
+    ground_truth: str = _get_cleaned_text(TranscriptionResult.load_from_test_meeting())
     test_text: str = _get_cleaned_text(transcription_result)
 
     transform: jiwer.Compose = jiwer.Compose(

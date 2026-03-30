@@ -79,7 +79,40 @@ uv sync
 uv run python -m spacy download en_core_web_sm
 ```
 
-#### 8. Quick verification
+#### 3. Google Cloud setup (for Google Chirp transcriber)
+
+Install the [Google Cloud CLI](https://cloud.google.com/sdk/docs/install) and log in:
+
+```bash
+gcloud auth login
+gcloud auth application-default login
+```
+
+This authenticates both the Speech-to-Text API and Google Cloud Storage (used for temporary audio uploads during batch transcription).
+
+Set the required environment variables:
+
+```bash
+export GOOGLE_CLOUD_PROJECT="your-project-id"
+export GCS_BUCKET="your-bucket-name"
+```
+
+Make sure your GCP project has the **Cloud Speech-to-Text API** enabled and the bucket exists:
+
+```bash
+gcloud services enable speech.googleapis.com --project=$GOOGLE_CLOUD_PROJECT
+gcloud storage buckets create gs://$GCS_BUCKET --project=$GOOGLE_CLOUD_PROJECT --location=us
+```
+
+#### 4. OpenAI setup (for GPT-4o transcriber)
+
+Set your OpenAI API key:
+
+```bash
+export OPENAI_API_KEY="sk-..."
+```
+
+#### 5. Quick verification
 
 ```bash
 python - <<'PY'
