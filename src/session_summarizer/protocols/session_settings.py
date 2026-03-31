@@ -58,7 +58,7 @@ class SessionSettings(BaseModel, frozen=True):
         Field(description="Device for model inference — 'cpu' or 'cuda'"),
     ]
 
-    vad_segments_path: Annotated[
+    segments_path: Annotated[
         Path,
         Field(description="Path to the VAD segments JSON output (created during processing)"),
     ]
@@ -144,7 +144,7 @@ class SessionSettings(BaseModel, frozen=True):
             "transcript_file",
             "aligned_transcript_path",
             "confidence_transcript_path",
-            "vad_segments_path",
+            "segments_path",
         ):
             raw = data.get(key)
             if raw is None:

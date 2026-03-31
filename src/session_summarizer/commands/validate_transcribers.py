@@ -5,10 +5,12 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from ..helpers.audio_cleaner import clean_audio
+from ..helpers.audio_segmenter import compute_vad_segments
 from ..protocols import SessionSettings, TranscriberProtocol
 from ..protocols.transcriber_protocol import TranscriptionResult
 from ..transcription import CanaryQwenTranscriber, WhisperTranscriber
 from ..transcription.transcription_validator import TranscriptionValidationResult, validate_transcriber
+from ..vad import SegmentSplitResultSet
 from .session_processing_command import SessionProcessingCommand
 
 # ---------------------------------------------------------------------------
@@ -54,6 +56,7 @@ class ValidateTranscribersCommand(SessionProcessingCommand):
     def process_session(self, settings: SessionSettings, session_dir: Path) -> None:
         clean_audio(settings, session_dir, True, self, self.logger)
         audio_path: Path = session_dir / settings.cleaned_audio_file
+        seg_results: SegmentSplitResultSet = compute_vad_segments(settings, session_dir, True, self, self.logger)
 
         results: dict[str, TranscriptionValidationResult] = {}
 
@@ -65,7 +68,7 @@ class ValidateTranscribersCommand(SessionProcessingCommand):
                 transcriber = factory(settings.device)
                 self.report_gpu_usage(f"before {transcriber_name}")
 
-                transcription: TranscriptionResult = transcriber.transcribe(audio_path, self.logger)
+                transcription: TranscriptionResult = transcriber.transcribe(audio_path, seg_results, self.logger)
                 self.report_gpu_usage(f"after {transcriber_name}")
 
                 validation = validate_transcriber(settings, session_dir, transcription, self.logger)

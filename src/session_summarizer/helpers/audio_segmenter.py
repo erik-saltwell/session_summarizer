@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Literal
 
 from ..protocols import (
     GpuLogger,
     LoggingProtocol,
     SessionSettings,
 )
-from ..vad import NemoVadDetector, SegmentSplitResult, compute_segments
+from ..vad import NemoVadDetector, SegmentSplitResult, SegmentSplitResultSet, compute_segments
 
 
 def compute_vad_segments(
@@ -17,8 +16,7 @@ def compute_vad_segments(
     use_cache_if_present: bool,
     gpu_logger: GpuLogger,
     logger: LoggingProtocol,
-    mode: Literal["short", "long"] = "short",
-) -> SegmentSplitResult:
+) -> SegmentSplitResultSet:
     """Run VAD on cleaned audio and compute optimal cut points for chunked processing.
 
     Args:
@@ -26,10 +24,10 @@ def compute_vad_segments(
               "long" uses min/max_segment_length_long (for OOM-sensitive operations
               such as diarization).
     """
-    final_path: Path = session_dir / settings.vad_segments_path
+    final_path: Path = session_dir / settings.segments_path
     if final_path.exists() and use_cache_if_present:
         logger.report_message(f"[yellow]{final_path} already exists, returning cached instance.[/yellow]")
-        return SegmentSplitResult.load(final_path)
+        return SegmentSplitResultSet.load(final_path)
 
     gpu_logger.report_gpu_usage("before VAD")
 
@@ -49,25 +47,18 @@ def compute_vad_segments(
     vad_result = detector.detect(session_dir / settings.cleaned_audio_file, logger)
     gpu_logger.report_gpu_usage("after VAD")
 
-    if mode == "short":
-        min_length = settings.min_segment_length_short
-        max_length = settings.max_segment_length_short
-    else:
-        min_length = settings.min_segment_length_long
-        max_length = settings.max_segment_length_long
-
+    short_segments: SegmentSplitResult
+    long_segments: SegmentSplitResult
     with logger.status("Computing segment cut points."):
-        result = compute_segments(
+        short_segments = compute_segments(
             vad_result,
-            min_length=min_length,
-            max_length=max_length,
+            min_length=settings.min_segment_length_short,
+            max_length=settings.max_segment_length_short,
+        )
+        long_segments = compute_segments(
+            vad_result, min_length=settings.min_segment_length_long, max_length=settings.max_segment_length_long
         )
 
-    logger.report_message(
-        f"[blue]Computed {len(result.segments)} segments with {len(result.cut_points)} cut points[/blue]"
-    )
+    logger.report_message("[blue]Comput segments complete.[/blue]")
 
-    result.save(final_path)
-    logger.report_message(f"[green]VAD segments saved to {final_path}[/green]")
-
-    return result
+    return SegmentSplitResultSet(short=short_segments, long=long_segments)

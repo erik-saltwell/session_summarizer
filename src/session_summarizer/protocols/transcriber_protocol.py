@@ -3,7 +3,10 @@ from __future__ import annotations
 import json
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Protocol, Self
+from typing import TYPE_CHECKING, Protocol, Self
+
+if TYPE_CHECKING:
+    from ..vad.segment_splitter import SegmentSplitResultSet
 
 from session_summarizer.utils import common_paths
 
@@ -56,4 +59,6 @@ class TranscriptionResult:
 
 
 class TranscriberProtocol(Protocol):
-    def transcribe(self, audio_path: Path, logger: LoggingProtocol) -> TranscriptionResult: ...
+    def transcribe(
+        self, audio_path: Path, segments: SegmentSplitResultSet, logger: LoggingProtocol
+    ) -> TranscriptionResult: ...

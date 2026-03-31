@@ -6,16 +6,18 @@ import session_summarizer.utils.common_paths as common_paths
 from session_summarizer.protocols.session_settings import SessionSettings
 
 from ..helpers.audio_cleaner import clean_audio
-from ..helpers.vad_segmenter import compute_vad_segments
+from ..helpers.audio_segmenter import compute_vad_segments
+from ..vad import SegmentSplitResultSet
 from .session_processing_command import SessionProcessingCommand
 
 
 @dataclass
-class ComputeVadSegmentsCommand(SessionProcessingCommand):
+class ComputeSegmentsCommand(SessionProcessingCommand):
     def name(self) -> str:
-        return "Compute VAD Segments"
+        return "Compute Segments"
 
     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
         self.gpu_logging_enabled = True
         clean_audio(settings, session_dir, True, self, self.logger)
-        compute_vad_segments(settings, session_dir, False, self, self.logger)
+        results: SegmentSplitResultSet = compute_vad_segments(settings, session_dir, False, self, self.logger)
+        results.save(session_dir / settings.segments_path)

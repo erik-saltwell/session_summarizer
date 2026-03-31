@@ -8,9 +8,9 @@ from dotenv import load_dotenv
 from rich.console import Console
 
 from session_summarizer.commands.align_transcript import AlignTranscriptCommand
-from session_summarizer.commands.clean_audio_command import CleanAudioCommand
+from session_summarizer.commands.clean_audio import CleanAudioCommand
 from session_summarizer.commands.clean_session import CleanSessionCommand
-from session_summarizer.commands.compute_vad_segments import ComputeVadSegmentsCommand
+from session_summarizer.commands.compute_segments import ComputeSegmentsCommand
 from session_summarizer.commands.score_confidence import ScoreConfidenceCommand
 from session_summarizer.commands.transcribe_audio import TranscribeAudioCommand
 from session_summarizer.commands.validate_transcribers import ValidateTranscribersCommand
@@ -100,7 +100,7 @@ def compute_vad_segments(
     """Run VAD on cleaned audio and compute optimal cut points for chunked processing."""
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
-    command: ComputeVadSegmentsCommand = ComputeVadSegmentsCommand(session)
+    command: ComputeSegmentsCommand = ComputeSegmentsCommand(session)
     command.execute(logger)
 
 
@@ -218,13 +218,13 @@ device: cuda
 
 
 # ---------------------------------------------------------------------------
-# vad_segments_path
+# segments_path
 # ---------------------------------------------------------------------------
-# Where the VAD-based segment plan is written. This JSON file contains
-# silence-aware cut points that downstream commands use to process long
-# audio in chunks without splitting mid-speech.
+# Where the segment plan is written. This JSON file contains silence-aware
+# cut points that downstream commands use to process long audio in chunks
+# without splitting mid-speech.
 # Relative paths are resolved from this file's directory.
-vad_segments_path: vad_segments.json
+segments_path: segments.json
 
 
 # ---------------------------------------------------------------------------
@@ -238,7 +238,7 @@ vad_segments_path: vad_segments.json
 #   max_segment_length_short — no chunk will exceed this duration. If continuous
 #       speech runs longer than this with no silence gap, a hard cut is made.
 min_segment_length_short: 10
-max_segment_length_short: 60
+max_segment_length_short: 38
 
 
 # ---------------------------------------------------------------------------

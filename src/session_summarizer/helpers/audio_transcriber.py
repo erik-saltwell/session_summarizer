@@ -10,6 +10,7 @@ from ..protocols import (
     TranscriptionResult,
 )
 from ..transcription import CanaryQwenTranscriber
+from ..vad import SegmentSplitResultSet
 
 
 def transcribe_from_cleaned_audio(
@@ -32,12 +33,15 @@ def transcribe_from_cleaned_audio(
 
     gpu_logger.report_gpu_usage("before processing")
 
+    segments_path = session_dir / settings.segments_path
+    segments: SegmentSplitResultSet = SegmentSplitResultSet.load(segments_path)
+
     transcriber: TranscriberProtocol
     with logger.status("Creating transcriber."):
         transcriber = CanaryQwenTranscriber(device=settings.device)
         gpu_logger.report_gpu_usage("Created transcriber")
 
-    result: TranscriptionResult = transcriber.transcribe(original_path, logger)
+    result: TranscriptionResult = transcriber.transcribe(original_path, segments, logger)
     gpu_logger.report_gpu_usage("After transcription")
 
     logger.report_message("[blue]Transcription complete.[/blue]")

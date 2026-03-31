@@ -218,3 +218,51 @@ def compute_segments(
         max_segment_length=max_length,
         speech_segments=vad_result.segments,
     )
+
+
+@dataclass
+class SegmentSplitResultSet:
+    short: SegmentSplitResult
+    long: SegmentSplitResult
+
+    def _result_to_dict(self, result: SegmentSplitResult) -> dict:
+        return {
+            "audio_duration": result.audio_duration,
+            "min_segment_length": result.min_segment_length,
+            "max_segment_length": result.max_segment_length,
+            "segments": [asdict(s) for s in result.segments],
+            "cut_points": [asdict(c) for c in result.cut_points],
+            "speech_segments": [asdict(s) for s in result.speech_segments],
+        }
+
+    @staticmethod
+    def _result_from_dict(data: dict) -> SegmentSplitResult:
+        return SegmentSplitResult(
+            audio_duration=data["audio_duration"],
+            min_segment_length=data["min_segment_length"],
+            max_segment_length=data["max_segment_length"],
+            segments=[AudioSegment(**s) for s in data["segments"]],
+            cut_points=[CutPoint(**c) for c in data["cut_points"]],
+            speech_segments=[SpeechSegment(**s) for s in data["speech_segments"]],
+        )
+
+    def save(self, path: Path) -> None:
+        path.write_text(
+            json.dumps(
+                {
+                    "short": self._result_to_dict(self.short),
+                    "long": self._result_to_dict(self.long),
+                },
+                indent=2,
+                ensure_ascii=False,
+            ),
+            encoding="utf-8",
+        )
+
+    @classmethod
+    def load(cls, path: Path) -> SegmentSplitResultSet:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return cls(
+            short=cls._result_from_dict(data["short"]),
+            long=cls._result_from_dict(data["long"]),
+        )

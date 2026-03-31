@@ -7,6 +7,7 @@ from typing import Any
 
 from ..protocols import LoggingProtocol
 from ..protocols.transcriber_protocol import TranscriptionResult, TranscriptionSegment
+from ..vad.segment_splitter import SegmentSplitResultSet
 
 
 @dataclass
@@ -24,7 +25,9 @@ class WhisperTranscriber:
     model_name: str = "turbo"
     device: str = "cuda"
 
-    def transcribe(self, audio_path: Path, logger: LoggingProtocol) -> TranscriptionResult:
+    def transcribe(
+        self, audio_path: Path, segments: SegmentSplitResultSet, logger: LoggingProtocol
+    ) -> TranscriptionResult:
         try:
             import whisper
         except ImportError as e:
