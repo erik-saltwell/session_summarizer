@@ -1,7 +1,8 @@
 from .diarizen_diarizer import (
-    DiarizationResult,
-    DiarizationSegment,
     DiarizenDiarizer,
+    MergedDiarizationResult,
+    MergedDiarizationSegment,
+    merge_overlapping_diarization,
 )
 
-__all__ = ["DiarizenDiarizer", "DiarizationResult", "DiarizationSegment"]
+__all__ = ["DiarizenDiarizer", "MergedDiarizationResult", "MergedDiarizationSegment", "merge_overlapping_diarization"]

@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from session_summarizer.diarization.diarizen_diarizer import DiarizationResult, DiarizenDiarizer
+from session_summarizer.diarization.diarizen_diarizer import DiarizenDiarizer, MergedDiarizationResult
+from session_summarizer.helpers.speech_clip_factory import create_speech_clips
+from session_summarizer.protocols.speech_clip import SpeechClipSet
 from session_summarizer.transcription.parakeet_ctc_confidence_scorer import AlignmentResult
-from session_summarizer.vad.segment_splitter import SegmentSplitResultSet
 
 from ..protocols import (
     GpuLogger,
@@ -16,22 +17,24 @@ from ..protocols import (
 def diarize_audio(
     settings: SessionSettings,
     session_dir: Path,
-    alignment: AlignmentResult,
-    segments: SegmentSplitResultSet,
+    alignment_result: AlignmentResult,
     use_cache_if_present: bool,
     gpu_logger: GpuLogger,
     logger: LoggingProtocol,
-) -> DiarizationResult:
+) -> SpeechClipSet:
     logger.report_message("[blue]Diarizing audio.[/blue]")
     final_path: Path = session_dir / settings.base_diarized_path
     if final_path.exists() and use_cache_if_present:
         logger.report_message(f"[yellow]{final_path} already exists, returning cached instance.[/yellow]")
-        return DiarizationResult.load(final_path)
+        return SpeechClipSet.load(final_path)
 
     gpu_logger.report_gpu_usage("before processing")
 
     diarizer: DiarizenDiarizer = DiarizenDiarizer()
-    result: DiarizationResult = diarizer.diarize(session_dir / settings.cleaned_audio_file, logger)
+    diarization: MergedDiarizationResult = diarizer.diarize(session_dir / settings.cleaned_audio_file, logger)
+    logger.report_message(f"[blue]Converting to SpeechClipSet {final_path}...[/blue]")
+    result: SpeechClipSet = create_speech_clips(diarization, alignment_result)
+
     logger.report_message("[blue]Diarization complete.[/blue]")
 
     return result

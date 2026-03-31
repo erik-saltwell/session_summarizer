@@ -114,15 +114,58 @@ class DiarizationSegment:
 class DiarizationResult:
     segments: list[DiarizationSegment]
 
+
+@dataclass
+class MergedDiarizationSegment:
+    start: float  # seconds
+    end: float  # seconds
+    speakers: list[str]  # sorted for determinism
+
+    @property
+    def duration(self) -> float:
+        return self.end - self.start
+
+    @property
+    def is_multispeaker(self) -> bool:
+        return len(self.speakers) > 1
+
+
+@dataclass
+class MergedDiarizationResult:
+    segments: list[MergedDiarizationSegment]
+
     def save(self, path: Path) -> None:
-        data = [{"speaker": s.speaker, "start": s.start, "end": s.end} for s in self.segments]
+        data = [{"start": s.start, "end": s.end, "speakers": s.speakers} for s in self.segments]
         path.write_text(json.dumps(data, indent=2))
 
     @classmethod
-    def load(cls, path: Path) -> DiarizationResult:
+    def load(cls, path: Path) -> MergedDiarizationResult:
         data = json.loads(path.read_text())
-        segments = [DiarizationSegment(speaker=s["speaker"], start=s["start"], end=s["end"]) for s in data]
+        segments = [MergedDiarizationSegment(start=s["start"], end=s["end"], speakers=s["speakers"]) for s in data]
         return cls(segments=segments)
+
+
+def merge_overlapping_diarization(raw: DiarizationResult) -> MergedDiarizationResult:
+    """Convert overlapping per-speaker segments into non-overlapping windows.
+
+    Uses a sweep-line over all unique start/end timestamps. Each consecutive
+    pair of breakpoints becomes one output window whose speakers list contains
+    every raw segment active (overlapping) during that window.
+    """
+    if not raw.segments:
+        return MergedDiarizationResult(segments=[])
+
+    breakpoints = sorted({t for seg in raw.segments for t in (seg.start, seg.end)})
+
+    merged: list[MergedDiarizationSegment] = []
+    for i in range(len(breakpoints) - 1):
+        t_start = breakpoints[i]
+        t_end = breakpoints[i + 1]
+        active = sorted({seg.speaker for seg in raw.segments if seg.start < t_end and seg.end > t_start})
+        if active:
+            merged.append(MergedDiarizationSegment(start=t_start, end=t_end, speakers=active))
+
+    return MergedDiarizationResult(segments=merged)
 
 
 @dataclass
@@ -137,7 +180,7 @@ class DiarizenDiarizer:
 
     model_name: str = "BUT-FIT/diarizen-wavlm-large-s80-md-v2"
 
-    def diarize(self, audio_path: Path, logger: LoggingProtocol) -> DiarizationResult:
+    def diarize(self, audio_path: Path, logger: LoggingProtocol) -> MergedDiarizationResult:
         _patch_torchaudio_for_pyannote()
 
         try:
@@ -169,8 +212,10 @@ class DiarizenDiarizer:
                 )
 
             segments.sort(key=lambda s: s.start)
-            logger.report_message(f"[green]Diarization complete: {len(segments)} segments.[/green]")
-            return DiarizationResult(segments=segments)
+            raw = DiarizationResult(segments=segments)
+            result = merge_overlapping_diarization(raw)
+            logger.report_message(f"[green]Diarization complete: {len(result.segments)} merged segments.[/green]")
+            return result
 
         finally:
             del pipeline

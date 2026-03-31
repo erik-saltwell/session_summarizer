@@ -36,6 +36,12 @@ class AlignmentResult:
             words=[WordAlignment(**w) for w in data.get("words", [])],
         )
 
+    def get_segments_for_time_range(self, start_time: float, end_time: float) -> list[WordAlignment]:
+        return sorted(
+            [w for w in self.words if w.end > start_time and w.start < end_time],
+            key=lambda w: w.start,
+        )
+
 
 def _map_confidence_by_time(
     salm_words: list[WordAlignment],

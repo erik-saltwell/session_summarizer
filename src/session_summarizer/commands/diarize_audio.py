@@ -5,6 +5,7 @@ from dataclasses import dataclass
 import session_summarizer.utils.common_paths as common_paths
 from session_summarizer.helpers.audio_diarizer import diarize_audio
 from session_summarizer.protocols.session_settings import SessionSettings
+from session_summarizer.protocols.speech_clip import SpeechClipSet
 from session_summarizer.transcription.parakeet_ctc_confidence_scorer import AlignmentResult
 
 from ..helpers.audio_cleaner import clean_audio
@@ -30,5 +31,5 @@ class DiarizeAudioCommand(SessionProcessingCommand):
         )
         alignment: AlignmentResult = align_transcript(settings, session_dir, result, segments, True, self, self.logger)
         alignment = score_confidence(settings, session_dir, alignment, segments, True, self, self.logger)
-        diarization = diarize_audio(settings, session_dir, alignment, segments, False, self, self.logger)
-        diarization.save(session_dir / settings.base_diarized_path)
+        clips: SpeechClipSet = diarize_audio(settings, session_dir, alignment, False, self, self.logger)
+        clips.save(session_dir / settings.base_diarized_path)
