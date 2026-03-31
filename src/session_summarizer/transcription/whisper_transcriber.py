@@ -54,14 +54,14 @@ class WhisperTranscriber:
             whisper_segments: list[dict] = list(raw_segments)
             logger.report_message(f"[blue]Whisper returned {len(whisper_segments)} segments.[/blue]")
 
-            segments: list[TranscriptionSegment] = []
+            result_segments: list[TranscriptionSegment] = []
             texts: list[str] = []
             for seg in whisper_segments:
                 text = seg.get("text", "").strip()
                 if not text:
                     continue
                 texts.append(text)
-                segments.append(
+                result_segments.append(
                     TranscriptionSegment(
                         text=text,
                         start=float(seg["start"]),
@@ -72,7 +72,7 @@ class WhisperTranscriber:
 
             full_text = " ".join(texts)
             logger.report_message("[green]Transcription complete[/green]")
-            return TranscriptionResult(segments=segments, full_text=full_text)
+            return TranscriptionResult(segments=result_segments, full_text=full_text)
 
         finally:
             del model
