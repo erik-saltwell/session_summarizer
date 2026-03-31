@@ -253,7 +253,7 @@ max_segment_length_short: 38
 #   min_segment_length_long — chunks shorter than this are merged with neighbours.
 #   max_segment_length_long — no chunk will exceed this duration. A hard cut is
 #       made when no silence gap falls within the window.
-min_segment_length_long: 30
+min_segment_length_long: 120
 max_segment_length_long: 300
 
 

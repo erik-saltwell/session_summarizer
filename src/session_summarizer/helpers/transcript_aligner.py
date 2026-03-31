@@ -10,6 +10,7 @@ from ..protocols import (
     TranscriptionSegment,
 )
 from ..transcription import AlignmentResult, ParakeetCTCWordAligner
+from ..vad import SegmentSplitResultSet
 
 _PAUSE_THRESHOLD_S = 0.5  # gap between words that triggers a new segment
 _MAX_SEGMENT_DURATION_S = 3.0  # hard cap on segment length
@@ -61,6 +62,7 @@ def align_transcript(
     settings: SessionSettings,
     session_dir: Path,
     transcription: TranscriptionResult,
+    segments: SegmentSplitResultSet,
     use_cache_if_present: bool,
     gpu_logger: GpuLogger,
     logger: LoggingProtocol,
@@ -79,7 +81,7 @@ def align_transcript(
         gpu_logger.report_gpu_usage("Created aligner")
 
     alignment: AlignmentResult = aligner.align(
-        session_dir / settings.cleaned_audio_file, transcription.full_text, logger
+        session_dir / settings.cleaned_audio_file, transcription, segments, logger
     )
     gpu_logger.report_gpu_usage("after alignment")
 

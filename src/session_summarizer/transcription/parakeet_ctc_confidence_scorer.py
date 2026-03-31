@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Self
 
 from ..protocols import LoggingProtocol
+from ..vad.segment_splitter import AudioSegment, SegmentSplitResultSet
 
 
 @dataclass
@@ -77,58 +78,27 @@ class ParakeetCTCConfidenceScorer:
     model_name: str = "nvidia/parakeet-ctc-0.6b"
     device: str = "cuda"
 
-    chunk_duration_s: float = 120.0  # 2 minutes per chunk — longer inputs cause CTC to miss early words
-    chunk_overlap_s: float = 10.0  # overlap to avoid edge effects
-
-    @staticmethod
-    def _word_start_time(wt: dict, stride: float) -> float:
-        if "start" in wt:
-            return float(wt["start"])
-        return float(wt.get("start_offset", 0)) * stride
-
-    def _transcribe_single(
+    def _transcribe_segments(
         self,
         audio_path: Path,
         ctc_model: Any,
         stride: float,
+        audio_segments: list[AudioSegment],
         logger: LoggingProtocol,
     ) -> tuple[list[dict], list[float]]:
-        import torch
-
-        with torch.inference_mode():
-            hyps: Any = ctc_model.transcribe([str(audio_path)], return_hypotheses=True)
-        hyp: Any = hyps[0]
-        word_ts: list[dict] = hyp.timestamp.get("word", []) if hyp.timestamp else []
-        word_conf: list[float] = hyp.word_confidence or []
-        return word_ts, word_conf
-
-    def _transcribe_chunks(
-        self,
-        audio_path: Path,
-        ctc_model: Any,
-        stride: float,
-        logger: LoggingProtocol,
-    ) -> tuple[list[dict], list[float]]:
-        """Run free transcription in chunks, returning merged word timestamps and confidences."""
+        """Run free transcription over VAD segments, returning merged word timestamps and confidences."""
         import soundfile as sf
         import torch
 
         info = sf.info(str(audio_path))
-        total_duration = info.duration
         sample_rate = info.samplerate
-
-        if total_duration <= self.chunk_duration_s:
-            return self._transcribe_single(audio_path, ctc_model, stride, logger)
 
         all_timestamps: list[dict] = []
         all_confidences: list[float] = []
-        chunk_start = 0.0
 
-        while chunk_start < total_duration:
-            chunk_end = min(chunk_start + self.chunk_duration_s, total_duration)
-            start_sample = int(chunk_start * sample_rate)
-            end_sample = int(chunk_end * sample_rate)
-
+        for seg in audio_segments:
+            start_sample = int(seg.start * sample_rate)
+            end_sample = int(seg.end * sample_rate)
             audio_data, sr = sf.read(str(audio_path), start=start_sample, stop=end_sample, dtype="float32")
 
             with tempfile.NamedTemporaryFile(suffix=".wav", delete=True) as tmp:
@@ -140,38 +110,25 @@ class ParakeetCTCConfidenceScorer:
             word_ts: list[dict] = hyp.timestamp.get("word", []) if hyp.timestamp else []
             word_conf: list[float] = hyp.word_confidence or []
 
-            # Shift timestamps from chunk-local to absolute time
+            # Shift timestamps from segment-local to absolute time
             for wt in word_ts:
                 if "start_offset" in wt:
-                    wt["start_offset"] = wt["start_offset"] + chunk_start / stride
-                    wt["end_offset"] = wt["end_offset"] + chunk_start / stride
+                    wt["start_offset"] = wt["start_offset"] + seg.start / stride
+                    wt["end_offset"] = wt["end_offset"] + seg.start / stride
                 elif "start" in wt:
-                    wt["start"] = float(wt["start"]) + chunk_start
-                    wt["end"] = float(wt["end"]) + chunk_start
-
-            # For overlapping regions, discard words from this chunk that fall in the overlap
-            # (prefer earlier chunk's words for the overlap zone)
-            if chunk_start > 0 and all_timestamps:
-                overlap_cutoff = chunk_start + self.chunk_overlap_s
-                filtered_ts = []
-                filtered_conf = []
-                for wt, wc in zip(word_ts, word_conf, strict=False):
-                    t = self._word_start_time(wt, stride)
-                    if t >= overlap_cutoff:
-                        filtered_ts.append(wt)
-                        filtered_conf.append(wc)
-                word_ts = filtered_ts
-                word_conf = filtered_conf
+                    wt["start"] = float(wt["start"]) + seg.start
+                    wt["end"] = float(wt["end"]) + seg.start
 
             all_timestamps.extend(word_ts)
             all_confidences.extend(word_conf)
 
-            logger.report_message(f"[blue]Chunk {chunk_start:.0f}s–{chunk_end:.0f}s: {len(word_ts)} words[/blue]")
-            chunk_start += self.chunk_duration_s - self.chunk_overlap_s
+            logger.report_message(f"[blue]Segment {seg.start:.0f}s–{seg.end:.0f}s: {len(word_ts)} words[/blue]")
 
         return all_timestamps, all_confidences
 
-    def score(self, audio_path: Path, alignment: AlignmentResult, logger: LoggingProtocol) -> AlignmentResult:
+    def score(
+        self, audio_path: Path, alignment: AlignmentResult, segments: SegmentSplitResultSet, logger: LoggingProtocol
+    ) -> AlignmentResult:
         if not alignment.words:
             logger.report_warning("[yellow]Empty alignment — skipping confidence scoring.[/yellow]")
             return alignment
@@ -211,8 +168,8 @@ class ParakeetCTCConfidenceScorer:
             stride = window_stride * sub_factor
 
             logger.report_message("[blue]Running free transcription pass for confidence scores...[/blue]")
-            parakeet_word_timestamps, parakeet_word_confidence = self._transcribe_chunks(
-                audio_path, ctc_model, stride, logger
+            parakeet_word_timestamps, parakeet_word_confidence = self._transcribe_segments(
+                audio_path, ctc_model, stride, segments.long.segments, logger
             )
 
             _map_confidence_by_time(

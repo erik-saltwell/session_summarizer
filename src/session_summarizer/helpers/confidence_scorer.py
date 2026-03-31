@@ -9,6 +9,7 @@ from ..protocols import (
     TranscriptionSegment,
 )
 from ..transcription import AlignmentResult, ParakeetCTCConfidenceScorer
+from ..vad import SegmentSplitResultSet
 
 _PAUSE_THRESHOLD_S = 0.5  # gap between words that triggers a new segment
 _MAX_SEGMENT_DURATION_S = 3.0  # hard cap on segment length
@@ -60,6 +61,7 @@ def score_confidence(
     settings: SessionSettings,
     session_dir: Path,
     aligned_transcription: AlignmentResult,
+    segments: SegmentSplitResultSet,
     use_cache_if_present: bool,
     gpu_logger: GpuLogger,
     logger: LoggingProtocol,
@@ -79,7 +81,9 @@ def score_confidence(
 
     scored_alignment: AlignmentResult
     with logger.status("Scoring confidence."):
-        scored_alignment = scorer.score(session_dir / settings.cleaned_audio_file, aligned_transcription, logger)
+        scored_alignment = scorer.score(
+            session_dir / settings.cleaned_audio_file, aligned_transcription, segments, logger
+        )
 
     gpu_logger.report_gpu_usage("after alignment")
 

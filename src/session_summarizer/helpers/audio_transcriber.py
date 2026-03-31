@@ -16,6 +16,7 @@ from ..vad import SegmentSplitResultSet
 def transcribe_from_cleaned_audio(
     settings: SessionSettings,
     session_dir: Path,
+    segments: SegmentSplitResultSet,
     use_cache_if_present: bool,
     gpu_logger: GpuLogger,
     logger: LoggingProtocol,
@@ -32,9 +33,6 @@ def transcribe_from_cleaned_audio(
         raise FileNotFoundError(original_path)
 
     gpu_logger.report_gpu_usage("before processing")
-
-    segments_path = session_dir / settings.segments_path
-    segments: SegmentSplitResultSet = SegmentSplitResultSet.load(segments_path)
 
     transcriber: TranscriberProtocol
     with logger.status("Creating transcriber."):
