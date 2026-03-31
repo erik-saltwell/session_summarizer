@@ -159,7 +159,7 @@ class DiarizenDiarizer:
             annotation = pipeline(str(audio_path.resolve()))
 
             segments: list[DiarizationSegment] = []
-            for turn, _, speaker in annotation.itertracks(yield_label=True):
+            for turn, _, speaker in annotation.itertracks(yield_label=True):  # type: ignore[misc]
                 segments.append(
                     DiarizationSegment(
                         speaker=str(speaker),
