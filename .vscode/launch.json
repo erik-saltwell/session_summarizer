@@ -5,6 +5,18 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "-diarize-audio",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "diarize-audio",
+                "--session",
+                "test",
+            ]
+        },
+        {
             "name": "-validate-transcribers",
             "type": "debugpy",
             "request": "launch",

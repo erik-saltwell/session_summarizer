@@ -1,3 +1,7 @@
-from .msdd_diarizer import DiarizationResult, DiarizationSegment, MsddDiarizer
+from .diarizen_diarizer import (
+    DiarizationResult,
+    DiarizationSegment,
+    DiarizenDiarizer,
+)
 
-__all__ = ["MsddDiarizer", "DiarizationResult", "DiarizationSegment"]
+__all__ = ["DiarizenDiarizer", "DiarizationResult", "DiarizationSegment"]

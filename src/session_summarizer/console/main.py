@@ -11,6 +11,7 @@ from session_summarizer.commands.align_transcript import AlignTranscriptCommand
 from session_summarizer.commands.clean_audio import CleanAudioCommand
 from session_summarizer.commands.clean_session import CleanSessionCommand
 from session_summarizer.commands.compute_segments import ComputeSegmentsCommand
+from session_summarizer.commands.diarize_audio import DiarizeAudioCommand
 from session_summarizer.commands.score_confidence import ScoreConfidenceCommand
 from session_summarizer.commands.transcribe_audio import TranscribeAudioCommand
 from session_summarizer.commands.validate_transcribers import ValidateTranscribersCommand
@@ -80,6 +81,16 @@ def score_confidence(
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
     command: ScoreConfidenceCommand = ScoreConfidenceCommand(session)
+    command.execute(logger)
+
+
+@app.command("diarize-audio")
+def diarize_audio(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to transcribe"),
+) -> None:
+    confirm_session(session)
+    logger: LoggingProtocol = create_logger()
+    command: DiarizeAudioCommand = DiarizeAudioCommand(session)
     command.execute(logger)
 
 
@@ -207,6 +218,14 @@ aligned_transcript_path: aligned_transcript.json
 # Relative paths are resolved from this file's directory.
 confidence_transcript_path: confidence_transcript.json
 
+# ---------------------------------------------------------------------------
+# base_diarized_path  (REQUIRED)
+# ---------------------------------------------------------------------------
+# Where the list of diarized segments generated from audio is written
+# (or read from, if it already exists). Contains auto-generated speaker labels
+# and timestamps for each speech segment, used as a basis for final diarization output.
+# Relative paths are resolved from this file's directory.
+base_diarized_path: base_diarization.json
 
 # ---------------------------------------------------------------------------
 # device  (REQUIRED)

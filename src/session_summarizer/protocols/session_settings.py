@@ -53,6 +53,10 @@ class SessionSettings(BaseModel, frozen=True):
             " (created during processing)"
         ),
     ]
+    base_diarized_path: Annotated[
+        Path,
+        Field(description="Path to the list of diarized segments generated from audio. (created during processing)"),
+    ]
     device: Annotated[
         Literal["cpu", "cuda"],
         Field(description="Device for model inference — 'cpu' or 'cuda'"),
@@ -145,6 +149,7 @@ class SessionSettings(BaseModel, frozen=True):
             "aligned_transcript_path",
             "confidence_transcript_path",
             "segments_path",
+            "base_diarized_path",
         ):
             raw = data.get(key)
             if raw is None:
