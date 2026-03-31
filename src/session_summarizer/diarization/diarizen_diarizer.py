@@ -45,7 +45,7 @@ def _patch_torchaudio_for_pyannote() -> None:
             kwargs["weights_only"] = False
         return _orig_torch_load(*args, **kwargs)
 
-    _torch.load = _patched_torch_load  # type: ignore[assignment]
+    _torch.load = _patched_torch_load
 
     import soundfile as sf
     import torch
@@ -58,14 +58,14 @@ def _patch_torchaudio_for_pyannote() -> None:
             self.bits_per_sample = bits_per_sample
             self.encoding = encoding
 
-    torchaudio.AudioMetaData = AudioMetaData  # type: ignore[attr-defined]
+    torchaudio.AudioMetaData = AudioMetaData  # pyright: ignore[reportAttributeAccessIssue]
 
     def list_audio_backends() -> list[str]:
         return ["soundfile"]
 
-    torchaudio.list_audio_backends = list_audio_backends  # type: ignore[attr-defined]
+    torchaudio.list_audio_backends = list_audio_backends  # pyright: ignore[reportAttributeAccessIssue]
 
-    def info(path: str | Path, backend: str | None = None) -> AudioMetaData:  # type: ignore[misc]
+    def info(path: str | Path, backend: str | None = None) -> AudioMetaData:
         meta = sf.info(str(path))
         return AudioMetaData(
             sample_rate=meta.samplerate,
@@ -75,9 +75,9 @@ def _patch_torchaudio_for_pyannote() -> None:
             encoding="PCM_S",
         )
 
-    torchaudio.info = info  # type: ignore[attr-defined]
+    torchaudio.info = info  # pyright: ignore[reportAttributeAccessIssue]
 
-    def load(  # type: ignore[misc]
+    def load(
         uri: str | Path,
         frame_offset: int = 0,
         num_frames: int = -1,
@@ -99,8 +99,8 @@ def _patch_torchaudio_for_pyannote() -> None:
             waveform = waveform.T
         return waveform, sr
 
-    torchaudio.load = load  # type: ignore[attr-defined]
-    torchaudio._patched_for_pyannote = True  # type: ignore[attr-defined]
+    torchaudio.load = load  # pyright: ignore[reportAttributeAccessIssue]
+    torchaudio._patched_for_pyannote = True  # pyright: ignore[reportAttributeAccessIssue]
 
 
 @dataclass
@@ -159,7 +159,7 @@ class DiarizenDiarizer:
             annotation = pipeline(str(audio_path.resolve()))
 
             segments: list[DiarizationSegment] = []
-            for turn, _, speaker in annotation.itertracks(yield_label=True):  # type: ignore[misc]
+            for turn, _, speaker in annotation.itertracks(yield_label=True):  # pyright: ignore[reportAssignmentType]
                 segments.append(
                     DiarizationSegment(
                         speaker=str(speaker),
