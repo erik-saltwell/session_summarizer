@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from ..processing_results import TranscriptionResult
 from ..protocols import (
     GpuLogger,
     LoggingProtocol,
     SessionSettings,
     TranscriberProtocol,
-    TranscriptionResult,
 )
 from ..transcription import CanaryQwenTranscriber
 from ..vad import SegmentSplitResultSet
@@ -27,7 +27,7 @@ def transcribe_from_cleaned_audio(
     logger.report_message(f"[blue]Transcribing from clean audio at {original_path}[/blue]")
     if final_path.exists():
         logger.report_message(f"[yellow]{final_path} already exists, returning cached instance.[/yellow]")
-        return TranscriptionResult.load(final_path)
+        return TranscriptionResult.load_from_json(final_path)
 
     if not original_path.exists():
         raise FileNotFoundError(original_path)

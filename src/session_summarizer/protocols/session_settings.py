@@ -57,6 +57,12 @@ class SessionSettings(BaseModel, frozen=True):
         Path,
         Field(description="Path to the list of diarized segments generated from audio. (created during processing)"),
     ]
+    speech_clips_with_embedding: Annotated[
+        Path,
+        Field(
+            description="Path to SpeechClipSet JSON file with speaker embeddings added (read/written during processing)"
+        ),
+    ]
     device: Annotated[
         Literal["cpu", "cuda"],
         Field(description="Device for model inference — 'cpu' or 'cuda'"),
@@ -100,10 +106,26 @@ class SessionSettings(BaseModel, frozen=True):
             ),
         ),
     ]
+    high_confidence_similarity_threshold: Annotated[
+        float,
+        Field(
+            description=(
+                "Minimum cosine similarity score (0.0–1.0) for a speaker embedding match to be "
+                "considered high-confidence during initial speaker identification"
+            ),
+        ),
+    ]
     vad: Annotated[
         VadSettings,
         Field(description="VAD model and post-processing hyperparameters"),
     ]
+
+    @field_validator("high_confidence_similarity_threshold")
+    @classmethod
+    def _similarity_threshold_must_be_in_range(cls, v: float) -> float:
+        if not (0.0 <= v <= 1.0):
+            raise ValueError(f"high_confidence_similarity_threshold must be between 0.0 and 1.0, got {v!r}")
+        return v
 
     @field_validator("attendees")
     @classmethod
@@ -150,6 +172,7 @@ class SessionSettings(BaseModel, frozen=True):
             "confidence_transcript_path",
             "segments_path",
             "base_diarized_path",
+            "speech_clips_with_embedding",
         ):
             raw = data.get(key)
             if raw is None:

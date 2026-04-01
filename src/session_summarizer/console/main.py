@@ -7,6 +7,7 @@ import typer
 from dotenv import load_dotenv
 from rich.console import Console
 
+from session_summarizer.commands.add_embeddings import AddEmbeddingsCommand
 from session_summarizer.commands.align_transcript import AlignTranscriptCommand
 from session_summarizer.commands.clean_audio import CleanAudioCommand
 from session_summarizer.commands.clean_session import CleanSessionCommand
@@ -81,6 +82,17 @@ def score_confidence(
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
     command: ScoreConfidenceCommand = ScoreConfidenceCommand(session)
+    command.execute(logger)
+
+
+@app.command("add-embeddings")
+def add_embeddings(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to process"),
+) -> None:
+    """Generate speaker embeddings for each speech clip and save to disk."""
+    confirm_session(session)
+    logger: LoggingProtocol = create_logger()
+    command: AddEmbeddingsCommand = AddEmbeddingsCommand(session)
     command.execute(logger)
 
 
@@ -228,6 +240,21 @@ confidence_transcript_path: confidence_transcript.json
 base_diarized_path: base_diarization.json
 
 # ---------------------------------------------------------------------------
+# speech_clips_with_embedding  (REQUIRED)
+# ---------------------------------------------------------------------------
+# Path to the SpeechClipSet JSON file that stores speech clips with speaker
+# embeddings attached. The app writes this file after computing embeddings and
+# reads it back in subsequent steps (e.g. speaker identification, merging).
+# Relative paths are resolved from this file's directory.
+#
+# Default: clips_with_embeddings.json
+#
+# Example:
+#   speech_clips_with_embedding: clips_with_embeddings.json
+speech_clips_with_embedding: clips_with_embeddings.json
+
+
+# ---------------------------------------------------------------------------
 # device  (REQUIRED)
 # ---------------------------------------------------------------------------
 # Compute device for model inference. Allowed values:
@@ -274,6 +301,26 @@ max_segment_length_short: 38
 #       made when no silence gap falls within the window.
 min_segment_length_long: 120
 max_segment_length_long: 300
+
+
+# ---------------------------------------------------------------------------
+# high_confidence_similarity_threshold  (REQUIRED)
+# ---------------------------------------------------------------------------
+# Minimum cosine similarity score for a speaker embedding comparison to be
+# treated as a confident match during initial speaker identification. Matches
+# at or above this threshold are used to merge speech clips and assign speaker
+# labels before the full diarization pass.
+#
+# Allowed values: 0.0–1.0  (cosine similarity; higher = stricter matching)
+#
+# Default: 0.88
+# Reasonable range: 0.80–0.95
+#   Lower values accept more matches (may merge different speakers).
+#   Higher values accept fewer matches (may leave clips unlabelled).
+#
+# Example:
+#   high_confidence_similarity_threshold: 0.88
+high_confidence_similarity_threshold: 0.88
 
 
 # ---------------------------------------------------------------------------

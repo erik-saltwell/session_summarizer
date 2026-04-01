@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from ..processing_results import AlignmentResult, TranscriptionSegment
 from ..protocols import (
     GpuLogger,
     LoggingProtocol,
     SessionSettings,
-    TranscriptionSegment,
 )
-from ..transcription import AlignmentResult, ParakeetCTCConfidenceScorer
+from ..transcription import ParakeetCTCConfidenceScorer
 from ..vad import SegmentSplitResultSet
 
 _PAUSE_THRESHOLD_S = 0.5  # gap between words that triggers a new segment
@@ -70,7 +70,7 @@ def score_confidence(
     final_path: Path = session_dir / settings.confidence_transcript_path
     if final_path.exists() and use_cache_if_present:
         logger.report_message(f"[yellow]{final_path} already exists, returning cached instance.[/yellow]")
-        return AlignmentResult.load(final_path)
+        return AlignmentResult.load_from_json(final_path)
 
     gpu_logger.report_gpu_usage("before processing")
 

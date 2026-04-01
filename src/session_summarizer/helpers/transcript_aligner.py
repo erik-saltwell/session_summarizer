@@ -2,12 +2,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from ..processing_results import TranscriptionResult, TranscriptionSegment
 from ..protocols import (
     GpuLogger,
     LoggingProtocol,
     SessionSettings,
-    TranscriptionResult,
-    TranscriptionSegment,
 )
 from ..transcription import AlignmentResult, ParakeetCTCWordAligner
 from ..vad import SegmentSplitResultSet
@@ -71,7 +70,7 @@ def align_transcript(
     final_path: Path = session_dir / settings.aligned_transcript_path
     if final_path.exists() and use_cache_if_present:
         logger.report_message(f"[yellow]{final_path} already exists, returning cached instance.[/yellow]")
-        return AlignmentResult.load(final_path)
+        return AlignmentResult.load_from_json(final_path)
 
     gpu_logger.report_gpu_usage("before processing")
 

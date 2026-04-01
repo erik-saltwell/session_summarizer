@@ -4,7 +4,7 @@ from pathlib import Path
 
 from session_summarizer.diarization.diarizen_diarizer import DiarizenDiarizer, MergedDiarizationResult
 from session_summarizer.helpers.speech_clip_factory import create_speech_clips
-from session_summarizer.protocols.speech_clip import SpeechClipSet
+from session_summarizer.processing_results.speech_clip_set import SpeechClipSet
 from session_summarizer.transcription.parakeet_ctc_confidence_scorer import AlignmentResult
 
 from ..protocols import (
@@ -26,7 +26,7 @@ def diarize_audio(
     final_path: Path = session_dir / settings.base_diarized_path
     if final_path.exists() and use_cache_if_present:
         logger.report_message(f"[yellow]{final_path} already exists, returning cached instance.[/yellow]")
-        return SpeechClipSet.load(final_path)
+        return SpeechClipSet.load_from_json(final_path)
 
     gpu_logger.report_gpu_usage("before processing")
 

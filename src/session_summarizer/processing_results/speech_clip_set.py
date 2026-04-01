@@ -4,9 +4,17 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
+from .process_result_protocol import ProcessResultProtocol
 
-class SpeechClipSet(list["SpeechClip"]):
-    def save(self, path: Path) -> None:
+
+class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol):
+    def name(self) -> str:
+        return "SpeechClipSet"
+
+    def plain_text(self) -> str:
+        return " ".join(clip.text for clip in self)
+
+    def save_to_json(self, path: Path) -> None:
         data = [
             {
                 "clip_id": clip.clip_id,
@@ -24,7 +32,7 @@ class SpeechClipSet(list["SpeechClip"]):
             json.dump(data, f, indent=2)
 
     @classmethod
-    def load(cls, path: Path) -> SpeechClipSet:
+    def load_from_json(cls, path: Path) -> SpeechClipSet:
         with path.open("r", encoding="utf-8") as f:
             data: list[dict] = json.load(f)
         instance = cls()

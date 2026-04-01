@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from session_summarizer.diarization.diarizen_diarizer import MergedDiarizationResult
-from session_summarizer.protocols.speech_clip import SpeechClip, SpeechClipSet
-from session_summarizer.transcription.parakeet_ctc_confidence_scorer import AlignmentResult, WordAlignment
+from ..diarization.diarizen_diarizer import MergedDiarizationResult
+from ..processing_results.speech_clip_set import SpeechClip, SpeechClipSet
+from ..transcription.parakeet_ctc_confidence_scorer import AlignmentResult, WordAlignment
 
 _CROSSTALK = "[crosstalk]"
 

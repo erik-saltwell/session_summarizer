@@ -10,7 +10,7 @@ from .logging_protocol import (
     _NullStatus,
 )
 from .session_settings import SessionSettings
-from .transcriber_protocol import TranscriberProtocol, TranscriptionResult, TranscriptionSegment
+from .transcriber_protocol import TranscriberProtocol
 
 __all__ = [
     "LoggingProtocol",
@@ -21,8 +21,6 @@ __all__ = [
     "_NullStatus",
     "NullLogger",
     "TranscriberProtocol",
-    "TranscriptionResult",
-    "TranscriptionSegment",
     "EmbeddingFactory",
     "SessionSettings",
     "GpuLogger",

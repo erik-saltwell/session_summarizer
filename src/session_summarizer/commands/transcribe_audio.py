@@ -24,4 +24,4 @@ class TranscribeAudioCommand(SessionProcessingCommand):
         result: TranscriptionResult = transcribe_from_cleaned_audio(
             settings, session_dir, segments, False, self, self.logger
         )
-        result.save(session_dir / settings.transcript_file)
+        result.save_to_json(session_dir / settings.transcript_file)

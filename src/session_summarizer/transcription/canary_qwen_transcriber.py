@@ -5,8 +5,8 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
+from ..processing_results import TranscriptionResult, TranscriptionSegment
 from ..protocols import LoggingProtocol
-from ..protocols.transcriber_protocol import TranscriptionResult, TranscriptionSegment
 from ..vad.segment_splitter import SegmentSplitResultSet
 
 _MAX_NEW_TOKENS: int = 512

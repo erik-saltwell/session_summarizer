@@ -27,4 +27,4 @@ class AlignTranscriptCommand(SessionProcessingCommand):
             settings, session_dir, segments, True, self, self.logger
         )
         alignment: AlignmentResult = align_transcript(settings, session_dir, result, segments, False, self, self.logger)
-        alignment.save(session_dir / settings.aligned_transcript_path)
+        alignment.save_to_json(session_dir / settings.aligned_transcript_path)

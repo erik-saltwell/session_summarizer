@@ -33,8 +33,8 @@ from rich.console import Console
 from session_summarizer.commands.register_speakers import RegisterSpeakersCommand
 from session_summarizer.commands.transcribe_audio import TranscribeAudioCommand
 from session_summarizer.logging import CompositeLogger, FileLogger, RichConsoleLogger
+from session_summarizer.processing_results import TranscriptionResult, TranscriptionSegment
 from session_summarizer.protocols.logging_protocol import LoggingProtocol
-from session_summarizer.protocols.transcriber_protocol import TranscriptionResult, TranscriptionSegment
 from session_summarizer.utils import common_paths, flush_gpu_memory
 
 from .temp_session import TempSession
