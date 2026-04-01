@@ -101,8 +101,8 @@ class ParakeetCTCWordAligner:
                             all_words.append(
                                 WordAlignment(
                                     word=str(entry["word"]),
-                                    start=float(entry["start"]) + seg.start,
-                                    end=float(entry["end"]) + seg.start,
+                                    start_time=float(entry["start"]) + seg.start,
+                                    end_time=float(entry["end"]) + seg.start,
                                 )
                             )
 

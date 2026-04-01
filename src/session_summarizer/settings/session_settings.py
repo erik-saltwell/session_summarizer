@@ -6,23 +6,14 @@ from typing import Annotated, Literal, Self
 import yaml
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from .diarization_stitching_settings import DiarizationStitchingSettings
+from .vad_settings import VadSettings
+
 _SETTINGS_FILE = "settings.yaml"
 
 SUPPORTED_AUDIO_SUFFIXES: frozenset[str] = frozenset(
     {".m4a", ".mp3", ".wav", ".flac", ".ogg", ".opus", ".wma", ".aac", ".webm"}
 )
-
-
-class VadSettings(BaseModel, frozen=True):
-    """Hyperparameters for NeMo VAD post-processing."""
-
-    model_name: str = Field(description="Pretrained NeMo VAD model name")
-    onset: float = Field(description="Speech onset probability threshold (0.0–1.0)")
-    offset: float = Field(description="Speech offset probability threshold (0.0–1.0)")
-    min_duration_on: float = Field(description="Minimum speech segment duration in seconds")
-    min_duration_off: float = Field(description="Minimum silence segment duration in seconds")
-    pad_onset: float = Field(description="Padding added before speech onset in seconds")
-    pad_offset: float = Field(description="Padding added after speech offset in seconds")
 
 
 class SessionSettings(BaseModel, frozen=True):
@@ -118,6 +109,13 @@ class SessionSettings(BaseModel, frozen=True):
     vad: Annotated[
         VadSettings,
         Field(description="VAD model and post-processing hyperparameters"),
+    ]
+
+    diarization_stitching: Annotated[
+        DiarizationStitchingSettings,
+        Field(
+            description="Policy knobs for assigning ASR words to diarized speaker segments",
+        ),
     ]
 
     @field_validator("high_confidence_similarity_threshold")

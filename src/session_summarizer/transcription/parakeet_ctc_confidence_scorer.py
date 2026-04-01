@@ -30,7 +30,7 @@ def _map_confidence_by_time(
         overlapping = [
             conf
             for pw, conf in zip(parakeet_timestamps, parakeet_confidence, strict=False)
-            if _time(pw, "end") > sw.start and _time(pw, "start") < sw.end
+            if _time(pw, "end") > sw.start_time and _time(pw, "start") < sw.end_time
         ]
         sw.confidence = min(overlapping) if overlapping else 0.0
 

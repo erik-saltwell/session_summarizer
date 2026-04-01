@@ -338,39 +338,204 @@ high_confidence_similarity_threshold: 0.88
 # vad  (VAD model hyperparameters)
 # ---------------------------------------------------------------------------
 # Controls the NeMo Voice Activity Detection model used to find speech and
-# silence boundaries. The values below work well for typical meeting recordings;
-# tune these if you see too many false speech detections (lower onset) or
-# missed speech (raise onset / lower offset).
-#
-#   model_name       — pretrained NeMo VAD model to use.
-#
-#   onset            — probability threshold to START a speech region (0.0–1.0).
-#                      Higher = fewer false positives, may miss quiet speech.
-#
-#   offset           — probability threshold to END a speech region (0.0–1.0).
-#                      Lower = speech regions extend further into trailing silence.
-#                      Must be ≤ onset for proper hysteresis.
-#
-#   min_duration_on  — speech regions shorter than this (seconds) are discarded.
-#                      Filters out clicks, coughs, and transient noise.
-#
-#   min_duration_off — silence regions shorter than this (seconds) are bridged
-#                      (treated as speech). Prevents choppy segmentation from
-#                      brief pauses within sentences.
-#
-#   pad_onset        — seconds of audio to include BEFORE each speech onset.
-#                      Captures plosive consonants and breath that precede speech.
-#
-#   pad_offset       — seconds of audio to include AFTER each speech offset.
-#                      Captures word-final sounds and natural trailing silence.
+# silence boundaries. Tune these if you see too many false speech detections
+# (lower onset) or missed speech (raise onset / lower offset).
 vad:
+
+  # Pretrained NeMo VAD model to load.
+  #
+  # Allowed values: any NeMo-registered VAD model name (string)
+  # Reasonable default: vad_multilingual_frame_marblenet
   model_name: vad_multilingual_frame_marblenet
+
+  # Probability threshold to START a speech region. Higher = fewer false
+  # positives but may miss quiet speech. Must be >= offset (hysteresis).
+  #
+  # Allowed values: 0.0–1.0
+  # Reasonable default: 0.7
   onset: 0.7
+
+  # Probability threshold to END a speech region. Lower = speech regions
+  # extend further into trailing silence. Must be <= onset.
+  #
+  # Allowed values: 0.0–1.0
+  # Reasonable default: 0.4
   offset: 0.4
+
+  # Speech regions shorter than this (seconds) are discarded. Filters out
+  # clicks, coughs, and transient noise.
+  #
+  # Allowed values: >= 0.0 (seconds)
+  # Reasonable default: 0.3
   min_duration_on: 0.3
+
+  # Silence regions shorter than this (seconds) are bridged (treated as
+  # speech). Prevents choppy segmentation from brief pauses within sentences.
+  #
+  # Allowed values: >= 0.0 (seconds)
+  # Reasonable default: 0.3
   min_duration_off: 0.3
+
+  # Seconds of audio to include BEFORE each speech onset. Captures plosive
+  # consonants and breath that precede speech.
+  #
+  # Allowed values: >= 0.0 (seconds)
+  # Reasonable default: 0.1
   pad_onset: 0.1
+
+  # Seconds of audio to include AFTER each speech offset. Captures
+  # word-final sounds and natural trailing silence.
+  #
+  # Allowed values: >= 0.0 (seconds)
+  # Reasonable default: 0.1
   pad_offset: 0.1
+
+
+# ---------------------------------------------------------------------------
+# diarization_stitching
+# ---------------------------------------------------------------------------
+# Controls how ASR words (with timestamps) are assigned to diarized speaker
+# segments (with timestamps and speaker labels). The algorithm iterates words
+# in time order and scores candidate segments by overlap. When no segment
+# overlaps acceptably, a fallback chain applies: nearest-segment assignment,
+# then anonymous-segment creation. After all words are assigned, optional
+# post-processing merges and expands segments.
+#
+# See .research/speaker_segment_assignment.md for the full design rationale.
+diarization_stitching:
+
+  # ── Overlap acceptance thresholds ────────────────────────────────────
+  # A candidate segment must pass BOTH thresholds to count as an "in-range"
+  # overlap. Relaxed defaults accommodate the boundary jitter inherent in
+  # both ASR word timestamps and diarization segment edges.
+
+  # Minimum fraction of the word's duration that must be overlapped by
+  # the candidate segment. 0.20 = at least 20 %% of the word must fall
+  # inside the segment. Prevents "barely touching" overlaps caused by
+  # boundary jitter.
+  #
+  # Allowed values: 0.0–1.0
+  # Reasonable default: 0.20
+  min_overlap_fraction_word: 0.20
+
+  # Absolute floor: overlaps shorter than this (seconds) are ignored.
+  # 20 ms matches typical speech-processing frame sizes (~25 ms); overlaps
+  # below one frame are not acoustically meaningful.
+  #
+  # Allowed values: >= 0.0 (seconds)
+  # Reasonable default: 0.02
+  min_overlap_seconds: 0.02
+
+
+  # ── Fallback: nearest-segment assignment ─────────────────────────────
+  # When no candidate passes the overlap thresholds, the algorithm can
+  # assign the word to the closest segment by midpoint distance, as long
+  # as the gap between intervals is within max_nearest_distance.
+
+  # Whether to enable nearest-segment fallback.
+  #
+  # Allowed values: true / false
+  # Reasonable default: true
+  fill_nearest: true
+
+  # Maximum gap (seconds) between a word and a non-overlapping segment
+  # for nearest-assignment to apply. 250 ms is a common tolerance scale
+  # in speech scoring; keeps the fallback conservative so it won't jump
+  # speakers across long silences.
+  #
+  # Allowed values: >= 0.0 (seconds)
+  # Reasonable default: 0.25
+  max_nearest_distance: 0.25
+
+
+  # ── Fallback: anonymous segments ─────────────────────────────────────
+  # If nearest-assignment also fails (or is disabled), words are placed
+  # into auto-created "anonymous" segments so that every word is covered.
+  # Consecutive anonymous words close in time are merged into one span.
+
+  # Whether to create anonymous segments for unassignable words.
+  #
+  # Allowed values: true / false
+  # Reasonable default: true
+  create_anonymous_segments: true
+
+  # Speaker label applied to anonymous segments.
+  #
+  # Allowed values: any non-empty string
+  # Reasonable default: UNKNOWN
+  anonymous_speaker_label: UNKNOWN
+
+  # Maximum gap (seconds) between consecutive anonymous words that will
+  # be merged into the same anonymous segment. Keeps output clean.
+  #
+  # Allowed values: >= 0.0 (seconds)
+  # Reasonable default: 0.15
+  anonymous_join_gap: 0.15
+
+
+  # ── Post-processing ──────────────────────────────────────────────────
+
+  # Merge adjacent segments that share the same speaker label when
+  # separated by at most merge_gap_seconds. Reduces fragmentation caused
+  # by brief pauses or diarization over-segmentation.
+  #
+  # Allowed values: true / false
+  # Reasonable default: true
+  merge_adjacent_same_speaker: true
+
+  # Maximum gap (seconds) between same-speaker segments that will be
+  # merged.
+  #
+  # Allowed values: >= 0.0 (seconds)
+  # Reasonable default: 0.20
+  merge_gap_seconds: 0.20
+
+  # Widen each segment's time boundaries to fully contain its assigned
+  # words. Useful for UI rendering where words must not extend beyond
+  # their parent segment, but reduces diarization boundary fidelity.
+  #
+  # Allowed values: true / false
+  # Reasonable default: false
+  expand_segments_to_fit_words: false
+
+  # Cap on how far (seconds) a segment boundary may be expanded.
+  # Use null for unlimited expansion.
+  #
+  # Allowed values: >= 0.0 (seconds), or null for no limit
+  # Reasonable default: null
+  expansion_limit_seconds: null
+
+
+  # ── Candidate scoring ────────────────────────────────────────────────
+
+  # How to rank candidate segments that overlap a word. Each mode scores
+  # by its primary metric first; ties are broken by midpoint distance
+  # (word midpoint vs. segment midpoint).
+  #
+  # Allowed values:
+  #   overlap_seconds_then_midpoint          — rank by raw overlap seconds
+  #   overlap_fraction_word_then_midpoint    — rank by overlap / word duration
+  #   iou_then_midpoint                      — rank by intersection-over-union
+  #
+  # Reasonable default: overlap_seconds_then_midpoint
+  scoring_mode: overlap_seconds_then_midpoint
+
+  # When two candidates score identically, prefer the shorter segment.
+  # Avoids bias toward long segments that span many words.
+  #
+  # Allowed values: true / false
+  # Reasonable default: true
+  prefer_shorter_on_tie: true
+
+
+  # ── Numeric tolerance ────────────────────────────────────────────────
+
+  # Small value used when comparing floating-point time boundaries to
+  # avoid edge cases from imprecision and quantization.
+  #
+  # Allowed values: >= 0.0
+  # Reasonable default: 0.000001
+  epsilon: 0.000001
 """
 
 

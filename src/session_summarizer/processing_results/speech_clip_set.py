@@ -4,7 +4,9 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
+from .alignment_result import WordAlignment
 from .process_result_protocol import ProcessResultProtocol
+from .segment_protocol import SegmentProtocol, compute_gap_distance, compute_overlap
 
 
 class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol):
@@ -63,23 +65,54 @@ class SpeechClip:
     text: str
     identity: str | None = None
     embedding: list[float] | None = None
+    words: list[WordAlignment] | None = None  # Used to collect words while processing. Not saved to disk.
+
+    @property
+    def midpoint(self) -> float:
+        return (self.start_time + self.end_time) / 2
 
     @property
     def duration(self) -> float:
         return self.end_time - self.start_time
 
     @property
+    def is_start_clip(self) -> bool:
+        return self.clip_id == 0
+
+    @property
+    def is_end_clip(self) -> bool:
+        return self.clip_id >= len(self.parent) - 1
+
+    @property
     def previous_clip(self) -> SpeechClip | None:
-        if self.clip_id == 0:
+        if self.is_start_clip:
             raise ValueError("Clip ID is 0, cannot determine previous clip")
         return self.parent[self.clip_id - 1]
 
     @property
     def next_clip(self) -> SpeechClip | None:
-        if self.clip_id >= len(self.parent) - 1:
+        if self.is_end_clip:
             raise ValueError("Clip ID is at the end of the list, cannot determine next clip")
         return self.parent[self.clip_id + 1]
 
     @property
     def is_multispeaker(self) -> bool:
         return len(self.speakers) > 1
+
+    def add_word(self, word: WordAlignment) -> None:
+        if self.words is None:
+            self.words = []
+        self.words.append(word)
+
+    def finalize_words(self) -> None:
+        if self.words is None:
+            return
+        self.text = " ".join(w.word for w in self.words)
+        self.confidence_avg = sum(w.confidence for w in self.words) / len(self.words)
+        self.words = None
+
+    def overlap(self, other: SegmentProtocol, minimum_overlap: float) -> float:
+        return compute_overlap(self, other, minimum_overlap)
+
+    def gap_distance(self, other: SegmentProtocol, minimum_overlap: float) -> float:
+        return compute_gap_distance(self, other, minimum_overlap)

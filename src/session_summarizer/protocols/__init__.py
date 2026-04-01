@@ -1,3 +1,4 @@
+from ..settings.session_settings import SessionSettings
 from .command_protocol import CommmandProtocol
 from .embedding_factory import EmbeddingFactory
 from .logging_protocol import (
@@ -9,7 +10,6 @@ from .logging_protocol import (
     _NullProgress,
     _NullStatus,
 )
-from .session_settings import SessionSettings
 from .transcriber_protocol import TranscriberProtocol
 
 __all__ = [

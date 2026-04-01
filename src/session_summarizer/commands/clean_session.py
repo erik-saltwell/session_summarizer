@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from session_summarizer.protocols.session_settings import SessionSettings
+from session_summarizer.settings.session_settings import SessionSettings
 
 from .session_processing_command import SessionProcessingCommand
 

@@ -13,7 +13,7 @@ from ..helpers.audio_transcriber import transcribe_from_cleaned_audio
 from ..helpers.confidence_scorer import score_confidence
 from ..helpers.transcript_aligner import align_transcript
 from ..processing_results import AlignmentResult, SpeechClipSet, TranscriptionResult
-from ..protocols.session_settings import SessionSettings
+from ..settings.session_settings import SessionSettings
 from .session_processing_command import SessionProcessingCommand
 
 _METRIC_LABELS: list[str] = [

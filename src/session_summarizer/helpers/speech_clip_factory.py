@@ -30,7 +30,7 @@ def create_speech_clips(
         end_time = segment.end
         speakers = segment.speakers
 
-        words: list[WordAlignment] = alignment_result.get_segments_for_time_range(start_time, end_time)
+        words: list[WordAlignment] = alignment_result.get_words_for_time_range(start_time, end_time)
         text = create_text_for_segment(words, segment.is_multispeaker)
         if not text or len(text.strip()) == 0:
             continue

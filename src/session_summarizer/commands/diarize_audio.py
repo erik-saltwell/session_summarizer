@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import session_summarizer.utils.common_paths as common_paths
 from session_summarizer.helpers.audio_diarizer import diarize_audio
 from session_summarizer.processing_results.speech_clip_set import SpeechClipSet
-from session_summarizer.protocols.session_settings import SessionSettings
+from session_summarizer.settings.session_settings import SessionSettings
 from session_summarizer.transcription.parakeet_ctc_confidence_scorer import AlignmentResult
 
 from ..helpers.audio_cleaner import clean_audio

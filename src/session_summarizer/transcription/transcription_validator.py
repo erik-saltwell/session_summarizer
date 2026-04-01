@@ -8,8 +8,8 @@ import jiwer
 from mathspell import analyze_text
 
 from session_summarizer.protocols.logging_protocol import LoggingProtocol
-from session_summarizer.protocols.session_settings import SessionSettings
 from session_summarizer.protocols.transcriber_protocol import TranscriptionResult
+from session_summarizer.settings.session_settings import SessionSettings
 
 
 @dataclass

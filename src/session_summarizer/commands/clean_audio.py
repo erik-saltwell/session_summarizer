@@ -3,9 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import session_summarizer.utils.common_paths as common_paths
-from session_summarizer.protocols.session_settings import SessionSettings
 
 from ..helpers.audio_cleaner import clean_audio
+from ..settings.session_settings import SessionSettings
 from .session_processing_command import SessionProcessingCommand
 
 

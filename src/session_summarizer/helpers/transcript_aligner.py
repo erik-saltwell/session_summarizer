@@ -23,8 +23,8 @@ def _rebuild_segments_from_alignment(alignment: AlignmentResult) -> list[Transcr
 
     segments: list[TranscriptionSegment] = []
     current_words: list[str] = [alignment.words[0].word]
-    seg_start = alignment.words[0].start
-    seg_end = alignment.words[0].end
+    seg_start = alignment.words[0].start_time
+    seg_end = alignment.words[0].end_time
     min_conf = alignment.words[0].confidence
 
     def _flush() -> None:
@@ -41,16 +41,16 @@ def _rebuild_segments_from_alignment(alignment: AlignmentResult) -> list[Transcr
             current_words = []
 
     for prev, word in zip(alignment.words, alignment.words[1:], strict=False):
-        gap = word.start - prev.end
+        gap = word.start_time - prev.end_time
         ends_sentence = prev.word and prev.word[-1] in _SENTENCE_ENDERS
-        duration = word.start - seg_start
+        duration = word.start_time - seg_start
         if gap >= _PAUSE_THRESHOLD_S or ends_sentence or duration >= _MAX_SEGMENT_DURATION_S:
             _flush()
-            seg_start = word.start
+            seg_start = word.start_time
             min_conf = word.confidence
 
         current_words.append(word.word)
-        seg_end = word.end
+        seg_end = word.end_time
         min_conf = min(min_conf, word.confidence)
 
     _flush()

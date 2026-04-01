@@ -6,7 +6,7 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
-from session_summarizer.protocols.session_settings import (
+from session_summarizer.settings.session_settings import (
     SUPPORTED_AUDIO_SUFFIXES,
     SessionSettings,
 )
@@ -29,6 +29,23 @@ _VAD_FIELDS: dict = {
     "pad_offset": 0.1,
 }
 
+_DIARIZATION_STITCHING_FIELDS: dict = {
+    "min_overlap_fraction_word": 0.20,
+    "min_overlap_seconds": 0.02,
+    "fill_nearest": True,
+    "max_nearest_distance": 0.25,
+    "create_anonymous_segments": True,
+    "anonymous_speaker_label": "UNKNOWN",
+    "anonymous_join_gap": 0.15,
+    "merge_adjacent_same_speaker": True,
+    "merge_gap_seconds": 0.20,
+    "expand_segments_to_fit_words": False,
+    "expansion_limit_seconds": None,
+    "scoring_mode": "overlap_seconds_then_midpoint",
+    "prefer_shorter_on_tie": True,
+    "epsilon": 1e-6,
+}
+
 
 def _required_fields(audio_file: Path | str) -> dict:
     """Return a complete set of required fields for constructing a SessionSettings."""
@@ -49,6 +66,7 @@ def _required_fields(audio_file: Path | str) -> dict:
         "min_segment_length_long": 30.0,
         "max_segment_length_long": 300.0,
         "vad": _VAD_FIELDS,
+        "diarization_stitching": _DIARIZATION_STITCHING_FIELDS,
     }
 
 
@@ -71,6 +89,7 @@ def _required_yaml_fields(audio_file: str) -> dict:
         "min_segment_length_long": 30.0,
         "max_segment_length_long": 300.0,
         "vad": _VAD_FIELDS,
+        "diarization_stitching": _DIARIZATION_STITCHING_FIELDS,
     }
 
 
@@ -197,6 +216,7 @@ class TestLoad:
                     "min_segment_length_long": 30.0,
                     "max_segment_length_long": 300.0,
                     "vad": _VAD_FIELDS,
+                    "diarization_stitching": _DIARIZATION_STITCHING_FIELDS,
                 }
             )
         )

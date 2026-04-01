@@ -4,9 +4,9 @@ from dataclasses import dataclass
 
 import session_summarizer.utils.common_paths as common_paths
 from session_summarizer.processing_results.speech_clip_set import SpeechClipSet
-from session_summarizer.protocols.session_settings import SessionSettings
 
 from ..helpers.add_embeddings import add_embeddings
+from ..settings import SessionSettings
 from .session_processing_command import SessionProcessingCommand
 
 
