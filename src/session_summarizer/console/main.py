@@ -13,6 +13,7 @@ from session_summarizer.commands.clean_audio import CleanAudioCommand
 from session_summarizer.commands.clean_session import CleanSessionCommand
 from session_summarizer.commands.compute_segments import ComputeSegmentsCommand
 from session_summarizer.commands.diarize_audio import DiarizeAudioCommand
+from session_summarizer.commands.dump_and_compare_texts import DumpAndCompareTextsCommand
 from session_summarizer.commands.score_confidence import ScoreConfidenceCommand
 from session_summarizer.commands.transcribe_audio import TranscribeAudioCommand
 from session_summarizer.commands.validate_transcribers import ValidateTranscribersCommand
@@ -135,6 +136,16 @@ def validate_transcribers(
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
     command: ValidateTranscribersCommand = ValidateTranscribersCommand(session)
+    command.execute(logger)
+
+
+@app.command("dump-and-compare-texts")
+def dump_and_compare_texts(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to transcribe"),
+) -> None:
+    confirm_session(session)
+    logger: LoggingProtocol = create_logger()
+    command: DumpAndCompareTextsCommand = DumpAndCompareTextsCommand(session)
     command.execute(logger)
 
 

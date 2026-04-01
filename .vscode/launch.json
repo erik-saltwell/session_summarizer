@@ -5,6 +5,18 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "-dump-and-compare",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "dump-and-compare-texts",
+                "--session",
+                "test",
+            ]
+        },
+        {
             "name": "-diarize-audio",
             "type": "debugpy",
             "request": "launch",

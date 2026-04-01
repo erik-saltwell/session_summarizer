@@ -16,6 +16,12 @@ class WordAlignment:
     confidence: float = 0.0  # acoustic confidence [0.0, 1.0]
 
 
+def word_is_contained_in(word: WordAlignment, start_time: float, end_time: float) -> bool:
+    if word.end > start_time and word.start < end_time:
+        return True
+    return False
+
+
 @dataclass
 class AlignmentResult(ProcessResultProtocol):
     words: list[WordAlignment]
@@ -41,6 +47,6 @@ class AlignmentResult(ProcessResultProtocol):
 
     def get_segments_for_time_range(self, start_time: float, end_time: float) -> list[WordAlignment]:
         return sorted(
-            [w for w in self.words if w.end > start_time and w.start < end_time],
+            [w for w in self.words if word_is_contained_in(w, start_time, end_time)],
             key=lambda w: w.start,
         )

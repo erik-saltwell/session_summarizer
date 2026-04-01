@@ -18,7 +18,7 @@ class TranscriptionValidationResult:
     word_information_preservation: float
 
 
-def validate_transcriber(
+def evaluate_texts(
     test_name: str, hypothesis: str, reference: str, logger: LoggingProtocol
 ) -> TranscriptionValidationResult:
     ground_truth: str = clean_text_for_evaluation(reference)

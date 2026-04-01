@@ -8,8 +8,8 @@ _CROSSTALK = "[crosstalk]"
 
 
 def create_text_for_segment(words: list[WordAlignment], is_multispeaker: bool) -> str:
-    if is_multispeaker:
-        return _CROSSTALK
+    # if is_multispeaker:
+    #     return _CROSSTALK
     return " ".join(w.word for w in words)
 
 
