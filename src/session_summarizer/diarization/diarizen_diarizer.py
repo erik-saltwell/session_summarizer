@@ -117,13 +117,13 @@ class DiarizationResult:
 
 @dataclass
 class MergedDiarizationSegment:
-    start: float  # seconds
-    end: float  # seconds
+    start_time: float  # seconds
+    end_time: float  # seconds
     speakers: list[str]  # sorted for determinism
 
     @property
     def duration(self) -> float:
-        return self.end - self.start
+        return self.end_time - self.start_time
 
     @property
     def is_multispeaker(self) -> bool:
@@ -135,13 +135,15 @@ class MergedDiarizationResult:
     segments: list[MergedDiarizationSegment]
 
     def save(self, path: Path) -> None:
-        data = [{"start": s.start, "end": s.end, "speakers": s.speakers} for s in self.segments]
+        data = [{"start": s.start_time, "end": s.end_time, "speakers": s.speakers} for s in self.segments]
         path.write_text(json.dumps(data, indent=2))
 
     @classmethod
     def load(cls, path: Path) -> MergedDiarizationResult:
         data = json.loads(path.read_text())
-        segments = [MergedDiarizationSegment(start=s["start"], end=s["end"], speakers=s["speakers"]) for s in data]
+        segments = [
+            MergedDiarizationSegment(start_time=s["start"], end_time=s["end"], speakers=s["speakers"]) for s in data
+        ]
         return cls(segments=segments)
 
 
@@ -163,7 +165,7 @@ def merge_overlapping_diarization(raw: DiarizationResult) -> MergedDiarizationRe
         t_end = breakpoints[i + 1]
         active = sorted({seg.speaker for seg in raw.segments if seg.start < t_end and seg.end > t_start})
         if active:
-            merged.append(MergedDiarizationSegment(start=t_start, end=t_end, speakers=active))
+            merged.append(MergedDiarizationSegment(start_time=t_start, end_time=t_end, speakers=active))
 
     return MergedDiarizationResult(segments=merged)
 

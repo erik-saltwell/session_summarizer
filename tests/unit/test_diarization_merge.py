@@ -30,11 +30,11 @@ class TestMergeOverlappingDiarization:
         )
         merged = merge_overlapping_diarization(raw)
         expected = [
-            MergedDiarizationSegment(start=10.0, end=17.0, speakers=["1"]),
-            MergedDiarizationSegment(start=17.0, end=18.0, speakers=["1", "3"]),
-            MergedDiarizationSegment(start=18.0, end=19.0, speakers=["1", "2", "3"]),
-            MergedDiarizationSegment(start=19.0, end=20.0, speakers=["1", "2"]),
-            MergedDiarizationSegment(start=20.0, end=25.0, speakers=["2"]),
+            MergedDiarizationSegment(start_time=10.0, end_time=17.0, speakers=["1"]),
+            MergedDiarizationSegment(start_time=17.0, end_time=18.0, speakers=["1", "3"]),
+            MergedDiarizationSegment(start_time=18.0, end_time=19.0, speakers=["1", "2", "3"]),
+            MergedDiarizationSegment(start_time=19.0, end_time=20.0, speakers=["1", "2"]),
+            MergedDiarizationSegment(start_time=20.0, end_time=25.0, speakers=["2"]),
         ]
         assert merged.segments == expected
 
@@ -47,9 +47,9 @@ class TestMergeOverlappingDiarization:
         )
         merged = merge_overlapping_diarization(raw)
         assert len(merged.segments) == 3
-        assert merged.segments[0] == MergedDiarizationSegment(start=0.0, end=5.0, speakers=["A"])
-        assert merged.segments[1] == MergedDiarizationSegment(start=5.0, end=10.0, speakers=["B"])
-        assert merged.segments[2] == MergedDiarizationSegment(start=10.0, end=15.0, speakers=["C"])
+        assert merged.segments[0] == MergedDiarizationSegment(start_time=0.0, end_time=5.0, speakers=["A"])
+        assert merged.segments[1] == MergedDiarizationSegment(start_time=5.0, end_time=10.0, speakers=["B"])
+        assert merged.segments[2] == MergedDiarizationSegment(start_time=10.0, end_time=15.0, speakers=["C"])
 
     def test_full_overlap_two_speakers(self) -> None:
         """Two segments with identical boundaries → one window with both speakers."""
@@ -58,7 +58,7 @@ class TestMergeOverlappingDiarization:
             _raw("Y", 1.0, 4.0),
         )
         merged = merge_overlapping_diarization(raw)
-        assert merged.segments == [MergedDiarizationSegment(start=1.0, end=4.0, speakers=["X", "Y"])]
+        assert merged.segments == [MergedDiarizationSegment(start_time=1.0, end_time=4.0, speakers=["X", "Y"])]
 
     def test_speakers_are_sorted(self) -> None:
         """Speaker list in each window is deterministically sorted."""
@@ -78,9 +78,9 @@ class TestMergeOverlappingDiarization:
         )
         merged = merge_overlapping_diarization(raw)
         for a, b in zip(merged.segments, merged.segments[1:], strict=False):
-            assert a.end == b.start
+            assert a.end_time == b.start_time
 
     def test_single_segment(self) -> None:
         raw = _result(_raw("solo", 3.0, 7.0))
         merged = merge_overlapping_diarization(raw)
-        assert merged.segments == [MergedDiarizationSegment(start=3.0, end=7.0, speakers=["solo"])]
+        assert merged.segments == [MergedDiarizationSegment(start_time=3.0, end_time=7.0, speakers=["solo"])]

@@ -2,16 +2,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from session_summarizer.diarization.diarizen_diarizer import DiarizenDiarizer, MergedDiarizationResult
-from session_summarizer.helpers.speech_clip_factory import create_speech_clips
-from session_summarizer.processing_results.speech_clip_set import SpeechClipSet
-from session_summarizer.transcription.parakeet_ctc_confidence_scorer import AlignmentResult
-
+from ..diarization import DiarizenDiarizer, MergedDiarizationResult, create_speech_clips
+from ..processing_results import SpeechClipSet
 from ..protocols import (
     GpuLogger,
     LoggingProtocol,
     SessionSettings,
 )
+from ..transcription import AlignmentResult
 
 
 def diarize_audio(
@@ -33,7 +31,7 @@ def diarize_audio(
     diarizer: DiarizenDiarizer = DiarizenDiarizer()
     diarization: MergedDiarizationResult = diarizer.diarize(session_dir / settings.cleaned_audio_file, logger)
     logger.report_message(f"[blue]Converting to SpeechClipSet {final_path}...[/blue]")
-    result: SpeechClipSet = create_speech_clips(diarization, alignment_result)
+    result: SpeechClipSet = create_speech_clips(diarization, alignment_result, settings)
 
     logger.report_message("[blue]Diarization complete.[/blue]")
 
