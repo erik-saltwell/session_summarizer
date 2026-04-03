@@ -5,6 +5,44 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "-turn-end",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "update-turn-end",
+                "--session",
+                "test",
+            ]
+        },
+        {
+            "name": "-dump-human",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "dump-human-format",
+                "--session",
+                "test",
+                "--file",
+                "base_diarization.json"
+            ]
+        },
+        {
+            "name": "-embeddings",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "add-embeddings",
+                "--session",
+                "test",
+            ]
+        },
+        {
             "name": "-dump-and-compare",
             "type": "debugpy",
             "request": "launch",

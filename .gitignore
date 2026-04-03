@@ -237,3 +237,6 @@ voice_samples/john.wav
 # Keep data directory scaffolding, ignore generated data files
 /data/*
 /checkpoints/
+
+# Smart Turn ONNX models (downloaded separately, not committed)
+models/smart-turn/*.onnx

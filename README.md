@@ -74,12 +74,40 @@ sudo apt install -y libsndfile1 ffmpeg build-essential
 uv sync
 ```
 
-#### 2. Install en_core_web_sm :
+#### 2. Download the Smart Turn ONNX model
+
+The [Smart Turn](https://github.com/pipecat-ai/smart-turn) model provides end-of-turn detection — it predicts whether a speaker has finished their conversational turn by analysing raw 16 kHz audio.  This project vendors the Smart Turn inference code locally (in `src/smart_turn/`) and loads the ONNX model from `models/smart-turn/`.
+
+Download the model weights from HuggingFace ([pipecat-ai/smart-turn-v3](https://huggingface.co/pipecat-ai/smart-turn-v3)):
+
+```bash
+# CPU version (8.7 MB, int8 quantized — recommended for most setups)
+huggingface-cli download pipecat-ai/smart-turn-v3 smart-turn-v3.2-cpu.onnx \
+  --local-dir models/smart-turn
+
+# GPU version (32.4 MB, fp32 — slightly more accurate, faster on GPU)
+huggingface-cli download pipecat-ai/smart-turn-v3 smart-turn-v3.2-gpu.onnx \
+  --local-dir models/smart-turn
+```
+
+If you don't have the HuggingFace CLI, install it first:
+
+```bash
+uv pip install huggingface-hub[cli]
+```
+
+The inference code will prefer the GPU model if both are present; otherwise it uses the CPU model.
+
+**How it works:** Smart Turn uses Whisper Tiny as a backbone with a linear classifier (~8M parameters).  It accepts up to 8 seconds of 16 kHz mono PCM audio and returns an end-of-turn probability.  The project's `update-turn-end` command uses this to score each speech segment in a diarised recording.
+
+> **Note on `LocalSmartTurnAnalyzerV3`:** This class is part of the [Pipecat](https://pipecat.ai) real-time voice agent framework (v0.0.85+) and wraps the same underlying model for live streaming pipelines.  For this project's offline/batch scoring pipeline, we call `predict_endpoint()` directly from the vendored `smart_turn` package instead of going through Pipecat.
+
+#### 3. Install en_core_web_sm :
 ```bash
 uv run python -m spacy download en_core_web_sm
 ```
 
-#### 3. Google Cloud setup (for Google Chirp transcriber)
+#### 4. Google Cloud setup (for Google Chirp transcriber)
 
 Install the [Google Cloud CLI](https://cloud.google.com/sdk/docs/install) and log in:
 
@@ -104,7 +132,7 @@ gcloud services enable speech.googleapis.com --project=$GOOGLE_CLOUD_PROJECT
 gcloud storage buckets create gs://$GCS_BUCKET --project=$GOOGLE_CLOUD_PROJECT --location=us
 ```
 
-#### 4. OpenAI setup (for GPT-4o transcriber)
+#### 5. OpenAI setup (for GPT-4o transcriber)
 
 Set your OpenAI API key:
 
@@ -112,7 +140,7 @@ Set your OpenAI API key:
 export OPENAI_API_KEY="sk-..."
 ```
 
-#### 5. Quick verification
+#### 6. Quick verification
 
 ```bash
 python - <<'PY'

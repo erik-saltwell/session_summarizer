@@ -630,6 +630,14 @@ wheels = [
 ]
 
 [[package]]
+name = "flatbuffers"
+version = "25.12.19"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e8/2d/d2a548598be01649e2d46231d151a6c56d10b964d94043a335ae56ea2d92/flatbuffers-25.12.19-py2.py3-none-any.whl", hash = "sha256:7634f50c427838bb021c2d66a3d1168e9d199b0607e6329399f04846d42e20b4", size = 26661, upload-time = "2025-12-19T23:16:13.622Z" },
+]
+
+[[package]]
 name = "flexcache"
 version = "0.3"
 source = { registry = "https://pypi.org/simple" }
@@ -2016,6 +2024,22 @@ wheels = [
 ]
 
 [[package]]
+name = "onnxruntime"
+version = "1.24.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "flatbuffers", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+    { name = "numpy", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+    { name = "packaging", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+    { name = "protobuf", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+    { name = "sympy", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/aa/60/c4d1c8043eb42f8a9aa9e931c8c293d289c48ff463267130eca97d13357f/onnxruntime-1.24.4-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:1a5c5a544b22f90859c88617ecb30e161ee3349fcc73878854f43d77f00558b5", size = 15172485, upload-time = "2026-03-17T22:03:32.182Z" },
+    { url = "https://files.pythonhosted.org/packages/6d/ab/5b68110e0460d73fad814d5bd11c7b1ddcce5c37b10177eb264d6a36e331/onnxruntime-1.24.4-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:0d640eb9f3782689b55cfa715094474cd5662f2f137be6a6f847a594b6e9705c", size = 17244912, upload-time = "2026-03-17T22:04:37.251Z" },
+]
+
+[[package]]
 name = "openai"
 version = "2.30.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2978,6 +3002,7 @@ dependencies = [
     { name = "ml-dtypes", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "modelscope", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "nemo-toolkit", extra = ["asr"], marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+    { name = "onnxruntime", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "openai", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "openai-whisper", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "pyannote-audio", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
@@ -3014,6 +3039,7 @@ requires-dist = [
     { name = "ml-dtypes", specifier = ">=0.5,<0.6" },
     { name = "modelscope" },
     { name = "nemo-toolkit", extras = ["asr"] },
+    { name = "onnxruntime", specifier = ">=1.18.0" },
     { name = "openai", specifier = ">=1.0.0" },
     { name = "openai-whisper", specifier = ">=20250625" },
     { name = "pyannote-audio", git = "https://github.com/BUTSpeechFIT/DiariZen.git?subdirectory=pyannote-audio" },

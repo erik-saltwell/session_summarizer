@@ -27,6 +27,7 @@ dependencies = [
     "google-cloud-storage>=2.0.0",
     "en_core_web_sm",
     "pyannote-audio",
+    "onnxruntime>=1.18.0",
 ]
 
 [project.scripts]

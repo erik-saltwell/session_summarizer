@@ -23,7 +23,7 @@ class DiarizeAudioCommand(SessionProcessingCommand):
         return "Diarize Audio"
 
     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
-        self.gpu_logging_enabled = True
+        self.gpu_logging_enabled = False
         clean_audio(settings, session_dir, True, self, self.logger)
         segments: SegmentSplitResultSet = compute_vad_segments(settings, session_dir, True, self, self.logger)
         result: TranscriptionResult = transcribe_from_cleaned_audio(
