@@ -14,6 +14,7 @@ from session_summarizer.commands.clean_session import CleanSessionCommand
 from session_summarizer.commands.compute_segments import ComputeSegmentsCommand
 from session_summarizer.commands.diarize_audio import DiarizeAudioCommand
 from session_summarizer.commands.dump_and_compare_texts import DumpAndCompareTextsCommand
+from session_summarizer.commands.dump_human_format import DumpHumanFormatCommand
 from session_summarizer.commands.score_confidence import ScoreConfidenceCommand
 from session_summarizer.commands.transcribe_audio import TranscribeAudioCommand
 from session_summarizer.commands.update_turn_end import UpdateTurnEndCommand
@@ -106,6 +107,18 @@ def update_turn_end(
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
     command: UpdateTurnEndCommand = UpdateTurnEndCommand(session)
+    command.execute(logger)
+
+
+@app.command("dump-human-format")
+def dump_human_format(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session"),
+    json_file: str = typer.Option(..., "--file", "-f", help="SpeechClipSet JSON filename relative to session dir"),
+) -> None:
+    """Export a SpeechClipSet JSON file to a human-readable text format."""
+    confirm_session(session)
+    logger: LoggingProtocol = create_logger()
+    command: DumpHumanFormatCommand = DumpHumanFormatCommand(session, json_file=json_file)
     command.execute(logger)
 
 
