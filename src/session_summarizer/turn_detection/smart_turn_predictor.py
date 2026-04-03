@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Protocol
+from collections.abc import Callable
+from typing import Any, Protocol
 
 import numpy as np
 
@@ -19,9 +20,11 @@ class SmartTurnPredictor(Protocol):
 class LocalSmartTurnPredictor:
     """Wraps the local Smart Turn model for end-of-turn prediction."""
 
+    _predict_fn: Callable[..., Any]
+
     def __init__(self, device: str = "cpu") -> None:
         try:
-            from smart_turn.inference import predict_endpoint  # type: ignore[import-untyped]
+            from smart_turn.inference import predict_endpoint  # type: ignore[import-not-found]
         except ImportError as exc:
             raise ImportError(
                 "The 'smart_turn' package is required for turn-end scoring. "
@@ -31,4 +34,5 @@ class LocalSmartTurnPredictor:
         self._device = device
 
     def predict_endpoint(self, audio_f32_16k: np.ndarray) -> dict[str, float]:
-        return self._predict_fn(audio_f32_16k)
+        result: dict[str, float] = self._predict_fn(audio_f32_16k)
+        return result
