@@ -74,9 +74,6 @@ class DiarizationStitchingSettings(BaseModel, frozen=True):
     # covered.  Consecutive anonymous words close in time are merged into
     # a single anonymous span.
 
-    # Enable creation of anonymous segments for unassignable words.
-    create_anonymous_segments: bool
-
     # Maximum gap (seconds) between consecutive anonymous words that will
     # be merged into the same anonymous segment.
     anonymous_join_gap: float
@@ -86,7 +83,6 @@ class DiarizationStitchingSettings(BaseModel, frozen=True):
     # Merge adjacent segments that share the same speaker label when
     # separated by at most merge_gap_seconds.  Reduces fragmentation
     # caused by brief pauses or diarization over-segmentation.
-    merge_adjacent_same_speaker: bool
     merge_gap_seconds: float
 
     # Widen each segment's time boundaries to fully contain its assigned

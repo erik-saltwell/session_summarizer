@@ -453,12 +453,6 @@ diarization_stitching:
   # into auto-created "anonymous" segments so that every word is covered.
   # Consecutive anonymous words close in time are merged into one span.
 
-  # Whether to create anonymous segments for unassignable words.
-  #
-  # Allowed values: true / false
-  # Reasonable default: true
-  create_anonymous_segments: true
-
   # Maximum gap (seconds) between consecutive anonymous words that will
   # be merged into the same anonymous segment. Keeps output clean.
   #
@@ -469,15 +463,7 @@ diarization_stitching:
 
   # ── Post-processing ──────────────────────────────────────────────────
 
-  # Merge adjacent segments that share the same speaker label when
-  # separated by at most merge_gap_seconds. Reduces fragmentation caused
-  # by brief pauses or diarization over-segmentation.
-  #
-  # Allowed values: true / false
-  # Reasonable default: true
-  merge_adjacent_same_speaker: true
-
-  # Maximum gap (seconds) between same-speaker segments that will be
+  # Maximum gap (seconds) between same-speaker adjacent segments that will be
   # merged.
   #
   # Allowed values: >= 0.0 (seconds)
