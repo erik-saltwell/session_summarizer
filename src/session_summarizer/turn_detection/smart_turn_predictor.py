@@ -24,7 +24,7 @@ class LocalSmartTurnPredictor:
 
     def __init__(self, device: str = "cpu") -> None:
         try:
-            from smart_turn.inference import predict_endpoint  # type: ignore[import-not-found]
+            from smart_turn.inference import predict_endpoint
         except ImportError as exc:
             raise ImportError(
                 "The 'smart_turn' package is required for turn-end scoring. "
