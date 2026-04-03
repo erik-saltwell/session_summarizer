@@ -161,6 +161,8 @@ def create_speech_clips(
 
     speech_clips = _merge_clips(speech_clips, settings.diarization_stitching)
 
+    speech_clips.sort_clips()
+
     for clip in speech_clips:
         clip.finalize_words()
 

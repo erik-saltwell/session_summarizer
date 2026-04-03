@@ -79,6 +79,7 @@ class DumpAndCompareTextsCommand(SessionProcessingCommand):
         scored_eval = self.evaluate_texts(aligned_text, scored_text, "Confidence Scored Transcript")
 
         clips: SpeechClipSet = diarize_audio(settings, session_dir, alignment, True, self, self.logger)
+        clips.sort_clips()
         diarized_text = self.clean_and_dump_text(clips.plain_text(), session_dir / settings.base_diarized_path)
         diarized_eval = self.evaluate_texts(scored_text, diarized_text, "Diarized Transcript")
 

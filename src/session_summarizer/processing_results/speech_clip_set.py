@@ -159,6 +159,9 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol):
     def extend_clips(self, clips: list[SpeechClip]) -> None:
         self.extend(clips)
 
+    def sort_clips(self) -> None:
+        self.sort(key=lambda c: (c.start_time, c.end_time))
+
     @classmethod
     def load_from_json(cls, path: Path) -> SpeechClipSet:
         with path.open("r", encoding="utf-8") as f:
