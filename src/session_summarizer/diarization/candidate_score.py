@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import NamedTuple
 
 from ..processing_results import SpeechClip, WordAlignment
-from ..settings import DiarizationStitchingSettings
 from ..settings.diarization_stitching_settings import ScoringMode
 
 
@@ -26,27 +25,32 @@ class CandidateScore(NamedTuple):
 
 
 def score_candidate(
-    candidate_clip: SpeechClip, word: WordAlignment, settings: DiarizationStitchingSettings
+    candidate_clip: SpeechClip,
+    word: WordAlignment,
+    epsilon: float,
+    scoring_mode: ScoringMode,
+    prefer_shorter_on_tie: bool,
+    ignore_overlap: bool = False,
 ) -> CandidateScore:
-    minimum_meaningful_length = settings.epsilon
+    minimum_meaningful_length = epsilon
 
     word_duration = max(word.duration, minimum_meaningful_length)
     segment_duration = max(candidate_clip.duration, minimum_meaningful_length)
 
-    overlap = word.overlap(candidate_clip, minimum_meaningful_length)
+    overlap = 0.0 if ignore_overlap else word.overlap(candidate_clip, epsilon)
     gap = word.gap_distance(candidate_clip, minimum_meaningful_length)
     midpoint_distance = abs(word.midpoint - candidate_clip.midpoint)
     iou_overlap_ratio = overlap / max(word_duration + segment_duration - overlap, minimum_meaningful_length)
 
     overlap_score: float
-    if settings.scoring_mode == ScoringMode.overlap_seconds_then_midpoint:
+    if scoring_mode == ScoringMode.overlap_seconds_then_midpoint:
         overlap_score = overlap
-    elif settings.scoring_mode == ScoringMode.overlap_fraction_word_then_midpoint:
+    elif scoring_mode == ScoringMode.overlap_fraction_word_then_midpoint:
         overlap_score = overlap / word_duration
     else:  # settings.scoring_mode == ScoringMode.iou_then_midpoint:
         overlap_score = iou_overlap_ratio
 
-    shorter_bonus = -segment_duration if settings.prefer_shorter_on_tie else 0.0
+    shorter_bonus = -segment_duration if prefer_shorter_on_tie else 0.0
 
     return CandidateScore(
         overlap_score=overlap_score,

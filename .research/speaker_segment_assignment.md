@@ -6,9 +6,9 @@ Assigning per-word transcript tokens (with start/end times) to diarized speaker 
 
 Across both industry practice and open-source “STT + diarization merge” examples, the dominant baseline strategy is:
 
-- **Primary rule:** choose the speaker/segment with **maximum time intersection** with the word (or with a transcript segment containing words). citeturn43view0turn45view1  
-- **Fallback rule:** if there is **no overlap**, optionally **assign the nearest** speaker/segment by midpoint distance (“fill nearest”), or label as unknown. citeturn43view0turn45view1  
-- **Pipeline simplifier:** optionally request or derive **exclusive (non-overlapping) diarization** to make reconciliation with ASR outputs easier. citeturn10view0turn43view0  
+- **Primary rule:** choose the speaker/segment with **maximum time intersection** with the word (or with a transcript segment containing words). citeturn43view0turn45view1
+- **Fallback rule:** if there is **no overlap**, optionally **assign the nearest** speaker/segment by midpoint distance (“fill nearest”), or label as unknown. citeturn43view0turn45view1
+- **Pipeline simplifier:** optionally request or derive **exclusive (non-overlapping) diarization** to make reconciliation with ASR outputs easier. citeturn10view0turn43view0
 
 This report recommends a robust, configurable algorithm that (1) assigns every word to exactly one segment (no duplicates), (2) prioritizes overlap assignments, (3) supports principled fallbacks (nearest assignment or creation of anonymous segments), (4) handles overlaps/nesting/ties/gaps, (5) remains efficient for large transcripts, and (6) includes unit-testable examples. The implementation below follows the same core primitives used in widely adopted tooling (intersection-based voting and nearest-midpoint fallback), while adding missing production concerns (policy configuration, anonymous segment creation, deterministic tie-breaking, and post-merge/expansion options). citeturn43view0turn45view1turn47view0
 
@@ -27,8 +27,8 @@ Both are assumed to be referenced to the **same audio timeline** (same offset an
 
 If your inputs originate from classic evaluation/pipeline formats:
 
-- **RTTM** (“Rich Transcription Time Marked”) is a space-separated file format whose records include `type`, `file`, `channel`, `tbeg` (start), `tdur` (duration), and speaker `name` among other fields; this is often used by diarization toolchains. citeturn8view0  
-- **CTM** (“Conversation Time Marked”) captures per-token timing with `(file, channel, tbeg, tdur, ortho, [conf])`; this is widely used for word timestamps from ASR/aligners. citeturn9view0turn7view2  
+- **RTTM** (“Rich Transcription Time Marked”) is a space-separated file format whose records include `type`, `file`, `channel`, `tbeg` (start), `tdur` (duration), and speaker `name` among other fields; this is often used by diarization toolchains. citeturn8view0
+- **CTM** (“Conversation Time Marked”) captures per-token timing with `(file, channel, tbeg, tdur, ortho, [conf])`; this is widely used for word timestamps from ASR/aligners. citeturn9view0turn7view2
 
 ### Boundary uncertainty and collars
 
@@ -40,10 +40,10 @@ A separate evaluation plan describes how scoring workflows may ignore hypothesis
 
 For this problem, “correctness” is not only speaker attribution accuracy; it also includes structural invariants required by downstream applications:
 
-1. **Total coverage**: every word must be assigned to exactly one output segment (no unassigned tokens).  
-2. **No duplication**: no word may appear in more than one output segment.  
-3. **Robustness to overlaps**: if diarization outputs overlap (multi-speaker regions), the algorithm must still choose a unique assignment for each word, deterministically. citeturn10view1turn46view0  
-4. **Robustness to gaps**: if no diarization segment overlaps a word, the system must follow an explicit policy (nearest assignment, anonymous segment creation, or both). citeturn43view0turn45view1  
+1. **Total coverage**: every word must be assigned to exactly one output segment (no unassigned tokens).
+2. **No duplication**: no word may appear in more than one output segment.
+3. **Robustness to overlaps**: if diarization outputs overlap (multi-speaker regions), the algorithm must still choose a unique assignment for each word, deterministically. citeturn10view1turn46view0
+4. **Robustness to gaps**: if no diarization segment overlaps a word, the system must follow an explicit policy (nearest assignment, anonymous segment creation, or both). citeturn43view0turn45view1
 
 ## Approaches from literature and industry
 
@@ -56,8 +56,8 @@ A popular open-source implementation extends this down to word granularity: it q
 These approaches are attractive because they are:
 
 - Local and explainable (intersection math).
-- Compatible with overlap-heavy diarization outputs (they explicitly sum overlap contributions). citeturn10view1turn46view0  
-- Efficient when implemented with an interval index (rather than naive full scans). citeturn45view0turn45view1  
+- Compatible with overlap-heavy diarization outputs (they explicitly sum overlap contributions). citeturn10view1turn46view0
+- Efficient when implemented with an interval index (rather than naive full scans). citeturn45view0turn45view1
 
 ### Exclusive diarization as a reconciliation simplifier
 
@@ -96,12 +96,12 @@ For overlapping speech evaluation and multi-stream alignment, the NIST scoring e
 These defaults are intended for “speaker-attributed transcript rendering” (meeting notes, podcasts, call analysis), where determinism and continuity matter, and where overlap regions must be collapsed to a single attribution per word (as required by this task).
 
 - `epsilon = 1e-6` seconds: numerical stability for boundary ties (floating-point comparisons). (Engineering convention; used to enforce deterministic handling of equality.)
-- `min_overlap_fraction_word = 0.20`: accept partial overlaps, because word boundaries and diarization boundaries are not perfectly aligned; strict “majority overlap” can over-trigger fallback behavior in practice. This is consistent with the broader idea that collars/tolerances are needed to prevent boundary jitter from dominating. citeturn19view0turn47view0  
-- `min_overlap_seconds = 0.02`: a 20ms floor prevents pathological “touching” overlaps (comparable to common frame granularities across speech processing pipelines). The x-vector literature and typical feature extraction use 25ms frames, reinforcing that sub-frame overlap decisions are not meaningful. citeturn31view0  
-- `fill_nearest = True`, `max_nearest_distance = 0.25` seconds: 250ms is a widely used scale for time collars/tolerances in speech scoring practice; using this as the maximum nearest assignment distance makes the fallback conservative (won’t jump speakers across long silences). citeturn19view0turn47view0  
-- `create_anonymous_segments = True`, `anonymous_label = "UNKNOWN"`: ensures total coverage when diarization has gaps (or in areas where exclusive diarization has removed overlaps). This mirrors common merge tutorials that emit UNKNOWN when no match is plausible. citeturn43view0turn45view1  
+- `min_overlap_fraction_word = 0.20`: accept partial overlaps, because word boundaries and diarization boundaries are not perfectly aligned; strict “majority overlap” can over-trigger fallback behavior in practice. This is consistent with the broader idea that collars/tolerances are needed to prevent boundary jitter from dominating. citeturn19view0turn47view0
+- `min_overlap_seconds = 0.02`: a 20ms floor prevents pathological “touching” overlaps (comparable to common frame granularities across speech processing pipelines). The x-vector literature and typical feature extraction use 25ms frames, reinforcing that sub-frame overlap decisions are not meaningful. citeturn31view0
+- `fill_nearest = True`, `max_nearest_distance = 0.25` seconds: 250ms is a widely used scale for time collars/tolerances in speech scoring practice; using this as the maximum nearest assignment distance makes the fallback conservative (won’t jump speakers across long silences). citeturn19view0turn47view0
+- `create_anonymous_segments = True`, `anonymous_label = "UNKNOWN"`: ensures total coverage when diarization has gaps (or in areas where exclusive diarization has removed overlaps). This mirrors common merge tutorials that emit UNKNOWN when no match is plausible. citeturn43view0turn45view1
 - `anonymous_join_gap = 0.15` seconds: merges consecutive unknown words into a single unknown span if they are close, producing cleaner output for UIs.
-- `merge_adjacent_same_speaker = True`, `merge_gap = 0.20` seconds: reduces fragmentation and matches “transcription workflow” motivations for cleaner turns. citeturn10view0turn43view0  
+- `merge_adjacent_same_speaker = True`, `merge_gap = 0.20` seconds: reduces fragmentation and matches “transcription workflow” motivations for cleaner turns. citeturn10view0turn43view0
 - `expand_segments_to_fit_words = False` by default for fidelity; enable for UI/UX output modes where segment boundaries must contain their words.
 
 ## Robust assignment algorithm with complexity

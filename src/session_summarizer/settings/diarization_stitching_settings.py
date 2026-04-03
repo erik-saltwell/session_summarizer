@@ -39,7 +39,7 @@ class DiarizationStitchingSettings(BaseModel, frozen=True):
     """
 
     # ── Overlap acceptance thresholds ──────────────────────────────────
-    # A candidate segment must pass *both* thresholds to count as an
+    # A candidate segment may pass *either* thresholds to count as an
     # "in-range" overlap.  Relaxed defaults accommodate the boundary jitter
     # inherent in both ASR word timestamps and diarization segment edges.
 
@@ -77,9 +77,6 @@ class DiarizationStitchingSettings(BaseModel, frozen=True):
     # Enable creation of anonymous segments for unassignable words.
     create_anonymous_segments: bool
 
-    # Speaker label applied to anonymous segments.
-    anonymous_speaker_label: str
-
     # Maximum gap (seconds) between consecutive anonymous words that will
     # be merged into the same anonymous segment.
     anonymous_join_gap: float
@@ -98,8 +95,7 @@ class DiarizationStitchingSettings(BaseModel, frozen=True):
     expand_segments_to_fit_words: bool
 
     # Cap on how far a segment boundary may be expanded (seconds).
-    # None means unlimited expansion.
-    expansion_limit_seconds: float | None
+    expansion_limit_seconds: float
 
     # ── Candidate scoring ──────────────────────────────────────────────
 
@@ -122,6 +118,7 @@ class DiarizationStitchingSettings(BaseModel, frozen=True):
         "max_nearest_distance",
         "anonymous_join_gap",
         "merge_gap_seconds",
+        "expansion_limit_seconds",
         "epsilon",
     )
     @classmethod
@@ -130,16 +127,9 @@ class DiarizationStitchingSettings(BaseModel, frozen=True):
             raise ValueError("must be non-negative")
         return v
 
-    @field_validator("expansion_limit_seconds")
-    @classmethod
-    def non_negative_or_none(cls, v: float | None) -> float | None:
-        if v is not None and v < 0:
-            raise ValueError("expansion_limit_seconds must be >= 0 or None.")
-        return v
-
     @field_validator("min_overlap_fraction_word")
     @classmethod
     def zero_to_one(cls, v: float) -> float:
-        if v < 0:
+        if v < 0 or v > 1:
             raise ValueError("must be between 0 and 1")
         return v

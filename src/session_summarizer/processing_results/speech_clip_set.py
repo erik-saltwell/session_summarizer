@@ -6,7 +6,12 @@ from pathlib import Path
 
 from .alignment_result import WordAlignment
 from .process_result_protocol import ProcessResultProtocol
-from .segment_protocol import SegmentProtocol, compute_gap_distance, compute_overlap
+from .segment_protocol import (
+    SegmentProtocol,
+    compute_duration_inside_meaningful_boundaries,
+    compute_gap_distance,
+    compute_overlap,
+)
 
 _ANONYMOUS_SPEAKER = "anonymous"
 
@@ -40,6 +45,9 @@ class SpeechClip:
     def is_multispeaker(self) -> bool:
         return len(self.speakers) > 1
 
+    def duration_inside_meaningful_boundaries(self, epsilon: float) -> float:
+        return compute_duration_inside_meaningful_boundaries(self, epsilon)
+
     @classmethod
     def create_from_word(cls, word: WordAlignment) -> SpeechClip:
         return cls(
@@ -62,10 +70,14 @@ class SpeechClip:
             or self.embedding is not None
             or other.identity is not None
             or other.embedding is not None
-            or self.words is not None
-            or other.words is not None
         ):
-            raise ValueError("Cannot merge clips that have identity, words, or embedding information")
+            raise ValueError("Cannot merge clips that have identity or embedding information")
+
+        if self.text and other.text:
+            if self.start_time < other.start_time:
+                self.text = (self.text + " " + other.text).strip()
+            else:
+                self.text = (other.text + " " + self.text).strip()
 
         self.start_time = min(self.start_time, other.start_time)
         self.end_time = max(self.end_time, other.end_time)
@@ -76,11 +88,10 @@ class SpeechClip:
             if (self.word_count + other.word_count) > 0
             else 0.0
         )
-        if len(self.text) > 0 and len(other.text) > 0:
-            if self.start_time < other.start_time:
-                self.text = (self.text + " " + other.text).strip()
-            else:
-                self.text = (other.text + " " + self.text).strip()
+
+        if other.words:
+            for word in other.words:
+                self.add_word(word)
 
     def add_word(self, word: WordAlignment) -> None:
         if self.words is None:
@@ -92,7 +103,10 @@ class SpeechClip:
             return
         sorted_words = sorted(self.words, key=lambda w: (w.start_time, w.end_time))
         self.text = " ".join(w.word for w in sorted_words)
-        self.confidence_avg = sum(w.confidence for w in sorted_words) / len(sorted_words)
+        if len(sorted_words) == 0:
+            self.confidence_avg = 0.0
+        else:
+            self.confidence_avg = sum(w.confidence for w in sorted_words) / len(sorted_words)
         self.words = None
 
     def overlap(self, other: SegmentProtocol, minimum_overlap: float) -> float:
@@ -100,6 +114,20 @@ class SpeechClip:
 
     def gap_distance(self, other: SegmentProtocol, minimum_overlap: float) -> float:
         return compute_gap_distance(self, other, minimum_overlap)
+
+    def expand_bounds_to_include_words(self, epsilon: float, expansion_limit_seconds: float) -> None:
+        if self.words is None:
+            return
+        min_start = min(min(word.start_time for word in self.words), self.start_time)
+        max_end = max(max(word.end_time for word in self.words), self.end_time)
+
+        expand_left = self.start_time - min_start
+        expand_right = max_end - self.end_time
+
+        if expand_left > epsilon:
+            self.start_time = self.start_time - min(expand_left, expansion_limit_seconds)
+        if expand_right > epsilon:
+            self.end_time = self.end_time + min(expand_right, expansion_limit_seconds)
 
 
 class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol):
@@ -114,7 +142,7 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol):
             {
                 "start_time": clip.start_time,
                 "end_time": clip.end_time,
-                "speakers": clip.speakers,
+                "speakers": sorted(clip.speakers),
                 "confidence_avg": clip.confidence_avg,
                 "text": clip.text,
                 "identity": clip.identity,
@@ -140,7 +168,7 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol):
             clip = SpeechClip(
                 start_time=item["start_time"],
                 end_time=item["end_time"],
-                speakers=item["speakers"],
+                speakers=set(item["speakers"]),
                 confidence_avg=item["confidence_avg"],
                 text=item["text"],
                 identity=item.get("identity"),

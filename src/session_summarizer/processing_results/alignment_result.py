@@ -6,7 +6,12 @@ from pathlib import Path
 from typing import Self
 
 from .process_result_protocol import ProcessResultProtocol
-from .segment_protocol import SegmentProtocol, compute_gap_distance, compute_overlap
+from .segment_protocol import (
+    SegmentProtocol,
+    compute_duration_inside_meaningful_boundaries,
+    compute_gap_distance,
+    compute_overlap,
+)
 
 
 @dataclass
@@ -30,32 +35,30 @@ class WordAlignment:
     def gap_distance(self, other: SegmentProtocol, minimum_overlap: float = 0.0) -> float:
         return compute_gap_distance(self, other, minimum_overlap)
 
+    def duration_inside_meaningful_boundaries(self, epsilon: float) -> float:
+        return compute_duration_inside_meaningful_boundaries(self, epsilon)
 
-_DEBUG_TIMING_THRESHOLD = 25.0  # seconds, for debug print statements about word-segment alignment
+
+# def word_is_contained_in(word: WordAlignment, start_time: float, end_time: float) -> bool:
+#     if word.start_time > end_time:
+#         return False
+#     debug_str = f"  '{word.word}'({word.start_time:.4f}-{word.end_time:.4f}):seg({start_time:.4f}-{end_time:.4f})"
+#     return_value: bool = False
+#     if word.start_time >= start_time and word.end_time <= end_time:
+#         debug_str += " word inside segment"
+#         return_value = True
+#     elif word.start_time < start_time and word.end_time > end_time:
+#         debug_str += " segment inside word"
+#         return_value = True
+#     elif word.start_time >= start_time and word.start_time <= end_time
+#         debug_str += " word starts in segment"
+#         return_value = True
 
 
-def word_is_contained_in(word: WordAlignment, start_time: float, end_time: float) -> bool:
-    if word.start_time > end_time:
-        return False
-    debug_str = f"  '{word.word}'({word.start_time:.4f}-{word.end_time:.4f}):seg({start_time:.4f}-{end_time:.4f})"
-    return_value: bool = False
-    if word.start_time >= start_time and word.end_time <= end_time:
-        debug_str += " word inside segment"
-        return_value = True
-    elif word.start_time < start_time and word.end_time > end_time:
-        debug_str += " segment inside word"
-        return_value = True
-    elif word.start_time >= start_time and word.start_time <= end_time:
-        debug_str += " word starts in segment"
-        return_value = True
+#     return return_value
 
-    if start_time < _DEBUG_TIMING_THRESHOLD:
-        print(debug_str)
-
-    return return_value
-
-    # midpoint = (word.start + word.end) / 2
-    # return start_time <= midpoint < end_time
+# midpoint = (word.start + word.end) / 2
+# return start_time <= midpoint < end_time
 
 
 @dataclass
@@ -81,11 +84,11 @@ class AlignmentResult(ProcessResultProtocol):
     def plain_text(self) -> str:
         return " ".join(w.word for w in self.words)
 
-    def get_words_for_time_range(self, start_time: float, end_time: float) -> list[WordAlignment]:
-        if start_time < _DEBUG_TIMING_THRESHOLD:
-            print(f"({start_time:.4f}-{end_time:.4f})")
+    # def get_words_for_time_range(self, start_time: float, end_time: float) -> list[WordAlignment]:
+    #     return sorted(
+    #         [w for w in self.words if word_is_contained_in(w, start_time, end_time)],
+    #         key=lambda w: w.start_time,
+    #     )
 
-        return sorted(
-            [w for w in self.words if word_is_contained_in(w, start_time, end_time)],
-            key=lambda w: w.start_time,
-        )
+    def sort(self) -> None:
+        self.words.sort(key=lambda w: (w.start_time, w.end_time))

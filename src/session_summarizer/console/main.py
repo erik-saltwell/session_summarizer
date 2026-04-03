@@ -404,10 +404,10 @@ vad:
 # See .research/speaker_segment_assignment.md for the full design rationale.
 diarization_stitching:
 
-  # ── Overlap acceptance thresholds ────────────────────────────────────
-  # A candidate segment must pass BOTH thresholds to count as an "in-range"
-  # overlap. Relaxed defaults accommodate the boundary jitter inherent in
-  # both ASR word timestamps and diarization segment edges.
+  # ── Overlap acceptance thresholds ──────────────────────────────────
+  # A candidate segment may pass *either* thresholds to count as an
+  # "in-range" overlap.  Relaxed defaults accommodate the boundary jitter
+  # inherent in both ASR word timestamps and diarization segment edges.
 
   # Minimum fraction of the word's duration that must be overlapped by
   # the candidate segment. 0.20 = at least 20 %% of the word must fall
@@ -459,12 +459,6 @@ diarization_stitching:
   # Reasonable default: true
   create_anonymous_segments: true
 
-  # Speaker label applied to anonymous segments.
-  #
-  # Allowed values: any non-empty string
-  # Reasonable default: UNKNOWN
-  anonymous_speaker_label: UNKNOWN
-
   # Maximum gap (seconds) between consecutive anonymous words that will
   # be merged into the same anonymous segment. Keeps output clean.
   #
@@ -499,11 +493,10 @@ diarization_stitching:
   expand_segments_to_fit_words: false
 
   # Cap on how far (seconds) a segment boundary may be expanded.
-  # Use null for unlimited expansion.
   #
-  # Allowed values: >= 0.0 (seconds), or null for no limit
-  # Reasonable default: null
-  expansion_limit_seconds: null
+  # Allowed values: >= 0.0 (seconds)
+  # Reasonable default: 300
+  expansion_limit_seconds: 300
 
 
   # ── Candidate scoring ────────────────────────────────────────────────

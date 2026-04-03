@@ -40,7 +40,7 @@ _DIARIZATION_STITCHING_FIELDS: dict = {
     "merge_adjacent_same_speaker": True,
     "merge_gap_seconds": 0.20,
     "expand_segments_to_fit_words": False,
-    "expansion_limit_seconds": None,
+    "expansion_limit_seconds": 300,
     "scoring_mode": "overlap_seconds_then_midpoint",
     "prefer_shorter_on_tie": True,
     "epsilon": 1e-6,
