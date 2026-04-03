@@ -35,7 +35,6 @@ _DIARIZATION_STITCHING_FIELDS: dict = {
     "fill_nearest": True,
     "max_nearest_distance": 0.25,
     "create_anonymous_segments": True,
-    "anonymous_speaker_label": "UNKNOWN",
     "anonymous_join_gap": 0.15,
     "merge_adjacent_same_speaker": True,
     "merge_gap_seconds": 0.20,
