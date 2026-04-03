@@ -16,6 +16,7 @@ from session_summarizer.commands.diarize_audio import DiarizeAudioCommand
 from session_summarizer.commands.dump_and_compare_texts import DumpAndCompareTextsCommand
 from session_summarizer.commands.score_confidence import ScoreConfidenceCommand
 from session_summarizer.commands.transcribe_audio import TranscribeAudioCommand
+from session_summarizer.commands.update_turn_end import UpdateTurnEndCommand
 from session_summarizer.commands.validate_transcribers import ValidateTranscribersCommand
 from session_summarizer.utils import common_paths
 
@@ -94,6 +95,17 @@ def add_embeddings(
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
     command: AddEmbeddingsCommand = AddEmbeddingsCommand(session)
+    command.execute(logger)
+
+
+@app.command("update-turn-end")
+def update_turn_end(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to process"),
+) -> None:
+    """Score each speech clip with end-of-turn probability and set the END_OF_TURN flag."""
+    confirm_session(session)
+    logger: LoggingProtocol = create_logger()
+    command: UpdateTurnEndCommand = UpdateTurnEndCommand(session)
     command.execute(logger)
 
 
@@ -506,6 +518,15 @@ diarization_stitching:
   # Reasonable default: true
   prefer_shorter_on_tie: true
 
+  # ── Turn detection ──────────────────────────────────────────────────
+
+  # Probability threshold for classifying a speech clip as the end of a
+  # conversational turn.  A clip whose AI-model turn-end probability meets
+  # or exceeds this value is flagged as a turn boundary.
+  #
+  # Allowed values: 0.0 to 1.0
+  # Reasonable default: 0.5
+  turn_end_probability_threshold: 0.5
 
   # ── Numeric tolerance ────────────────────────────────────────────────
 

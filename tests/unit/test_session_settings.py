@@ -40,6 +40,7 @@ _DIARIZATION_STITCHING_FIELDS: dict = {
     "expansion_limit_seconds": 300,
     "scoring_mode": "overlap_seconds_then_midpoint",
     "prefer_shorter_on_tie": True,
+    "turn_end_probability_threshold": 0.5,
     "epsilon": 1e-6,
 }
 

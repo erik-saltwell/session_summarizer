@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from enum import IntFlag, auto
 from pathlib import Path
 
 from .alignment_result import WordAlignment
@@ -17,6 +18,11 @@ _ANONYMOUS_SPEAKER = "anonymous"
 _ANONYMOUS_SPEAKER_SET: set[str] = set(_ANONYMOUS_SPEAKER)
 
 
+class SpeechClipFlags(IntFlag):
+    NONE = 0
+    END_OF_TURN = auto()
+
+
 @dataclass
 class SpeechClip:
     start_time: float
@@ -26,6 +32,8 @@ class SpeechClip:
     text: str
     identity: str | None = None
     embedding: list[float] | None = None
+    flags: SpeechClipFlags = field(default=SpeechClipFlags.NONE)
+    end_of_turn_probability: float | None = None
     words: list[WordAlignment] | None = None  # Used to collect words while processing. Not saved to disk.
 
     @property
@@ -49,6 +57,15 @@ class SpeechClip:
     @property
     def is_anonymous(self) -> bool:
         return self.speakers == _ANONYMOUS_SPEAKER_SET
+
+    def has_flag(self, flag: SpeechClipFlags) -> bool:
+        return bool(self.flags & flag)
+
+    def set_flag(self, flag: SpeechClipFlags, is_set: bool) -> None:
+        if is_set:
+            self.flags |= flag
+        else:
+            self.flags &= ~flag
 
     def duration_inside_meaningful_boundaries(self, epsilon: float) -> float:
         return compute_duration_inside_meaningful_boundaries(self, epsilon)
@@ -149,6 +166,18 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol):
     def plain_text(self) -> str:
         return " ".join(clip.text for clip in self)
 
+    def save_to_human_format(self, path: Path) -> None:
+        with path.open("w", encoding="utf-8") as f:
+            for clip in self:
+                speakers = ", ".join(sorted(clip.speakers))
+                flags = " ".join(
+                    flag.name for flag in SpeechClipFlags if flag and clip.has_flag(flag) and flag.name is not None
+                )
+                flag_str = f" [{flags}]" if flags else ""
+                f.write(f"{speakers}{flag_str}:\n")
+                f.write(f"{clip.text}\n")
+                f.write("\n")
+
     def save_to_json(self, path: Path) -> None:
         data = [
             {
@@ -159,6 +188,8 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol):
                 "text": clip.text,
                 "identity": clip.identity,
                 "embedding": clip.embedding,
+                "flags": int(clip.flags),
+                "end_of_turn_probability": clip.end_of_turn_probability,
             }
             for clip in self
         ]
@@ -188,6 +219,8 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol):
                 text=item["text"],
                 identity=item.get("identity"),
                 embedding=item.get("embedding"),
+                flags=SpeechClipFlags(item.get("flags", 0)),
+                end_of_turn_probability=item.get("end_of_turn_probability"),
             )
             instance.append(clip)
         return instance

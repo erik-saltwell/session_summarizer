@@ -103,6 +103,15 @@ class DiarizationStitchingSettings(BaseModel, frozen=True):
     # This avoids bias toward long segments that span many words.
     prefer_shorter_on_tie: bool
 
+    # ── Turn detection ─────────────────────────────────────────────────
+
+    # Probability threshold for classifying a speech clip as the end of a
+    # conversational turn.  A clip whose AI-model turn-end probability meets
+    # or exceeds this value is flagged as a turn boundary.  Lower values
+    # increase sensitivity (more boundaries detected); higher values require
+    # stronger model confidence.
+    turn_end_probability_threshold: float
+
     # ── Numeric tolerance ──────────────────────────────────────────────
 
     # Small value added/subtracted when comparing floating-point time
@@ -123,7 +132,7 @@ class DiarizationStitchingSettings(BaseModel, frozen=True):
             raise ValueError("must be non-negative")
         return v
 
-    @field_validator("min_overlap_fraction_word")
+    @field_validator("min_overlap_fraction_word", "turn_end_probability_threshold")
     @classmethod
     def zero_to_one(cls, v: float) -> float:
         if v < 0 or v > 1:

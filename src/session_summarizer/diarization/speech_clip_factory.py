@@ -96,6 +96,15 @@ def _find_best_candidate(
     return (best_candidate, best_score)
 
 
+def _remove_empty_clips(clips: SpeechClipSet) -> SpeechClipSet:
+    return_clips: SpeechClipSet = SpeechClipSet()
+    for clip in clips:
+        if clip.words:
+            return_clips.add_clip(clip)
+    return_clips.sort_clips()
+    return return_clips
+
+
 def create_speech_clips(
     diarization_result: MergedDiarizationResult,
     alignment_result: AlignmentResult,
@@ -146,7 +155,7 @@ def create_speech_clips(
             clip.expand_bounds_to_include_words(epsilon, settings.diarization_stitching.expansion_limit_seconds)
 
     speech_clips = merge_clips(speech_clips, SimpleMergeSelector(), settings.diarization_stitching, logger)
-
+    speech_clips = _remove_empty_clips(speech_clips)
     speech_clips.sort_clips()
 
     for clip in speech_clips:
