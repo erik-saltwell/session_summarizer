@@ -31,7 +31,7 @@ def diarize_audio(
     diarizer: DiarizenDiarizer = DiarizenDiarizer()
     diarization: MergedDiarizationResult = diarizer.diarize(session_dir / settings.cleaned_audio_file, logger)
     logger.report_message(f"[blue]Converting to SpeechClipSet {final_path}...[/blue]")
-    result: SpeechClipSet = create_speech_clips(diarization, alignment_result, settings)
+    result: SpeechClipSet = create_speech_clips(diarization, alignment_result, settings, logger)
 
     logger.report_message("[blue]Diarization complete.[/blue]")
 

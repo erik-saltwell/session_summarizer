@@ -14,6 +14,7 @@ from .segment_protocol import (
 )
 
 _ANONYMOUS_SPEAKER = "anonymous"
+_ANONYMOUS_SPEAKER_SET: set[str] = set(_ANONYMOUS_SPEAKER)
 
 
 @dataclass
@@ -44,6 +45,10 @@ class SpeechClip:
     @property
     def is_multispeaker(self) -> bool:
         return len(self.speakers) > 1
+
+    @property
+    def is_anonymous(self) -> bool:
+        return self.speakers == _ANONYMOUS_SPEAKER_SET
 
     def duration_inside_meaningful_boundaries(self, epsilon: float) -> float:
         return compute_duration_inside_meaningful_boundaries(self, epsilon)
@@ -81,7 +86,14 @@ class SpeechClip:
 
         self.start_time = min(self.start_time, other.start_time)
         self.end_time = max(self.end_time, other.end_time)
-        self.speakers = self.speakers | other.speakers
+
+        if self.is_anonymous:
+            self.speakers = other.speakers
+        elif other.is_anonymous:
+            pass
+        else:
+            self.speakers = self.speakers | other.speakers
+
         self.confidence_avg = (
             (self.confidence_avg * self.word_count + other.confidence_avg * other.word_count)
             / (self.word_count + other.word_count)
