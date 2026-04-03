@@ -289,6 +289,16 @@ base_diarized_path: base_diarization.json
 #   speech_clips_with_embedding: clips_with_embeddings.json
 speech_clips_with_embedding: clips_with_embeddings.json
 
+# ---------------------------------------------------------------------------
+# turn_end_updated_path  (REQUIRED)
+# ---------------------------------------------------------------------------
+# Path to the SpeechClipSet JSON file with END_OF_TURN flags applied.
+# Written by the update-turn-end command.
+#
+# Example:
+#   turn_end_updated_path: turn_end_updated.json
+turn_end_updated_path: turn_end_updated.json
+
 
 # ---------------------------------------------------------------------------
 # device  (REQUIRED)

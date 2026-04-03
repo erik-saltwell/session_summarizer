@@ -15,16 +15,15 @@ from ..turn_detection.smart_turn_scorer import load_audio_mono_16k, score_clips_
 def update_turn_end(
     settings: SessionSettings,
     session_dir: Path,
+    clips: SpeechClipSet,
     use_cache_if_present: bool,
     gpu_logger: GpuLogger,
     logger: LoggingProtocol,
 ) -> SpeechClipSet:
-    base_path: Path = session_dir / settings.base_diarized_path
-    clips: SpeechClipSet = SpeechClipSet.load_from_json(base_path)
-
-    if use_cache_if_present and len(clips) > 0 and clips[0].end_of_turn_probability is not None:
-        logger.report_message("[yellow]Clips already have turn-end probabilities, returning cached.[/yellow]")
-        return clips
+    final_path: Path = session_dir / settings.turn_end_updated_path
+    if final_path.exists() and use_cache_if_present:
+        logger.report_message(f"[yellow]{final_path} already exists, returning cached instance.[/yellow]")
+        return SpeechClipSet.load_from_json(final_path)
 
     with logger.status("Loading audio for Smart Turn scoring..."):
         audio = load_audio_mono_16k(session_dir / settings.cleaned_audio_file)

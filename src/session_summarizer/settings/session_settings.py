@@ -54,6 +54,14 @@ class SessionSettings(BaseModel, frozen=True):
             description="Path to SpeechClipSet JSON file with speaker embeddings added (read/written during processing)"
         ),
     ]
+    turn_end_updated_path: Annotated[
+        Path,
+        Field(
+            description=(
+                "Path to SpeechClipSet JSON file with END_OF_TURN flags applied (read/written during processing)"
+            )
+        ),
+    ]
     device: Annotated[
         Literal["cpu", "cuda"],
         Field(description="Device for model inference — 'cpu' or 'cuda'"),
@@ -171,6 +179,7 @@ class SessionSettings(BaseModel, frozen=True):
             "segments_path",
             "base_diarized_path",
             "speech_clips_with_embedding",
+            "turn_end_updated_path",
         ):
             raw = data.get(key)
             if raw is None:
