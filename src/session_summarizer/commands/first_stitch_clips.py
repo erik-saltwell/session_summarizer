@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
 import session_summarizer.utils.common_paths as common_paths
 
@@ -15,6 +15,12 @@ from ..helpers.update_turn_end import update_turn_end
 from ..processing_results import AlignmentResult, SpeechClipSet, TranscriptionResult
 from ..settings import SessionSettings
 from .session_processing_command import SessionProcessingCommand
+
+
+@dataclass
+class StitchResults:
+    pre_stitching_segments: int = 0
+    post_stitching_segments: int = 0
 
 
 @dataclass
@@ -34,8 +40,13 @@ class FirstStitchClipsCommand(SessionProcessingCommand):
 
         turn_clips: SpeechClipSet = update_turn_end(settings, session_dir, diarized_clips, True, self, self.logger)
 
+        stitch_results: StitchResults = StitchResults()
+        stitch_results.pre_stitching_segments = len(turn_clips)
+
         stitched_clips: SpeechClipSet = apply_first_stitching(
             settings, session_dir, turn_clips, False, self, self.logger
         )
+        stitch_results.post_stitching_segments = len(stitched_clips)
+        self.logger.report_table_message(asdict(stitch_results))
 
         stitched_clips.save_to_json(session_dir / settings.first_stitched_path)
