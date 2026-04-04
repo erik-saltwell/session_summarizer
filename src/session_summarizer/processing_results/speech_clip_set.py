@@ -170,11 +170,17 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol):
         with path.open("w", encoding="utf-8") as f:
             for clip in self:
                 speakers = ", ".join(sorted(clip.speakers))
+
                 flags = " ".join(
                     flag.name for flag in SpeechClipFlags if flag and clip.has_flag(flag) and flag.name is not None
                 )
-                flag_str = f" [{flags}]" if flags else ""
-                f.write(f"{speakers}{flag_str}:\n")
+                flag_str = f" [{flags if flags else 'NO_FLAGS'}]"
+
+                # prob_end_turn_str: str = f"{clip.end_of_turn_probability:0.2f}"
+                f.write(f"{speakers} ")
+                f.write(f"{flag_str}:")
+                # f.write(f"{prob_end_turn_str}")
+                f.write("\n")
                 f.write(f"{clip.text}\n")
                 f.write("\n")
 

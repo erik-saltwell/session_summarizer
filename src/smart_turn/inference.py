@@ -109,7 +109,7 @@ def predict_endpoint(audio_array: np.ndarray) -> dict[str, float]:
     outputs = session.run(None, {"input_features": input_features})
 
     # Extract probability (ONNX model returns sigmoid probabilities)
-    probability = outputs[0][0].item()
+    probability = outputs[0][0].item()  # pyright: ignore[reportIndexIssue]
 
     # Make prediction (1 for Complete, 0 for Incomplete)
     prediction = 1 if probability > 0.5 else 0

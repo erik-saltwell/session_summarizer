@@ -549,7 +549,7 @@ diarization_stitching:
   #
   # Allowed values: 0.0 to 1.0
   # Reasonable default: 0.5
-  turn_end_probability_threshold: 0.5
+  turn_end_probability_threshold: 0.8
 
   # ── Numeric tolerance ────────────────────────────────────────────────
 

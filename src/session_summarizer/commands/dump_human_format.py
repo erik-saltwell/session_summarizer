@@ -24,5 +24,6 @@ class DumpHumanFormatCommand(SessionProcessingCommand):
 
         clips: SpeechClipSet = SpeechClipSet.load_from_json(input_path)
         output_path: Path = input_path.with_stem(input_path.stem + "_human").with_suffix(".txt")
+
         clips.save_to_human_format(output_path)
         self.logger.report_message(f"[green]Wrote {len(clips)} clips to {output_path}[/green]")

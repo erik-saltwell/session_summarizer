@@ -27,7 +27,7 @@
                 "--session",
                 "test",
                 "--file",
-                "base_diarization.json"
+                "turn_end_updated.json"
             ]
         },
         {
