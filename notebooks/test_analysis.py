@@ -107,7 +107,7 @@ def _(first_stitched_data, pd, plt):
     plt.ylim(top=0.5, bottom=0)
     plt.grid(True, alpha=0.3)
     plt.gca()
-    return
+    return (diarization_df,)
 
 
 @app.cell
@@ -181,6 +181,43 @@ def _(plt, record_count_df):
     plt.ylabel("Number of Records")
     plt.xticks(rotation=15, ha="right")
     plt.grid(axis="y", alpha=0.3)
+    plt.gca()
+    return
+
+
+@app.cell
+def _(diarization_df):
+    filtered_first_stitched_gap_df = (
+        diarization_df.sort_values("start_time")
+        .reset_index(drop=True)
+        .assign(
+            duration=lambda df: df["end_time"] - df["start_time"],
+            previous_end_time=lambda df: df["end_time"].shift(1),
+        )
+        .assign(gap_from_previous=lambda df: df["start_time"] - df["previous_end_time"])
+        .loc[
+            lambda df: (df["duration"] <= 0.5) & (df["gap_from_previous"] < 2.0)
+        ]
+        .copy()
+    )
+
+    filtered_first_stitched_gap_df.head()
+    return (filtered_first_stitched_gap_df,)
+
+
+@app.cell
+def _(filtered_first_stitched_gap_df, plt):
+    plt.figure(figsize=(8, 5))
+    plt.hist(
+        filtered_first_stitched_gap_df["gap_from_previous"].dropna(),
+        bins=30,
+        color="#4C78A8",
+        edgecolor="white",
+    )
+    plt.title("Gap to Previous Clip for First-Stitched Clips ≤ 0.5s and Gap < 4.0s")
+    plt.xlabel("Gap from previous clip end to current clip start (seconds)")
+    plt.ylabel("Count")
+    plt.grid(axis="y", alpha=0.1)
     plt.gca()
     return
 

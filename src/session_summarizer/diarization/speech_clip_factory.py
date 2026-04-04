@@ -159,6 +159,6 @@ def create_speech_clips(
     speech_clips.sort_clips()
 
     for clip in speech_clips:
-        clip.finalize_words()
+        clip.compute_word_derived_values()
 
     return speech_clips

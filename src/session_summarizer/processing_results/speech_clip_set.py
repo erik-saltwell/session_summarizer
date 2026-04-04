@@ -86,57 +86,62 @@ class SpeechClip:
         self.end_time = max(self.end_time, word.end_time)
         self.add_word(word)
 
+    def _set_merge_start_properties(self, first: SpeechClip) -> None:
+        self.start_time = first.start_time
+
+    def _set_merge_end_properties(self, last: SpeechClip) -> None:
+        self.end_time = last.end_time
+        self.end_of_turn_probability = last.end_of_turn_probability
+        self.set_flag(SpeechClipFlags.END_OF_TURN, last.has_flag(SpeechClipFlags.END_OF_TURN))
+
+    def _set_merge_base_properties(self, other: SpeechClip) -> None:
+        speakers: set[str] = set()
+        speakers |= self.speakers if not self.speakers == _ANONYMOUS_SPEAKER_SET else set()
+        speakers |= other.speakers if not other.speakers == _ANONYMOUS_SPEAKER_SET else set()
+        if len(speakers) == 0:
+            speakers.add(_ANONYMOUS_SPEAKER)
+        self.speakers = speakers
+
+        words: list[WordAlignment] | None
+        words = []
+        words.extend(self.words if self.words else [])
+        words.extend(other.words if other.words else [])
+        if len(words) == 0:
+            words = None
+        self.words = words
+
+        identity = self.identity if self.identity else other.identity
+        self.identity = identity
+
+        embedding = None  # embedding needs to be recomputed after merge
+        self.embedding = embedding
+
+        self.compute_word_derived_values()
+
     def merge(self, other: SpeechClip) -> None:
-        if (
-            self.identity is not None
-            or self.embedding is not None
-            or other.identity is not None
-            or other.embedding is not None
-        ):
-            raise ValueError("Cannot merge clips that have identity or embedding information")
+        if other is self:
+            return
 
-        if self.text and other.text:
-            if self.start_time < other.start_time:
-                self.text = (self.text + " " + other.text).strip()
-            else:
-                self.text = (other.text + " " + self.text).strip()
+        first: SpeechClip = self if self.start_time <= other.start_time else other
+        last: SpeechClip = self if self.end_time >= other.end_time else other
 
-        self.start_time = min(self.start_time, other.start_time)
-        self.end_time = max(self.end_time, other.end_time)
-
-        if self.is_anonymous:
-            self.speakers = other.speakers
-        elif other.is_anonymous:
-            pass
-        else:
-            self.speakers = self.speakers | other.speakers
-
-        self.confidence_avg = (
-            (self.confidence_avg * self.word_count + other.confidence_avg * other.word_count)
-            / (self.word_count + other.word_count)
-            if (self.word_count + other.word_count) > 0
-            else 0.0
-        )
-
-        if other.words:
-            for word in other.words:
-                self.add_word(word)
+        self._set_merge_base_properties(other)
+        self._set_merge_start_properties(first)
+        self._set_merge_end_properties(last)
 
     def add_word(self, word: WordAlignment) -> None:
         if self.words is None:
             self.words = []
         self.words.append(word)
 
-    def finalize_words(self) -> None:
-        if self.words is None:
-            return
-        sorted_words = sorted(self.words, key=lambda w: (w.start_time, w.end_time))
-        self.text = " ".join(w.word for w in sorted_words)
-        if len(sorted_words) == 0:
+    def compute_word_derived_values(self) -> None:
+        if not self.words:
+            self.text = ""
             self.confidence_avg = 0.0
         else:
+            sorted_words = sorted(self.words, key=lambda w: (w.start_time, w.end_time))
+            self.text = " ".join(w.word for w in sorted_words)
             self.confidence_avg = sum(w.confidence for w in sorted_words) / len(sorted_words)
-        self.words = None
 
     def overlap(self, other: SegmentProtocol, minimum_overlap: float) -> float:
         return compute_overlap(self, other, minimum_overlap)

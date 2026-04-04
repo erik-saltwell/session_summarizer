@@ -6,13 +6,63 @@ from session_summarizer.processing_results.speech_clip_set import SpeechClip, Sp
 from session_summarizer.settings.diarization_stitching_settings import DiarizationStitchingSettings
 
 from ..diarization import MergeSelector, MergeType
-from ..diarization.clip_merger import clips_are_close_enough, clips_have_subset_superset_relationship, merge_clips
+from ..diarization.clip_merger import (
+    clips_are_close_enough,
+    clips_are_same_speaker,
+    clips_have_subset_superset_relationship,
+    merge_clips,
+)
 from ..processing_results.speech_clip_set import SpeechClipSet
 from ..protocols import (
     GpuLogger,
     LoggingProtocol,
     SessionSettings,
 )
+
+
+class BackchannelMerger(MergeSelector):
+    def ShouldMerge(
+        self,
+        prior_clip: SpeechClip,
+        current_clip: SpeechClip,
+        next_clip: SpeechClip | None,
+        settings: DiarizationStitchingSettings,
+        logger: LoggingProtocol,
+    ) -> MergeType:
+        if prior_clip.text.lower().endswith("and naze again"):
+            print("break")
+        if prior_clip.has_flag(SpeechClipFlags.END_OF_TURN):
+            return MergeType.NO_MERGE
+        if clips_are_same_speaker(prior_clip, current_clip, settings, True, logger):
+            return MergeType.NO_MERGE
+        if next_clip is None:
+            return MergeType.NO_MERGE
+
+        if not clips_are_same_speaker(prior_clip, next_clip, settings, True, logger):
+            return MergeType.NO_MERGE
+
+        if current_clip.duration > 0.5:
+            return MergeType.NO_MERGE
+
+        if not clips_are_close_enough(
+            prior_clip,
+            current_clip,
+            0.25,
+            settings.epsilon,
+            logger,
+        ):
+            return MergeType.NO_MERGE
+
+        if not clips_are_close_enough(
+            current_clip,
+            next_clip,
+            1.0,
+            settings.epsilon,
+            logger,
+        ):
+            return MergeType.NO_MERGE
+
+        return MergeType.MERGE_ALL_THREE
 
 
 class MergeUnfinishedSegmentsWithSameSpeakerOrAnonymous(MergeSelector):
@@ -53,9 +103,12 @@ def apply_first_stitching(
         logger.report_message(f"[yellow]{final_path} already exists, returning cached instance.[/yellow]")
         return SpeechClipSet.load_from_json(final_path)
 
+    backchannel_selector: BackchannelMerger = BackchannelMerger()
+    merged_clips = merge_clips(clips, backchannel_selector, settings.diarization_stitching, logger)
+
     merge_selector: MergeUnfinishedSegmentsWithSameSpeakerOrAnonymous = (
         MergeUnfinishedSegmentsWithSameSpeakerOrAnonymous()
     )
-    merged_clips = merge_clips(clips, merge_selector, settings.diarization_stitching, logger)
+    merged_clips = merge_clips(merged_clips, merge_selector, settings.diarization_stitching, logger)
 
     return merged_clips
