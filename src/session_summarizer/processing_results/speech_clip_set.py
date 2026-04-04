@@ -174,13 +174,12 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol):
                 flags = " ".join(
                     flag.name for flag in SpeechClipFlags if flag and clip.has_flag(flag) and flag.name is not None
                 )
-                flag_str = f" [{flags if flags else 'NO_FLAGS'}]"
+                flag_str = f"[{flags if flags else 'NO_FLAGS'}]"
+                start_str = f"{clip.start_time: 0.3f}".strip()
+                end_str = f"{clip.start_time: 0.3f}".strip()
 
-                # prob_end_turn_str: str = f"{clip.end_of_turn_probability:0.2f}"
-                f.write(f"{speakers} ")
-                f.write(f"{flag_str}:")
-                # f.write(f"{prob_end_turn_str}")
-                f.write("\n")
+                f.write(f"{speakers}\n")
+                f.write(f"({start_str},{end_str}): {flag_str}\n")
                 f.write(f"{clip.text}\n")
                 f.write("\n")
 

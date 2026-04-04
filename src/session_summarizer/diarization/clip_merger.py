@@ -28,10 +28,14 @@ class MergeSelector(Protocol):
 
 
 def clips_are_close_enough(
-    first: SpeechClip, second: SpeechClip, settings: DiarizationStitchingSettings, logger: LoggingProtocol
+    first: SpeechClip,
+    second: SpeechClip,
+    settings: DiarizationStitchingSettings,
+    logger: LoggingProtocol,
+    distance_multiplier: float = 1.0,
 ) -> bool:
     gap: float = first.gap_distance(second, settings.epsilon)
-    return gap <= (settings.merge_gap_seconds + settings.epsilon)
+    return gap <= (settings.merge_gap_seconds * distance_multiplier + settings.epsilon)
 
 
 def clips_are_same_speaker(
@@ -56,6 +60,18 @@ def clips_have_subset_superset_relationship(
     if exempt_anonymous and (first.is_anonymous or second.is_anonymous):
         return True
     return first.speakers <= second.speakers or second.speakers <= first.speakers
+
+
+def second_clip_is_superset(
+    first: SpeechClip,
+    second: SpeechClip,
+    settings: DiarizationStitchingSettings,
+    exempt_anonymous: bool,
+    logger: LoggingProtocol,
+) -> bool:
+    if exempt_anonymous and (first.is_anonymous or second.is_anonymous):
+        return True
+    return first.speakers <= second.speakers
 
 
 def merge_clips(

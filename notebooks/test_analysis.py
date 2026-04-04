@@ -21,64 +21,42 @@ def _():
 
 
 @app.cell
-def _(Path):
+def _(Path, json):
     print(Path.cwd())
-    return
+    base_diarization_path = Path("data/test/base_diarization.json")
+    turn_end_path = Path("data/test/turn_end_updated.json")
+    first_stitched_path = Path("data/test/first_stitched.json")
 
-
-@app.cell
-def _(Path, json, pd):
-    json_path = Path("data/test/turn_end_updated.json")
-
-    json_text = json_path.read_text()
-
-    try:
-        json_data = json.loads(json_text)
-    except json.JSONDecodeError:
-        json_data = [json.loads(line) for line in json_text.splitlines() if line.strip()]
-
-    def collect_field_values(obj, field_name):
-        collected = []
-        if isinstance(obj, dict):
-            if field_name in obj:
-                collected.append(obj[field_name])
-            for value in obj.values():
-                collected.extend(collect_field_values(value, field_name))
-        elif isinstance(obj, list):
-            for item in obj:
-                collected.extend(collect_field_values(item, field_name))
-        return collected
-
-    end_turn_probability_values = collect_field_values(json_data, "end_of_turn_probability")
-    end_turn_probability_series = pd.to_numeric(pd.Series(end_turn_probability_values), errors="coerce").dropna()
-    end_turn_probability_df = pd.DataFrame({"end_of_turn_probability": end_turn_probability_series})
-
-    end_turn_probability_df.head()
-    return end_turn_probability_df, json_data, json_path
-
-
-@app.cell
-def _(end_turn_probability_df, plt):
-    plt.figure(figsize=(8, 5))
-    plt.hist(end_turn_probability_df["end_of_turn_probability"], bins=30, color="#4C78A8", edgecolor="white")
-    plt.title("Histogram of end_turn_probability")
-    plt.xlabel("end_turn_probability")
-    plt.ylabel("Count")
-    plt.grid(axis="y", alpha=0.3)
-    plt.gca()
-    return
-
-
-@app.cell
-def _(Path, json, pd):
-    diarization_path = Path("data/test/base_diarization.json")
-    diarization_text = diarization_path.read_text()
+    base_diarization_text = base_diarization_path.read_text()
+    turn_end_text = turn_end_path.read_text()
+    first_stitched_text = first_stitched_path.read_text()
 
     try:
-        diarization_data = json.loads(diarization_text)
+        base_diarization_data = json.loads(base_diarization_text)
     except json.JSONDecodeError:
-        diarization_data = [json.loads(line) for line in diarization_text.splitlines() if line.strip()]
+        base_diarization_data = [json.loads(line) for line in base_diarization_text.splitlines() if line.strip()]
 
+    try:
+        turn_end_data = json.loads(turn_end_text)
+    except:
+        turn_end_data = [json.loads(line) for line in turn_end_text.splitlines() if line.strip()]
+
+    try:
+        first_stitched_data = json.loads(first_stitched_text)
+    except:
+        first_stitched_data = [json.loads(line) for line in first_stitched_text.splitlines() if line.strip()]
+    return (
+        base_diarization_data,
+        base_diarization_path,
+        first_stitched_data,
+        first_stitched_path,
+        turn_end_data,
+        turn_end_path,
+    )
+
+
+@app.cell
+def _(base_diarization_data, pd, plt):
     def collect_time_segments(obj):
         segments = []
         if isinstance(obj, dict):
@@ -96,7 +74,7 @@ def _(Path, json, pd):
                 segments.extend(collect_time_segments(item))
         return segments
 
-    diarization_segments = collect_time_segments(diarization_data)
+    diarization_segments = collect_time_segments(base_diarization_data)
 
     diarization_df = pd.DataFrame(diarization_segments)
     diarization_df["start_time"] = pd.to_numeric(diarization_df["start_time"], errors="coerce")
@@ -113,12 +91,6 @@ def _(Path, json, pd):
         gap=diarization_df["start_time"] - diarization_df["end_time"].shift(1),
     ).dropna(subset=["gap"])
 
-    diarization_plot_df.head()
-    return diarization_data, diarization_path, diarization_plot_df
-
-
-@app.cell
-def _(diarization_plot_df, plt):
     plt.figure(figsize=(9, 6))
     plt.scatter(
         diarization_plot_df["duration"],
@@ -139,20 +111,59 @@ def _(diarization_plot_df, plt):
 
 
 @app.cell
-def _(diarization_data, diarization_path, json_data, json_path, pd):
+def _(pd, plt, turn_end_data):
+    def collect_field_values(obj, field_name):
+        collected = []
+        if isinstance(obj, dict):
+            if field_name in obj:
+                collected.append(obj[field_name])
+            for value in obj.values():
+                collected.extend(collect_field_values(value, field_name))
+        elif isinstance(obj, list):
+            for item in obj:
+                collected.extend(collect_field_values(item, field_name))
+        return collected
+
+    end_turn_probability_values = collect_field_values(turn_end_data, "end_of_turn_probability")
+    end_turn_probability_series = pd.to_numeric(pd.Series(end_turn_probability_values), errors="coerce").dropna()
+    end_turn_probability_df = pd.DataFrame({"end_of_turn_probability": end_turn_probability_series})
+
+    end_turn_probability_df.head()
+
+    plt.figure(figsize=(8, 5))
+    plt.hist(end_turn_probability_df["end_of_turn_probability"], bins=30, color="#4C78A8", edgecolor="white")
+    plt.title("Histogram of end_turn_probability")
+    plt.xlabel("end_turn_probability")
+    plt.ylabel("Count")
+    plt.grid(axis="y", alpha=0.3)
+    plt.gca()
+    return
+
+
+@app.cell
+def _(
+    base_diarization_data,
+    base_diarization_path,
+    first_stitched_data,
+    first_stitched_path,
+    pd,
+    turn_end_data,
+    turn_end_path,
+):
     record_count_df = pd.DataFrame(
         {
             "file": [
-                str(diarization_path),
-                str(json_path),
+                str(base_diarization_path),
+                str(turn_end_path),
+                str(first_stitched_path),
             ],
             "record_count": [
-                len(diarization_data) if isinstance(diarization_data, list) else 1,
-                len(json_data) if isinstance(json_data, list) else 1,
+                len(base_diarization_data) if isinstance(base_diarization_data, list) else 1,
+                len(turn_end_data) if isinstance(turn_end_data, list) else 1,
+                len(first_stitched_data) if isinstance(first_stitched_data, list) else 1,
             ],
         }
     )
-
     return (record_count_df,)
 
 

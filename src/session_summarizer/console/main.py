@@ -21,6 +21,7 @@ from session_summarizer.commands.update_turn_end import UpdateTurnEndCommand
 from session_summarizer.commands.validate_transcribers import ValidateTranscribersCommand
 from session_summarizer.utils import common_paths
 
+from ..commands.first_stitch_clips import FirstStitchClipsCommand
 from ..commands.register_speakers import RegisterSpeakersCommand
 from ..logging import CompositeLogger, FileLogger, RichConsoleLogger
 from ..protocols import LoggingProtocol
@@ -107,6 +108,17 @@ def update_turn_end(
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
     command: UpdateTurnEndCommand = UpdateTurnEndCommand(session)
+    command.execute(logger)
+
+
+@app.command("apply-first-stitching")
+def apply_first_stitching(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to process"),
+) -> None:
+    """Score each speech clip with end-of-turn probability and set the END_OF_TURN flag."""
+    confirm_session(session)
+    logger: LoggingProtocol = create_logger()
+    command: FirstStitchClipsCommand = FirstStitchClipsCommand(session)
     command.execute(logger)
 
 
@@ -299,6 +311,15 @@ speech_clips_with_embedding: clips_with_embeddings.json
 #   turn_end_updated_path: turn_end_updated.json
 turn_end_updated_path: turn_end_updated.json
 
+# ---------------------------------------------------------------------------
+# first_stitched_path  (REQUIRED)
+# ---------------------------------------------------------------------------
+# Path to the SpeechClipSet JSON file with first stitching applied.
+# Written by the first-stitching command.
+#
+# Example:
+#   first_stitched_path: first_stitched.json
+first_stitched_path: first_stitched.json
 
 # ---------------------------------------------------------------------------
 # device  (REQUIRED)

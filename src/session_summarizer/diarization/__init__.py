@@ -1,4 +1,5 @@
 from .candidate_pool import CandidatePool
+from .clip_merger import MergeSelector, MergeType, merge_clips
 from .diarizen_diarizer import (
     DiarizenDiarizer,
     MergedDiarizationResult,
@@ -14,4 +15,7 @@ __all__ = [
     "merge_overlapping_diarization",
     "CandidatePool",
     "create_speech_clips",
+    "merge_clips",
+    "MergeSelector",
+    "MergeType",
 ]

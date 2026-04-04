@@ -62,6 +62,14 @@ class SessionSettings(BaseModel, frozen=True):
             )
         ),
     ]
+    first_stitched_path: Annotated[
+        Path,
+        Field(
+            description=(
+                "Path to SpeechClipSet JSON file that has had initial stitching (read/written during processing)"
+            )
+        ),
+    ]
     device: Annotated[
         Literal["cpu", "cuda"],
         Field(description="Device for model inference — 'cpu' or 'cuda'"),
@@ -180,6 +188,7 @@ class SessionSettings(BaseModel, frozen=True):
             "base_diarized_path",
             "speech_clips_with_embedding",
             "turn_end_updated_path",
+            "first_stitched_path",
         ):
             raw = data.get(key)
             if raw is None:

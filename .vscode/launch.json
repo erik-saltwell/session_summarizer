@@ -5,6 +5,18 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "-first-stitching",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "apply-first-stitching",
+                "--session",
+                "test",
+            ]
+        },
+        {
             "name": "-turn-end",
             "type": "debugpy",
             "request": "launch",
@@ -27,7 +39,7 @@
                 "--session",
                 "test",
                 "--file",
-                "turn_end_updated.json"
+                "first_stitched.json"
             ]
         },
         {
