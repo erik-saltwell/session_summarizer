@@ -5,6 +5,18 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "-pipeline",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "process-pipeline",
+                "--session",
+                "test",
+            ]
+        },
+        {
             "name": "-first-stitching",
             "type": "debugpy",
             "request": "launch",

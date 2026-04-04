@@ -22,6 +22,7 @@ from session_summarizer.commands.validate_transcribers import ValidateTranscribe
 from session_summarizer.utils import common_paths
 
 from ..commands.first_stitch_clips import FirstStitchClipsCommand
+from ..commands.process_pipeline import ProcessPipelineCommand
 from ..commands.register_speakers import RegisterSpeakersCommand
 from ..logging import CompositeLogger, FileLogger, RichConsoleLogger
 from ..protocols import LoggingProtocol
@@ -125,12 +126,11 @@ def apply_first_stitching(
 @app.command("dump-human-format")
 def dump_human_format(
     session: str = typer.Option(..., "--session", "-s", help="ID of the session"),
-    json_file: str = typer.Option(..., "--file", "-f", help="SpeechClipSet JSON filename relative to session dir"),
 ) -> None:
-    """Export a SpeechClipSet JSON file to a human-readable text format."""
+    """Export base_diarization, update_turn, and first_stitch to human-readable text format."""
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
-    command: DumpHumanFormatCommand = DumpHumanFormatCommand(session, json_file=json_file)
+    command: DumpHumanFormatCommand = DumpHumanFormatCommand(session)
     command.execute(logger)
 
 
@@ -162,6 +162,17 @@ def compute_vad_segments(
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
     command: ComputeSegmentsCommand = ComputeSegmentsCommand(session)
+    command.execute(logger)
+
+
+@app.command("process-pipeline")
+def process_pipeline(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to use for validation"),
+) -> None:
+    """Clean the session and run the full pipeline."""
+    confirm_session(session)
+    logger: LoggingProtocol = create_logger()
+    command: ProcessPipelineCommand = ProcessPipelineCommand(session)
     command.execute(logger)
 
 
