@@ -6,7 +6,7 @@ from session_summarizer.processing_results.speech_clip_set import SpeechClip, Sp
 from session_summarizer.settings.diarization_stitching_settings import DiarizationStitchingSettings
 
 from ..diarization import MergeSelector, MergeType
-from ..diarization.clip_merger import clips_are_close_enough, merge_clips, second_clip_is_superset
+from ..diarization.clip_merger import clips_are_close_enough, clips_have_subset_superset_relationship, merge_clips
 from ..processing_results.speech_clip_set import SpeechClipSet
 from ..protocols import (
     GpuLogger,
@@ -26,7 +26,7 @@ class MergeUnfinishedSegmentsWithSameSpeakerOrAnonymous(MergeSelector):
     ) -> MergeType:
         if prior_clip.has_flag(SpeechClipFlags.END_OF_TURN):
             return MergeType.NO_MERGE
-        if not second_clip_is_superset(prior_clip, current_clip, settings, True, logger):
+        if not clips_have_subset_superset_relationship(prior_clip, current_clip, settings, True, logger):
             return MergeType.NO_MERGE
         if not clips_are_close_enough(
             prior_clip,
