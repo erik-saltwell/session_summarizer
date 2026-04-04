@@ -60,7 +60,7 @@ class SimpleMergeSelector(MergeSelector):
         settings: DiarizationStitchingSettings,
         logger: LoggingProtocol,
     ) -> MergeType:
-        if not clips_are_close_enough(prior_clip, current_clip, settings, logger):
+        if not clips_are_close_enough(prior_clip, current_clip, settings.merge_gap_seconds, settings.epsilon, logger):
             return MergeType.NO_MERGE
         if not clips_are_same_speaker(prior_clip, current_clip, settings, self.exempt_anonymous, logger):
             return MergeType.NO_MERGE

@@ -30,12 +30,12 @@ class MergeSelector(Protocol):
 def clips_are_close_enough(
     first: SpeechClip,
     second: SpeechClip,
-    settings: DiarizationStitchingSettings,
+    maximum_gap: float,
+    epsilon: float,
     logger: LoggingProtocol,
-    distance_multiplier: float = 1.0,
 ) -> bool:
-    gap: float = first.gap_distance(second, settings.epsilon)
-    return gap <= (settings.merge_gap_seconds * distance_multiplier + settings.epsilon)
+    gap: float = first.gap_distance(second, epsilon)
+    return gap <= (maximum_gap + epsilon)
 
 
 def clips_are_same_speaker(

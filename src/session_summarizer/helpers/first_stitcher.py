@@ -28,7 +28,13 @@ class MergeUnfinishedSegmentsWithSameSpeakerOrAnonymous(MergeSelector):
             return MergeType.NO_MERGE
         if not second_clip_is_superset(prior_clip, current_clip, settings, True, logger):
             return MergeType.NO_MERGE
-        if not clips_are_close_enough(prior_clip, current_clip, settings, logger, distance_multiplier=2.0):
+        if not clips_are_close_enough(
+            prior_clip,
+            current_clip,
+            settings.unfinished_clip_merge_max_length,
+            settings.epsilon,
+            logger,
+        ):
             return MergeType.NO_MERGE
 
         return MergeType.MERGE_WITH_PRIOR
