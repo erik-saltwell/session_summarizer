@@ -81,7 +81,7 @@ def merge_clips(
     logger: LoggingProtocol,
 ) -> SpeechClipSet:
     if len(initial_clips) <= 1:
-        return SpeechClipSet()
+        return initial_clips
 
     merged_clips: SpeechClipSet = SpeechClipSet()
     merged_clips.add_clip(initial_clips[0])

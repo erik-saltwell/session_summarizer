@@ -34,7 +34,7 @@ class SpeechClip:
     embedding: list[float] | None = None
     flags: SpeechClipFlags = field(default=SpeechClipFlags.NONE)
     end_of_turn_probability: float | None = None
-    words: list[WordAlignment] | None = None  # Used to collect words while processing. Not saved to disk.
+    words: list[WordAlignment] | None = None
 
     @property
     def word_count(self) -> int:
@@ -200,6 +200,17 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol):
                 "embedding": clip.embedding,
                 "flags": int(clip.flags),
                 "end_of_turn_probability": clip.end_of_turn_probability,
+                "words": [
+                    {
+                        "word": w.word,
+                        "start_time": w.start_time,
+                        "end_time": w.end_time,
+                        "confidence": w.confidence,
+                    }
+                    for w in clip.words
+                ]
+                if clip.words is not None
+                else None,
             }
             for clip in self
         ]
@@ -221,6 +232,20 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol):
             data: list[dict] = json.load(f)
         instance = cls()
         for item in data:
+            raw_words = item.get("words")
+            words = (
+                [
+                    WordAlignment(
+                        word=w["word"],
+                        start_time=w["start_time"],
+                        end_time=w["end_time"],
+                        confidence=w.get("confidence", 0.0),
+                    )
+                    for w in raw_words
+                ]
+                if raw_words is not None
+                else None
+            )
             clip = SpeechClip(
                 start_time=item["start_time"],
                 end_time=item["end_time"],
@@ -231,6 +256,7 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol):
                 embedding=item.get("embedding"),
                 flags=SpeechClipFlags(item.get("flags", 0)),
                 end_of_turn_probability=item.get("end_of_turn_probability"),
+                words=words,
             )
             instance.append(clip)
         return instance
