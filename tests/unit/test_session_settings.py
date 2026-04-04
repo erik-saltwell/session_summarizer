@@ -41,6 +41,9 @@ _DIARIZATION_STITCHING_FIELDS: dict = {
     "expansion_limit_seconds": 300,
     "scoring_mode": "overlap_seconds_then_midpoint",
     "prefer_shorter_on_tie": True,
+    "max_backchannel_duration": 2.0,
+    "max_backchannel_prior_gap": 1.0,
+    "max_backchannel_next_gap": 1.0,
     "turn_end_probability_threshold": 0.5,
     "epsilon": 1e-6,
 }

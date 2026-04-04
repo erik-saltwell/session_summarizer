@@ -109,6 +109,25 @@ class DiarizationStitchingSettings(BaseModel, frozen=True):
     # This avoids bias toward long segments that span many words.
     prefer_shorter_on_tie: bool
 
+    # ── Backchannel detection ──────────────────────────────────────────
+
+    # Maximum duration (seconds) a clip may be to still qualify as a
+    # backchannel utterance (e.g. "mm-hmm", "right", "yeah").  Clips longer
+    # than this threshold are never treated as backchannels.
+    max_backchannel_duration: float
+
+    # Maximum gap (seconds) between a clip and its predecessor for the clip
+    # to be considered a backchannel.  Backchannels typically occur during or
+    # immediately after another speaker's speech; large prior-gaps indicate a
+    # new independent utterance instead.
+    max_backchannel_prior_gap: float
+
+    # Maximum gap (seconds) between a clip and its successor for the clip to
+    # be considered a backchannel.  If the following speech is far away, the
+    # short utterance is more likely a standalone contribution than a
+    # mid-stream backchannel.
+    max_backchannel_next_gap: float
+
     # ── Turn detection ─────────────────────────────────────────────────
 
     # Probability threshold for classifying a speech clip as the end of a
@@ -131,6 +150,9 @@ class DiarizationStitchingSettings(BaseModel, frozen=True):
         "merge_gap_seconds",
         "unfinished_clip_merge_max_length",
         "expansion_limit_seconds",
+        "max_backchannel_duration",
+        "max_backchannel_prior_gap",
+        "max_backchannel_next_gap",
         "epsilon",
     )
     @classmethod

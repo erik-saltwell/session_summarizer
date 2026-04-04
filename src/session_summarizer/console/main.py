@@ -571,6 +571,42 @@ diarization_stitching:
   # Reasonable default: true
   prefer_shorter_on_tie: true
 
+  # ── Backchannel detection ────────────────────────────────────────────
+  # Backchannel utterances are short, reactive sounds one speaker makes
+  # while another is talking — "mm-hmm", "right", "yeah", "uh-huh".
+  # They are not independent turns; they acknowledge or encourage the
+  # primary speaker without interrupting their turn. All three thresholds
+  # below must be satisfied simultaneously for a clip to be treated as a
+  # backchannel.
+
+  # Maximum duration (seconds) a clip may be to still qualify as a
+  # backchannel. Short utterances are candidates; longer ones are almost
+  # certainly independent contributions rather than backchannels.
+  #
+  # Allowed values: >= 0.0 (seconds)
+  # Reasonable default: 0.75
+  max_backchannel_duration: 0.75
+
+  # Maximum gap (seconds) between a clip and the clip that precedes it
+  # for the clip to be considered a backchannel. Backchannels typically
+  # occur during or immediately after another speaker's speech. If the
+  # prior clip ended a long time ago the short utterance is more likely
+  # a new turn opener than a reactive backchannel.
+  #
+  # Allowed values: >= 0.0 (seconds)
+  # Reasonable default: 0.25
+  max_backchannel_prior_gap: 0.25
+
+  # Maximum gap (seconds) between a clip and the clip that follows it
+  # for the clip to be considered a backchannel. If the next speech
+  # arrives after a long silence the utterance probably stands alone;
+  # true backchannels are surrounded by active conversation.
+  #
+  # Allowed values: >= 0.0 (seconds)
+  # Reasonable default: 1.0
+  max_backchannel_next_gap: 1.0
+
+
   # ── Turn detection ──────────────────────────────────────────────────
 
   # Probability threshold for classifying a speech clip as the end of a

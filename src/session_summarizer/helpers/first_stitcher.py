@@ -29,10 +29,6 @@ class BackchannelMerger(MergeSelector):
         settings: DiarizationStitchingSettings,
         logger: LoggingProtocol,
     ) -> MergeType:
-        if prior_clip.text.lower().endswith("and naze again"):
-            print("break")
-        if prior_clip.has_flag(SpeechClipFlags.END_OF_TURN):
-            return MergeType.NO_MERGE
         if clips_are_same_speaker(prior_clip, current_clip, settings, True, logger):
             return MergeType.NO_MERGE
         if next_clip is None:
@@ -41,13 +37,13 @@ class BackchannelMerger(MergeSelector):
         if not clips_are_same_speaker(prior_clip, next_clip, settings, True, logger):
             return MergeType.NO_MERGE
 
-        if current_clip.duration > 0.5:
+        if current_clip.duration > settings.max_backchannel_duration:
             return MergeType.NO_MERGE
 
         if not clips_are_close_enough(
             prior_clip,
             current_clip,
-            0.25,
+            settings.max_backchannel_prior_gap,
             settings.epsilon,
             logger,
         ):
@@ -56,7 +52,7 @@ class BackchannelMerger(MergeSelector):
         if not clips_are_close_enough(
             current_clip,
             next_clip,
-            1.0,
+            settings.max_backchannel_next_gap,
             settings.epsilon,
             logger,
         ):
@@ -103,8 +99,9 @@ def apply_first_stitching(
         logger.report_message(f"[yellow]{final_path} already exists, returning cached instance.[/yellow]")
         return SpeechClipSet.load_from_json(final_path)
 
-    backchannel_selector: BackchannelMerger = BackchannelMerger()
-    merged_clips = merge_clips(clips, backchannel_selector, settings.diarization_stitching, logger)
+    # backchannel_selector: BackchannelMerger = BackchannelMerger()
+    # merged_clips = merge_clips(clips, backchannel_selector, settings.diarization_stitching, logger)
+    merged_clips = clips
 
     merge_selector: MergeUnfinishedSegmentsWithSameSpeakerOrAnonymous = (
         MergeUnfinishedSegmentsWithSameSpeakerOrAnonymous()

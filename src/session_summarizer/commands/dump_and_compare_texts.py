@@ -11,6 +11,7 @@ from ..helpers.audio_diarizer import diarize_audio
 from ..helpers.audio_segmenter import SegmentSplitResultSet, compute_vad_segments
 from ..helpers.audio_transcriber import transcribe_from_cleaned_audio
 from ..helpers.confidence_scorer import score_confidence
+from ..helpers.first_stitcher import apply_first_stitching
 from ..helpers.transcript_aligner import align_transcript
 from ..processing_results import AlignmentResult, SpeechClipSet, TranscriptionResult
 from ..settings.session_settings import SessionSettings
@@ -83,7 +84,18 @@ class DumpAndCompareTextsCommand(SessionProcessingCommand):
         diarized_text = self.clean_and_dump_text(clips.plain_text(), session_dir / settings.base_diarized_path)
         diarized_eval = self.evaluate_texts(scored_text, diarized_text, "Diarized Transcript")
 
-        results: list[TranscriptionValidationResult] = [transcription_eval, align_eval, scored_eval, diarized_eval]
+        merged_clips: SpeechClipSet = apply_first_stitching(settings, session_dir, clips, True, self, self.logger)
+        merged_clips.sort_clips()
+        merged_text = self.clean_and_dump_text(merged_clips.plain_text(), session_dir / settings.first_stitched_path)
+        merged_eval = self.evaluate_texts(diarized_text, merged_text, "First Stitched")
+
+        results: list[TranscriptionValidationResult] = [
+            transcription_eval,
+            align_eval,
+            scored_eval,
+            diarized_eval,
+            merged_eval,
+        ]
 
         # Build table: rows = metrics, columns = transcribers
         # Build table: rows = metrics, columns = transcribers
