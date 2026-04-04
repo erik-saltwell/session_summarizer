@@ -57,6 +57,7 @@ def _required_fields(audio_file: Path | str) -> dict:
         "base_diarized_path": Path("base_diarization.json"),
         "speech_clips_with_embedding": Path("speech_clips_with_embedding.json"),
         "turn_end_updated_path": Path("turn_end_updated.json"),
+        "first_stitched_path": Path("first_stitched.json"),
         "high_confidence_similarity_threshold": 0.8,
         "device": "cuda",
         "segments_path": Path("vad_segments.json"),
@@ -81,6 +82,7 @@ def _required_yaml_fields(audio_file: str) -> dict:
         "base_diarized_path": "base_diarization.json",
         "speech_clips_with_embedding": "speech_clips_with_embedding.json",
         "turn_end_updated_path": "turn_end_updated.json",
+        "first_stitched_path": "first_stitched.json",
         "high_confidence_similarity_threshold": 0.8,
         "device": "cuda",
         "segments_path": "vad_segments.json",
@@ -209,6 +211,7 @@ class TestLoad:
                     "base_diarized_path": "base_diarization.json",
                     "speech_clips_with_embedding": "speech_clips_with_embedding.json",
                     "turn_end_updated_path": "turn_end_updated.json",
+                    "first_stitched_path": "first_stitched.json",
                     "high_confidence_similarity_threshold": 0.8,
                     "device": "cuda",
                     "segments_path": "vad_segments.json",
@@ -227,6 +230,7 @@ class TestLoad:
         assert settings.transcript_file == (tmp_path / "out.json").resolve()
         assert settings.aligned_transcript_path == (tmp_path / "aligned.json").resolve()
         assert settings.confidence_transcript_path == (tmp_path / "confidence.json").resolve()
+        assert settings.first_stitched_path == (tmp_path / "first_stitched.json").resolve()
 
     def test_load_missing_audio_file_key_raises(self, tmp_path: Path) -> None:
         settings_file = tmp_path / "settings.yaml"
