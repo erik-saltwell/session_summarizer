@@ -175,8 +175,8 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol):
                     flag.name for flag in SpeechClipFlags if flag and clip.has_flag(flag) and flag.name is not None
                 )
                 flag_str = f"[{flags if flags else 'NO_FLAGS'}]"
-                start_str = f"{clip.start_time: 0.3f}".strip()
-                end_str = f"{clip.start_time: 0.3f}".strip()
+                start_str = f"{clip.start_time: 0.5f}".strip()
+                end_str = f"{clip.end_time: 0.5f}".strip()
 
                 f.write(f"{speakers}\n")
                 f.write(f"({start_str},{end_str}): {flag_str}\n")

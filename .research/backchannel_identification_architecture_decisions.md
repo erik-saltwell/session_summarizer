@@ -73,6 +73,7 @@
     - `mhm`
     - `mm-hm`
     - `uh-huh`
+    - 'sure'
   - medium:
     - `right`
     - `okay`

@@ -56,7 +56,7 @@ def _(Path, json):
 
 
 @app.cell
-def _(base_diarization_data, pd, plt):
+def _(first_stitched_data, pd, plt):
     def collect_time_segments(obj):
         segments = []
         if isinstance(obj, dict):
@@ -74,7 +74,7 @@ def _(base_diarization_data, pd, plt):
                 segments.extend(collect_time_segments(item))
         return segments
 
-    diarization_segments = collect_time_segments(base_diarization_data)
+    diarization_segments = collect_time_segments(first_stitched_data)
 
     diarization_df = pd.DataFrame(diarization_segments)
     diarization_df["start_time"] = pd.to_numeric(diarization_df["start_time"], errors="coerce")
@@ -103,8 +103,8 @@ def _(base_diarization_data, pd, plt):
     plt.title("Diarization Segment Duration vs Gap")
     plt.xlabel("Duration (end_time - start_time)")
     plt.ylabel("Gap from Prior Segment (start_time - previous end_time)")
-    plt.xlim(right=12, left=0)
-    plt.ylim(top=2, bottom=0)
+    plt.xlim(right=2, left=0)
+    plt.ylim(top=0.5, bottom=0)
     plt.grid(True, alpha=0.3)
     plt.gca()
     return
