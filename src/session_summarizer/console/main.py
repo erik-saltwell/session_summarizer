@@ -526,6 +526,15 @@ diarization_stitching:
   # Reasonable default: 0.20
   merge_gap_seconds: 0.20
 
+  # Maximum gap (seconds) between an unfinished speech clip (not marked
+  # as an end-of-turn) and a following clip with the same speaker, for
+  # them to be merged. Helps preserve conversational flow by avoiding
+  # artificial breaks in ongoing speech, while respecting turn boundaries.
+  #
+  # Allowed values: >= 0.0 (seconds)
+  # Reasonable default: 2.0
+  unfinished_clip_merge_max_length: 2.0
+
   # Widen each segment's time boundaries to fully contain its assigned
   # words. Useful for UI rendering where words must not extend beyond
   # their parent segment, but reduces diarization boundary fidelity.

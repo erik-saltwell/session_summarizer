@@ -85,6 +85,12 @@ class DiarizationStitchingSettings(BaseModel, frozen=True):
     # caused by brief pauses or diarization over-segmentation.
     merge_gap_seconds: float
 
+    # Maximum gap (seconds) between an unfinished speech clip (not marked
+    # as an end-of-turn) and a following clip with the same speaker, for
+    # them to be merged. Helps preserve conversational flow by avoiding
+    # artificial breaks in ongoing speech, while respecting turn boundaries.
+    unfinished_clip_merge_max_length: float
+
     # Widen each segment's time boundaries to fully contain its assigned
     # words.  Useful for UI rendering where words must not extend beyond
     # their parent segment, but reduces diarization boundary fidelity.
@@ -123,6 +129,7 @@ class DiarizationStitchingSettings(BaseModel, frozen=True):
         "max_nearest_distance",
         "anonymous_join_gap",
         "merge_gap_seconds",
+        "unfinished_clip_merge_max_length",
         "expansion_limit_seconds",
         "epsilon",
     )

@@ -36,6 +36,7 @@ _DIARIZATION_STITCHING_FIELDS: dict = {
     "max_nearest_distance": 0.25,
     "anonymous_join_gap": 0.15,
     "merge_gap_seconds": 0.20,
+    "unfinished_clip_merge_max_length": 1.0,
     "expand_segments_to_fit_words": False,
     "expansion_limit_seconds": 300,
     "scoring_mode": "overlap_seconds_then_midpoint",
