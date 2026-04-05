@@ -14,6 +14,7 @@ from .diarize_audio import DiarizeAudioCommand
 from .dump_and_compare_texts import DumpAndCompareTextsCommand
 from .dump_human_format import DumpHumanFormatCommand
 from .first_stitch_clips import FirstStitchClipsCommand
+from .identify_speakers import IdentifySpeakersCommand
 from .score_confidence import ScoreConfidenceCommand
 from .session_processing_command import SessionProcessingCommand
 from .transcribe_audio import TranscribeAudioCommand
@@ -42,5 +43,6 @@ class ProcessPipelineCommand(SessionProcessingCommand):
         UpdateTurnEndCommand(self.session_id).execute(self.logger)
         FirstStitchClipsCommand(self.session_id).execute(self.logger)
         AddEmbeddingsCommand(self.session_id).execute(self.logger)
+        IdentifySpeakersCommand(self.session_id).execute(self.logger)
         DumpAndCompareTextsCommand(self.session_id).execute(self.logger)
         DumpHumanFormatCommand(self.session_id).execute(self.logger)

@@ -17,6 +17,18 @@
             ]
         },
         {
+            "name": "-identify-speakers",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "identify-speakers",
+                "--session",
+                "test",
+            ]
+        },
+        {
             "name": "-first-stitching",
             "type": "debugpy",
             "request": "launch",
@@ -50,8 +62,6 @@
                 "dump-human-format",
                 "--session",
                 "test",
-                "--file",
-                "first_stitched.json"
             ]
         },
         {

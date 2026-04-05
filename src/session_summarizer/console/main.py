@@ -15,6 +15,7 @@ from session_summarizer.commands.compute_segments import ComputeSegmentsCommand
 from session_summarizer.commands.diarize_audio import DiarizeAudioCommand
 from session_summarizer.commands.dump_and_compare_texts import DumpAndCompareTextsCommand
 from session_summarizer.commands.dump_human_format import DumpHumanFormatCommand
+from session_summarizer.commands.identify_speakers import IdentifySpeakersCommand
 from session_summarizer.commands.score_confidence import ScoreConfidenceCommand
 from session_summarizer.commands.transcribe_audio import TranscribeAudioCommand
 from session_summarizer.commands.update_turn_end import UpdateTurnEndCommand
@@ -98,6 +99,17 @@ def add_embeddings(
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
     command: AddEmbeddingsCommand = AddEmbeddingsCommand(session)
+    command.execute(logger)
+
+
+@app.command("identify-speakers")
+def identify_speakers(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to process"),
+) -> None:
+    """Identify speakers in each speech clip by comparing embeddings to registered attendees."""
+    confirm_session(session)
+    logger: LoggingProtocol = create_logger()
+    command: IdentifySpeakersCommand = IdentifySpeakersCommand(session)
     command.execute(logger)
 
 
@@ -311,6 +323,20 @@ base_diarized_path: base_diarization.json
 # Example:
 #   speech_clips_with_embedding: clips_with_embeddings.json
 speech_clips_with_embedding: clips_with_embeddings.json
+
+# ---------------------------------------------------------------------------
+# identified_speaker_path  (REQUIRED)
+# ---------------------------------------------------------------------------
+# Path to the SpeechClipSet JSON file with speaker identities assigned.
+# Written by the identify-speakers command after matching clip embeddings
+# against registered attendee embeddings using cosine similarity.
+# Relative paths are resolved from this file's directory.
+#
+# Default: identified_speakers.json
+#
+# Example:
+#   identified_speaker_path: identified_speakers.json
+identified_speaker_path: identified_speakers.json
 
 # ---------------------------------------------------------------------------
 # turn_end_updated_path  (REQUIRED)

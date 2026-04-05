@@ -174,7 +174,11 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol):
     def save_to_human_format(self, path: Path) -> None:
         with path.open("w", encoding="utf-8") as f:
             for clip in self:
-                speakers = ", ".join(sorted(clip.speakers))
+                speakers: str
+                if clip.identity is None:
+                    speakers = ", ".join(sorted(clip.speakers))
+                else:
+                    speakers = clip.identity
 
                 flags = " ".join(
                     flag.name for flag in SpeechClipFlags if flag and clip.has_flag(flag) and flag.name is not None

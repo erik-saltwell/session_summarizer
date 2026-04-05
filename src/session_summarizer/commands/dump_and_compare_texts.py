@@ -6,12 +6,14 @@ from pathlib import Path
 import session_summarizer.utils.common_paths as common_paths
 
 from ..evaluation import TranscriptionValidationResult, clean_text_for_evaluation, evaluate_texts
+from ..helpers.add_embeddings import add_embeddings
 from ..helpers.audio_cleaner import clean_audio
 from ..helpers.audio_diarizer import diarize_audio
 from ..helpers.audio_segmenter import SegmentSplitResultSet, compute_vad_segments
 from ..helpers.audio_transcriber import transcribe_from_cleaned_audio
 from ..helpers.confidence_scorer import score_confidence
 from ..helpers.first_stitcher import apply_first_stitching
+from ..helpers.speaker_identifier import identify_speakers
 from ..helpers.transcript_aligner import align_transcript
 from ..processing_results import AlignmentResult, SpeechClipSet, TranscriptionResult
 from ..settings.session_settings import SessionSettings
@@ -89,12 +91,23 @@ class DumpAndCompareTextsCommand(SessionProcessingCommand):
         merged_text = self.clean_and_dump_text(merged_clips.plain_text(), session_dir / settings.first_stitched_path)
         merged_eval = self.evaluate_texts(diarized_text, merged_text, "First Stitched")
 
+        embedded_clips: SpeechClipSet = add_embeddings(settings, session_dir, merged_clips, True, self, self.logger)
+        identified_clips: SpeechClipSet = identify_speakers(
+            settings, session_dir, embedded_clips, True, self, self.logger
+        )
+        identified_clips.sort_clips()
+        identified_text = self.clean_and_dump_text(
+            identified_clips.plain_text(), session_dir / settings.identified_speaker_path
+        )
+        identified_eval = self.evaluate_texts(merged_text, identified_text, "Speaker Identified")
+
         results: list[TranscriptionValidationResult] = [
             transcription_eval,
             align_eval,
             scored_eval,
             diarized_eval,
             merged_eval,
+            identified_eval,
         ]
 
         # Build table: rows = metrics, columns = transcribers

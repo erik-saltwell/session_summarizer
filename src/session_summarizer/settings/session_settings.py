@@ -54,6 +54,10 @@ class SessionSettings(BaseModel, frozen=True):
             description="Path to SpeechClipSet JSON file with speaker embeddings added (read/written during processing)"
         ),
     ]
+    identified_speaker_path: Annotated[
+        Path,
+        Field(description="Path to SpeechClipSet JSON file with identified speakers (read/written during processing)"),
+    ]
     turn_end_updated_path: Annotated[
         Path,
         Field(
@@ -187,6 +191,7 @@ class SessionSettings(BaseModel, frozen=True):
             "segments_path",
             "base_diarized_path",
             "speech_clips_with_embedding",
+            "identified_speaker_path",
             "turn_end_updated_path",
             "first_stitched_path",
         ):
