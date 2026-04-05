@@ -25,6 +25,7 @@ from session_summarizer.utils import common_paths
 from ..commands.first_stitch_clips import FirstStitchClipsCommand
 from ..commands.process_pipeline import ProcessPipelineCommand
 from ..commands.register_speakers import RegisterSpeakersCommand
+from ..commands.stitch_identities import StitichIdentitiesCommand
 from ..logging import CompositeLogger, FileLogger, RichConsoleLogger
 from ..protocols import LoggingProtocol
 from ..utils import flush_gpu_memory
@@ -132,6 +133,17 @@ def apply_first_stitching(
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
     command: FirstStitchClipsCommand = FirstStitchClipsCommand(session)
+    command.execute(logger)
+
+
+@app.command("apply-identity-stitching")
+def apply_identity_stitiching(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to process"),
+) -> None:
+    """Score each speech clip with end-of-turn probability and set the END_OF_TURN flag."""
+    confirm_session(session)
+    logger: LoggingProtocol = create_logger()
+    command: StitichIdentitiesCommand = StitichIdentitiesCommand(session)
     command.execute(logger)
 
 

@@ -13,6 +13,7 @@ from ..helpers.audio_segmenter import SegmentSplitResultSet, compute_vad_segment
 from ..helpers.audio_transcriber import transcribe_from_cleaned_audio
 from ..helpers.confidence_scorer import score_confidence
 from ..helpers.first_stitcher import apply_first_stitching
+from ..helpers.identity_stitch import apply_identity_stitching
 from ..helpers.speaker_identifier import identify_speakers
 from ..helpers.transcript_aligner import align_transcript
 from ..processing_results import AlignmentResult, SpeechClipSet, TranscriptionResult
@@ -101,6 +102,15 @@ class DumpAndCompareTextsCommand(SessionProcessingCommand):
         )
         identified_eval = self.evaluate_texts(merged_text, identified_text, "Speaker Identified")
 
+        identity_stitched_clips: SpeechClipSet = apply_identity_stitching(
+            settings, session_dir, identified_clips, True, self, self.logger
+        )
+        identity_stitched_clips.sort_clips()
+        identity_stitched_text = self.clean_and_dump_text(
+            identity_stitched_clips.plain_text(), session_dir / settings.identity_stitched_path
+        )
+        identity_stitched_eval = self.evaluate_texts(identified_text, identity_stitched_text, "Identities Stiched")
+
         results: list[TranscriptionValidationResult] = [
             transcription_eval,
             align_eval,
@@ -108,6 +118,7 @@ class DumpAndCompareTextsCommand(SessionProcessingCommand):
             diarized_eval,
             merged_eval,
             identified_eval,
+            identity_stitched_eval,
         ]
 
         # Build table: rows = metrics, columns = transcribers

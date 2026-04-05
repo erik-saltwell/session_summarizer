@@ -17,6 +17,7 @@ from .first_stitch_clips import FirstStitchClipsCommand
 from .identify_speakers import IdentifySpeakersCommand
 from .score_confidence import ScoreConfidenceCommand
 from .session_processing_command import SessionProcessingCommand
+from .stitch_identities import StitichIdentitiesCommand
 from .transcribe_audio import TranscribeAudioCommand
 from .update_turn_end import UpdateTurnEndCommand
 
@@ -44,5 +45,6 @@ class ProcessPipelineCommand(SessionProcessingCommand):
         FirstStitchClipsCommand(self.session_id).execute(self.logger)
         AddEmbeddingsCommand(self.session_id).execute(self.logger)
         IdentifySpeakersCommand(self.session_id).execute(self.logger)
+        StitichIdentitiesCommand(self.session_id).execute(self.logger)
         DumpAndCompareTextsCommand(self.session_id).execute(self.logger)
         DumpHumanFormatCommand(self.session_id).execute(self.logger)

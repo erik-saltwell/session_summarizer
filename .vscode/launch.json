@@ -17,6 +17,18 @@
             ]
         },
         {
+            "name": "-identity-stitch",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "apply-identity-stitching",
+                "--session",
+                "test",
+            ]
+        },
+        {
             "name": "-identify-speakers",
             "type": "debugpy",
             "request": "launch",

@@ -21,6 +21,7 @@ class DumpHumanFormatCommand(SessionProcessingCommand):
             settings.turn_end_updated_path,
             settings.first_stitched_path,
             settings.identified_speaker_path,
+            settings.identity_stitched_path,
         ]
         for relative_path in paths:
             input_path: Path = session_dir / relative_path
