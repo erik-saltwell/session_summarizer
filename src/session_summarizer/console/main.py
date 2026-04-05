@@ -697,22 +697,22 @@ diarization_stitching:
   # backchannel during identity stitching.
   #
   # Allowed values: >= 0.0 (seconds)
-  # Reasonable default: 1.5
-  max_identity_backchannel_duration: 1.5
+  # Reasonable default: 3.0
+  max_identity_backchannel_duration: 3.0
 
   # Maximum gap (seconds) between a clip and its predecessor for the
   # clip to be considered a backchannel during identity stitching.
   #
   # Allowed values: >= 0.0 (seconds)
   # Reasonable default: 0.5
-  max_identity_backchannel_prior_gap: 0.5
+  max_identity_backchannel_prior_gap: 0.75
 
   # Maximum gap (seconds) between a clip and its successor for the
   # clip to be considered a backchannel during identity stitching.
   #
   # Allowed values: >= 0.0 (seconds)
   # Reasonable default: 2.0
-  max_identity_backchannel_next_gap: 2.0
+  max_identity_backchannel_next_gap: 3.0
 
 
   # ── Turn detection ──────────────────────────────────────────────────
