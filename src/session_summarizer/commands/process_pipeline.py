@@ -5,6 +5,7 @@ from dataclasses import dataclass
 import session_summarizer.utils.common_paths as common_paths
 
 from ..settings import SessionSettings
+from .add_embeddings import AddEmbeddingsCommand
 from .align_transcript import AlignTranscriptCommand
 from .clean_audio import CleanAudioCommand
 from .clean_session import CleanSessionCommand
@@ -40,5 +41,6 @@ class ProcessPipelineCommand(SessionProcessingCommand):
         DiarizeAudioCommand(self.session_id).execute(self.logger)
         UpdateTurnEndCommand(self.session_id).execute(self.logger)
         FirstStitchClipsCommand(self.session_id).execute(self.logger)
+        AddEmbeddingsCommand(self.session_id).execute(self.logger)
         DumpAndCompareTextsCommand(self.session_id).execute(self.logger)
         DumpHumanFormatCommand(self.session_id).execute(self.logger)

@@ -29,7 +29,6 @@ class ERes2NetV2EmbeddingFactory(EmbeddingFactory):
         self._pipe = pipeline(task=Tasks.speaker_verification, model=self.model_id, device=self.device)
 
     def extract(self, audio_path: Path, logger: LoggingProtocol) -> list[float]:
-        logger.report_message("[blue]Extracting speaker embedding...[/blue]")
         with torch.no_grad():
             result: Any = self._pipe([str(audio_path.resolve())], output_emb=True)
         # result['embs'] is a numpy array of shape [N, 192]; take the first (and only) row
