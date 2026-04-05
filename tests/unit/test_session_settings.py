@@ -46,6 +46,9 @@ _DIARIZATION_STITCHING_FIELDS: dict = {
     "max_backchannel_duration": 2.0,
     "max_backchannel_prior_gap": 1.0,
     "max_backchannel_next_gap": 1.0,
+    "max_identity_backchannel_duration": 1.5,
+    "max_identity_backchannel_prior_gap": 0.5,
+    "max_identity_backchannel_next_gap": 2.0,
     "turn_end_probability_threshold": 0.5,
     "epsilon": 1e-6,
 }

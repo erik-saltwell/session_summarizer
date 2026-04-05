@@ -140,6 +140,23 @@ class DiarizationStitchingSettings(BaseModel, frozen=True):
     # mid-stream backchannel.
     max_backchannel_next_gap: float
 
+    # ── Identity-based backchannel detection ───────────────────────────
+    # Same concept as backchannel detection above, but applied during
+    # identity stitching where speaker labels come from embedding
+    # similarity rather than diarization labels.
+
+    # Maximum duration (seconds) a clip may be to still qualify as a
+    # backchannel during identity stitching.
+    max_identity_backchannel_duration: float
+
+    # Maximum gap (seconds) between a clip and its predecessor for the
+    # clip to be considered a backchannel during identity stitching.
+    max_identity_backchannel_prior_gap: float
+
+    # Maximum gap (seconds) between a clip and its successor for the
+    # clip to be considered a backchannel during identity stitching.
+    max_identity_backchannel_next_gap: float
+
     # ── Turn detection ─────────────────────────────────────────────────
 
     # Probability threshold for classifying a speech clip as the end of a
@@ -166,6 +183,9 @@ class DiarizationStitchingSettings(BaseModel, frozen=True):
         "max_backchannel_duration",
         "max_backchannel_prior_gap",
         "max_backchannel_next_gap",
+        "max_identity_backchannel_duration",
+        "max_identity_backchannel_prior_gap",
+        "max_identity_backchannel_next_gap",
         "epsilon",
     )
     @classmethod

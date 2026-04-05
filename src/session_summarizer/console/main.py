@@ -687,6 +687,33 @@ diarization_stitching:
   # Reasonable default: 1.0
   max_backchannel_next_gap: 1.0
 
+  # ── Identity-based backchannel detection ────────────────────────────
+  # Same concept as backchannel detection above, but applied during
+  # identity stitching where speaker labels come from embedding
+  # similarity rather than diarization labels.  All three thresholds
+  # must be satisfied simultaneously.
+
+  # Maximum duration (seconds) a clip may be to still qualify as a
+  # backchannel during identity stitching.
+  #
+  # Allowed values: >= 0.0 (seconds)
+  # Reasonable default: 1.5
+  max_identity_backchannel_duration: 1.5
+
+  # Maximum gap (seconds) between a clip and its predecessor for the
+  # clip to be considered a backchannel during identity stitching.
+  #
+  # Allowed values: >= 0.0 (seconds)
+  # Reasonable default: 0.5
+  max_identity_backchannel_prior_gap: 0.5
+
+  # Maximum gap (seconds) between a clip and its successor for the
+  # clip to be considered a backchannel during identity stitching.
+  #
+  # Allowed values: >= 0.0 (seconds)
+  # Reasonable default: 2.0
+  max_identity_backchannel_next_gap: 2.0
+
 
   # ── Turn detection ──────────────────────────────────────────────────
 
