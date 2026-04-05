@@ -74,6 +74,10 @@ class SessionSettings(BaseModel, frozen=True):
             )
         ),
     ]
+    identity_stitched_path: Annotated[
+        Path,
+        Field(description="Path to SpeechClipSet JSON file with speakers identified (read/written during processing)"),
+    ]
     device: Annotated[
         Literal["cpu", "cuda"],
         Field(description="Device for model inference — 'cpu' or 'cuda'"),
@@ -194,6 +198,7 @@ class SessionSettings(BaseModel, frozen=True):
             "identified_speaker_path",
             "turn_end_updated_path",
             "first_stitched_path",
+            "identity_stitched_path",
         ):
             raw = data.get(key)
             if raw is None:

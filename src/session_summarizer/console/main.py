@@ -359,6 +359,19 @@ turn_end_updated_path: turn_end_updated.json
 first_stitched_path: first_stitched.json
 
 # ---------------------------------------------------------------------------
+# identity_stitched_path  (REQUIRED)
+# ---------------------------------------------------------------------------
+# Path to the SpeechClipSet JSON file with speakers identified. Written
+# after speaker identity has been resolved and stitched into the clip set.
+# Relative paths are resolved from this file's directory.
+#
+# Default: identity_stitched.json
+#
+# Example:
+#   identity_stitched_path: identity_stitched.json
+identity_stitched_path: identity_stitched.json
+
+# ---------------------------------------------------------------------------
 # device  (REQUIRED)
 # ---------------------------------------------------------------------------
 # Compute device for model inference. Allowed values:
