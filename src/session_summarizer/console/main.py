@@ -788,10 +788,15 @@ def register_speakers(
         "-g",
         help="Seconds of silence inserted between clips when combining per-speaker audio files.",
     ),
+    clean_first: bool = typer.Option(
+        False,
+        "--clean-first/--no-clean-first",
+        help="Convert and clean audio before extracting embeddings. Pass --no-clean-first if already cleaned.",
+    ),
 ) -> None:
     """Combine per-speaker clip directories and register embeddings into registered_speakers.yaml."""
     logger: LoggingProtocol = create_logger()
-    RegisterSpeakersCommand(gap_length=gap_length).execute(logger)
+    RegisterSpeakersCommand(clean_first=clean_first, gap_length=gap_length).execute(logger)
 
 
 def _version_callback(value: bool) -> None:

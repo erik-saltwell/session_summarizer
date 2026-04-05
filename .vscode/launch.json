@@ -229,6 +229,7 @@
                 "register-speakers",
                 "--gap-length",
                 "0.5",
+                "--no-clean-first",
             ]
         },
         {

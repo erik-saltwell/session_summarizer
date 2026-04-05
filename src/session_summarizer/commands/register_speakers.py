@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -33,9 +34,11 @@ def _log_gpu_usage(logger: LoggingProtocol, label: str) -> None:
 
 @dataclass
 class RegisterSpeakersCommand:
+    clean_first: bool
     logger: LoggingProtocol = NullLogger()
     device: str = "cuda"
     gap_length: float = 0.5
+
     """Register all speakers found in per-speaker subdirectories of voice_samples/ into registered_speakers.yaml."""
 
     def execute(self, logger: LoggingProtocol) -> None:
@@ -87,23 +90,27 @@ class RegisterSpeakersCommand:
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp = Path(tmp_dir)
-            wav_48k = tmp / "wav_48k.wav"
-            cleaned_audio = tmp / "cleaned_audio.wav"
             normalized = tmp / "normalized_audio.wav"
 
-            with self.logger.status("Converting to 48k WAV..."):
-                convert_to_48k_wav(wav_file, wav_48k)
-            _log_gpu_usage(self.logger, "after 48k conversion")
+            if self.clean_first:
+                wav_48k = tmp / "wav_48k.wav"
+                cleaned_audio = tmp / "cleaned_audio.wav"
 
-            with self.logger.status("Enhancing with MossFormer2..."):
-                enhance_with_mossformer2(wav_48k, cleaned_audio)
-            _log_gpu_usage(self.logger, "after MossFormer2 cleanup")
+                with self.logger.status("Converting to 48k WAV..."):
+                    convert_to_48k_wav(wav_file, wav_48k)
+                _log_gpu_usage(self.logger, "after 48k conversion")
 
-            with self.logger.status("Measuring loudness..."):
-                stats = measure_loudness(cleaned_audio)
+                with self.logger.status("Enhancing with MossFormer2..."):
+                    enhance_with_mossformer2(wav_48k, cleaned_audio)
+                _log_gpu_usage(self.logger, "after MossFormer2 cleanup")
 
-            with self.logger.status("Normalizing to 16k mono..."):
-                normalize_and_export_16k_mono(cleaned_audio, normalized, stats)
+                with self.logger.status("Measuring loudness..."):
+                    stats = measure_loudness(cleaned_audio)
+
+                with self.logger.status("Normalizing to 16k mono..."):
+                    normalize_and_export_16k_mono(cleaned_audio, normalized, stats)
+            else:
+                shutil.copy2(wav_file, normalized)
 
             _log_gpu_usage(self.logger, "before embedding model")
             embedder: EmbeddingFactory = get_embeddings_factory(self.device)
