@@ -41,7 +41,7 @@ def transcription_result() -> TranscriptionResult:
             shutil.copy2(src, dst)
 
         # Register speakers
-        RegisterSpeakersCommand().execute(test_logger)
+        RegisterSpeakersCommand(True).execute(test_logger)
 
         # Run transcription
         TranscribeAudioCommand(session_id=SESSION_ID).execute(test_logger)
