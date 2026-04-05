@@ -34,3 +34,10 @@ class DumpHumanFormatCommand(SessionProcessingCommand):
 
             clips.save_to_human_format(output_path)
             self.logger.report_message(f"[green]Wrote {len(clips)} clips to {output_path}[/green]")
+
+        ground_truth: SpeechClipSet = SpeechClipSet.load_from_test_meeting()
+        ground_truth_path: Path = session_dir / "ground_truth_human.txt"
+        ground_truth.save_to_human_format(ground_truth_path)
+        self.logger.report_message(
+            f"[green]Wrote {len(ground_truth)} ground truth clips to {ground_truth_path}[/green]"
+        )
