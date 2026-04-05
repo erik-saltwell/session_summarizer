@@ -97,6 +97,12 @@ class DiarizationStitchingSettings(BaseModel, frozen=True):
     # values keep clips separate when the same speaker resumes after silence.
     identity_stitching_max_gap: float
 
+    # Minimum cosine similarity (0.0–1.0) between two clip embeddings for
+    # them to be considered the same speaker during identity stitching.
+    # Lower values accept weaker matches; higher values require stronger
+    # acoustic similarity before merging.
+    identity_similarity_threshold: float
+
     # Widen each segment's time boundaries to fully contain its assigned
     # words.  Useful for UI rendering where words must not extend beyond
     # their parent segment, but reduces diarization boundary fidelity.
@@ -168,7 +174,7 @@ class DiarizationStitchingSettings(BaseModel, frozen=True):
             raise ValueError("must be non-negative")
         return v
 
-    @field_validator("min_overlap_fraction_word", "turn_end_probability_threshold")
+    @field_validator("min_overlap_fraction_word", "turn_end_probability_threshold", "identity_similarity_threshold")
     @classmethod
     def zero_to_one(cls, v: float) -> float:
         if v < 0 or v > 1:

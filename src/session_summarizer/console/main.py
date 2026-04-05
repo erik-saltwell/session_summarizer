@@ -594,6 +594,16 @@ diarization_stitching:
   # Reasonable default: 10.0
   identity_stitching_max_gap: 10.0
 
+  # Minimum cosine similarity (0.0–1.0) between two clip embeddings for
+  # them to be considered the same speaker during identity stitching.
+  # Lower values accept weaker matches; higher values require stronger
+  # acoustic similarity before merging.
+  #
+  # Allowed values: 0.0–1.0
+  # Reasonable default: 0.65
+  # Reasonable range: 0.50–0.85
+  identity_similarity_threshold: 0.65
+
   # Widen each segment's time boundaries to fully contain its assigned
   # words. Useful for UI rendering where words must not extend beyond
   # their parent segment, but reduces diarization boundary fidelity.
