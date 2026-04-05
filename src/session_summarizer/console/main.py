@@ -12,6 +12,7 @@ from session_summarizer.commands.align_transcript import AlignTranscriptCommand
 from session_summarizer.commands.clean_audio import CleanAudioCommand
 from session_summarizer.commands.clean_session import CleanSessionCommand
 from session_summarizer.commands.compute_segments import ComputeSegmentsCommand
+from session_summarizer.commands.create_speaker_clips import CreateSpeakerClipsCommand
 from session_summarizer.commands.diarize_audio import DiarizeAudioCommand
 from session_summarizer.commands.dump_and_compare_texts import DumpAndCompareTextsCommand
 from session_summarizer.commands.dump_human_format import DumpHumanFormatCommand
@@ -144,6 +145,24 @@ def apply_identity_stitiching(
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
     command: StitichIdentitiesCommand = StitichIdentitiesCommand(session)
+    command.execute(logger)
+
+
+@app.command("create-speaker-clips")
+def create_speaker_clips(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to process"),
+    use_multi_speaker_clips: bool = typer.Option(
+        False,
+        "--use-multi-speaker-clips",
+        help="Also save clips where multiple speakers are present, as long as an identity is assigned.",
+    ),
+) -> None:
+    """Save each identified speaker clip as an individual audio file."""
+    confirm_session(session)
+    logger: LoggingProtocol = create_logger()
+    command: CreateSpeakerClipsCommand = CreateSpeakerClipsCommand(
+        session, use_multi_speaker_clips=use_multi_speaker_clips
+    )
     command.execute(logger)
 
 
@@ -453,6 +472,19 @@ high_confidence_similarity_threshold: 0.88
 
 
 # ---------------------------------------------------------------------------
+# speaker_clip_lead_in / speaker_clip_lead_out  (REQUIRED)
+# ---------------------------------------------------------------------------
+# Seconds of audio to include before/after each speech clip when creating
+# individual speaker audio files via the create-speaker-clips command.
+# Padding is faded in/out to avoid hard audio edges.
+#
+# Allowed values: >= 0.0 (seconds)
+# Reasonable default: 0.25
+speaker_clip_lead_in: 0.25
+speaker_clip_lead_out: 0.25
+
+
+# ---------------------------------------------------------------------------
 # vad  (VAD model hyperparameters)
 # ---------------------------------------------------------------------------
 # Controls the NeMo Voice Activity Detection model used to find speech and
@@ -749,10 +781,17 @@ def generate_sample_settings() -> None:
 
 
 @app.command("register-speakers")
-def register_speakers() -> None:
-    """Register all speakers from voice_samples directory into registered_speakers.yaml."""
+def register_speakers(
+    gap_length: float = typer.Option(
+        0.5,
+        "--gap-length",
+        "-g",
+        help="Seconds of silence inserted between clips when combining per-speaker audio files.",
+    ),
+) -> None:
+    """Combine per-speaker clip directories and register embeddings into registered_speakers.yaml."""
     logger: LoggingProtocol = create_logger()
-    RegisterSpeakersCommand().execute(logger)
+    RegisterSpeakersCommand(gap_length=gap_length).execute(logger)
 
 
 def _version_callback(value: bool) -> None:

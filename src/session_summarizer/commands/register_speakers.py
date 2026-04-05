@@ -14,6 +14,7 @@ from ..audio import (
     measure_loudness,
     normalize_and_export_16k_mono,
 )
+from ..audio.speaker_audio import create_combined_speaker_audio_file
 from ..protocols import EmbeddingFactory, LoggingProtocol, NullLogger
 from ..speaker_embeddings import get_embeddings_factory
 from ..speaker_embeddings.registered_speakers import RegisteredSpeakers
@@ -33,17 +34,31 @@ def _log_gpu_usage(logger: LoggingProtocol, label: str) -> None:
 @dataclass
 class RegisterSpeakersCommand:
     logger: LoggingProtocol = NullLogger()
-
     device: str = "cuda"
-    """Register all speakers found in the voice_samples directory into registered_speakers.yaml."""
+    gap_length: float = 0.5
+    """Register all speakers found in per-speaker subdirectories of voice_samples/ into registered_speakers.yaml."""
 
     def execute(self, logger: LoggingProtocol) -> None:
         self.logger = logger
-        wav_files: list[Path] = sorted(common_paths.voice_samples_dir().glob("*.wav"))
-        if not wav_files:
-            logger.report_message("[yellow]No WAV files found in voice_samples directory.[/yellow]")
+        voice_dir: Path = common_paths.voice_samples_dir()
+
+        # Phase 1 — delete existing root WAVs so stale combined files don't persist
+        for wav in voice_dir.glob("*.wav"):
+            wav.unlink()
+
+        # Phase 2 — discover speaker directories (skip hidden dirs)
+        speaker_dirs: list[Path] = sorted(d for d in voice_dir.iterdir() if d.is_dir() and not d.name.startswith("."))
+        if not speaker_dirs:
+            logger.report_message("[yellow]No speaker directories found in voice_samples/.[/yellow]")
             return
 
+        # Phase 3 — generate one combined WAV per speaker directory
+        for speaker_dir in speaker_dirs:
+            logger.report_message(f"[blue]Combining clips for {speaker_dir.name}...[/blue]")
+            create_combined_speaker_audio_file(speaker_dir.name, gap_length=self.gap_length)
+
+        # Phase 4 — register embeddings from the newly generated combined WAVs
+        wav_files: list[Path] = sorted(voice_dir.glob("*.wav"))
         logger.report_message(f"[blue]Registering {len(wav_files)} speaker(s) from voice_samples/[/blue]")
 
         speakers: RegisteredSpeakers = RegisteredSpeakers.load(common_paths.build_speakers_file_path())
@@ -54,7 +69,7 @@ class RegisterSpeakersCommand:
         speakers.save(common_paths.build_speakers_file_path())
 
         self.logger.report_message(
-            f"[green]Speaker '{len(speakers)}' speakers saved to {common_paths.build_speakers_file_path()}.[/green]"
+            f"[green]{len(speakers)} speaker(s) saved to {common_paths.build_speakers_file_path()}.[/green]"
         )
 
     def name(self) -> str:

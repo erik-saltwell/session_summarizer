@@ -29,6 +29,19 @@
             ]
         },
         {
+            "name": "-create-speaker-clips",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "create-speaker-clips",
+                "--session",
+                "test",
+                "--use-multi-speaker-clips",
+            ]
+        },
+        {
             "name": "-identify-speakers",
             "type": "debugpy",
             "request": "launch",
@@ -207,13 +220,15 @@
             ]
         },
         {
-            "name": "-register",
+            "name": "-register-speakers",
             "type": "debugpy",
             "request": "launch",
             "module": "session_summarizer",
             "console": "integratedTerminal",
             "args": [
                 "register-speakers",
+                "--gap-length",
+                "0.5",
             ]
         },
         {

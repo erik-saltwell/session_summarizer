@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Annotated, Literal, Self
 
 import yaml
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, ValidationInfo, field_validator, model_validator
 
 from .diarization_stitching_settings import DiarizationStitchingSettings
 from .vad_settings import VadSettings
@@ -135,12 +135,28 @@ class SessionSettings(BaseModel, frozen=True):
         Field(description="VAD model and post-processing hyperparameters"),
     ]
 
+    speaker_clip_lead_in: Annotated[
+        float,
+        Field(description="Seconds of audio padding before each speaker clip when creating individual audio files"),
+    ]
+    speaker_clip_lead_out: Annotated[
+        float,
+        Field(description="Seconds of audio padding after each speaker clip when creating individual audio files"),
+    ]
+
     diarization_stitching: Annotated[
         DiarizationStitchingSettings,
         Field(
             description="Policy knobs for assigning ASR words to diarized speaker segments",
         ),
     ]
+
+    @field_validator("speaker_clip_lead_in", "speaker_clip_lead_out")
+    @classmethod
+    def _lead_must_be_non_negative(cls, v: float, info: ValidationInfo) -> float:
+        if v < 0.0:
+            raise ValueError(f"{info.field_name} must be >= 0.0, got {v!r}")
+        return v
 
     @field_validator("high_confidence_similarity_threshold")
     @classmethod
