@@ -5,31 +5,43 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "-pipeline",
+            "name": "align",
             "type": "debugpy",
             "request": "launch",
             "module": "session_summarizer",
             "console": "integratedTerminal",
             "args": [
-                "process-pipeline",
+                "align-transcription",
                 "--session",
                 "test",
             ]
         },
         {
-            "name": "-identity-stitch",
+            "name": "clean-audio",
             "type": "debugpy",
             "request": "launch",
             "module": "session_summarizer",
             "console": "integratedTerminal",
             "args": [
-                "apply-identity-stitching",
+                "clean-audio",
                 "--session",
                 "test",
             ]
         },
         {
-            "name": "-create-speaker-clips",
+            "name": "clean-session",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "clean-session",
+                "--session",
+                "test",
+            ]
+        },
+        {
+            "name": "create-speaker-clips",
             "type": "debugpy",
             "request": "launch",
             "module": "session_summarizer",
@@ -42,79 +54,7 @@
             ]
         },
         {
-            "name": "-identify-speakers",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "session_summarizer",
-            "console": "integratedTerminal",
-            "args": [
-                "identify-speakers",
-                "--session",
-                "test",
-            ]
-        },
-        {
-            "name": "-first-stitching",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "session_summarizer",
-            "console": "integratedTerminal",
-            "args": [
-                "apply-first-stitching",
-                "--session",
-                "test",
-            ]
-        },
-        {
-            "name": "-turn-end",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "session_summarizer",
-            "console": "integratedTerminal",
-            "args": [
-                "update-turn-end",
-                "--session",
-                "test",
-            ]
-        },
-        {
-            "name": "-dump-human",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "session_summarizer",
-            "console": "integratedTerminal",
-            "args": [
-                "dump-human-format",
-                "--session",
-                "test",
-            ]
-        },
-        {
-            "name": "-embeddings",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "session_summarizer",
-            "console": "integratedTerminal",
-            "args": [
-                "add-embeddings",
-                "--session",
-                "test",
-            ]
-        },
-        {
-            "name": "-dump-and-compare",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "session_summarizer",
-            "console": "integratedTerminal",
-            "args": [
-                "dump-and-compare-texts",
-                "--session",
-                "test",
-            ]
-        },
-        {
-            "name": "-diarize-audio",
+            "name": "diarize-audio",
             "type": "debugpy",
             "request": "launch",
             "module": "session_summarizer",
@@ -126,91 +66,55 @@
             ]
         },
         {
-            "name": "-validate-transcribers",
+            "name": "dump-and-compare",
             "type": "debugpy",
             "request": "launch",
             "module": "session_summarizer",
             "console": "integratedTerminal",
             "args": [
-                "validate-transcribers",
+                "dump-and-compare-texts",
                 "--session",
                 "test",
             ]
         },
         {
-            "name": "-segment",
+            "name": "dump-human",
             "type": "debugpy",
             "request": "launch",
             "module": "session_summarizer",
             "console": "integratedTerminal",
             "args": [
-                "compute-vad-segments",
+                "dump-human-format",
                 "--session",
                 "test",
             ]
         },
         {
-            "name": "-score-confidence",
+            "name": "embeddings",
             "type": "debugpy",
             "request": "launch",
             "module": "session_summarizer",
             "console": "integratedTerminal",
             "args": [
-                "score-confidence",
+                "add-embeddings",
                 "--session",
                 "test",
             ]
         },
         {
-            "name": "-align",
+            "name": "first-stitching",
             "type": "debugpy",
             "request": "launch",
             "module": "session_summarizer",
             "console": "integratedTerminal",
             "args": [
-                "align-transcription",
+                "apply-first-stitching",
                 "--session",
                 "test",
             ]
         },
         {
-            "name": "-transcribe",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "session_summarizer",
-            "console": "integratedTerminal",
-            "args": [
-                "transcribe",
-                "--session",
-                "test",
-            ]
-        },
-        {
-            "name": "-clean-audio",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "session_summarizer",
-            "console": "integratedTerminal",
-            "args": [
-                "clean-audio",
-                "--session",
-                "test",
-            ]
-        },
-        {
-            "name": "-clean-session",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "session_summarizer",
-            "console": "integratedTerminal",
-            "args": [
-                "clean-session",
-                "--session",
-                "test",
-            ]
-        },
-        {
-            "name": "-gen-settings",
+            "name": "gen-settings",
             "type": "debugpy",
             "request": "launch",
             "module": "session_summarizer",
@@ -220,7 +124,43 @@
             ]
         },
         {
-            "name": "-register-speakers",
+            "name": "identify-speakers",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "identify-speakers",
+                "--session",
+                "test",
+            ]
+        },
+        {
+            "name": "identity-stitch",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "apply-identity-stitching",
+                "--session",
+                "test",
+            ]
+        },
+        {
+            "name": "pipeline",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "process-pipeline",
+                "--session",
+                "test",
+            ]
+        },
+        {
+            "name": "register-speakers",
             "type": "debugpy",
             "request": "launch",
             "module": "session_summarizer",
@@ -233,24 +173,76 @@
             ]
         },
         {
-            "name": "custom args",
+            "name": "score-confidence",
             "type": "debugpy",
             "request": "launch",
             "module": "session_summarizer",
             "console": "integratedTerminal",
-            "args": "${command:pickArgs}"
+            "args": [
+                "score-confidence",
+                "--session",
+                "test",
+            ]
         },
         {
-            "name": "Integration Tests",
+            "name": "segment",
             "type": "debugpy",
             "request": "launch",
-            "module": "pytest",
-            "justMyCode": true,
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
             "args": [
-                "-s",
-                "tests/integration"
-            ],
-            "console": "integratedTerminal"
+                "compute-vad-segments",
+                "--session",
+                "test",
+            ]
+        },
+        {
+            "name": "transcribe",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "transcribe",
+                "--session",
+                "test",
+            ]
+        },
+        {
+            "name": "turn-end",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "update-turn-end",
+                "--session",
+                "test",
+            ]
+        },
+        {
+            "name": "validate-diarization",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "validate-diarization",
+                "--session",
+                "test",
+            ]
+        },
+        {
+            "name": "validate-transcribers",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "validate-transcribers",
+                "--session",
+                "test",
+            ]
         }
     ]
 }

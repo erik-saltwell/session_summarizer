@@ -31,6 +31,8 @@ dependencies = [
     "marimo[recommended]>=0.22.4",
     "pandas>=2.3.3",
     "matplotlib>=3.10.8",
+    "meeteval>=0.4.3",
+    "pyannote-metrics>=3.2.1",
 ]
 
 [project.scripts]

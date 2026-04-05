@@ -476,6 +476,23 @@ wheels = [
 ]
 
 [[package]]
+name = "cython"
+version = "3.2.4"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/91/85/7574c9cd44b69a27210444b6650f6477f56c75fee1b70d7672d3e4166167/cython-3.2.4.tar.gz", hash = "sha256:84226ecd313b233da27dc2eb3601b4f222b8209c3a7216d8733b031da1dc64e6", size = 3280291, upload-time = "2026-01-04T14:14:14.473Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/03/1c/46e34b08bea19a1cdd1e938a4c123e6299241074642db9d81983cef95e9f/cython-3.2.4-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:869487ea41d004f8b92171f42271fbfadb1ec03bede3158705d16cd570d6b891", size = 3226757, upload-time = "2026-01-04T14:15:10.812Z" },
+    { url = "https://files.pythonhosted.org/packages/12/33/3298a44d201c45bcf0d769659725ae70e9c6c42adf8032f6d89c8241098d/cython-3.2.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:55b6c44cd30821f0b25220ceba6fe636ede48981d2a41b9bbfe3c7902ce44ea7", size = 3388969, upload-time = "2026-01-04T14:15:12.45Z" },
+    { url = "https://files.pythonhosted.org/packages/73/48/48530d9b9d64ec11dbe0dd3178a5fe1e0b27977c1054ecffb82be81e9b6a/cython-3.2.4-cp39-abi3-manylinux1_i686.manylinux_2_28_i686.manylinux_2_5_i686.whl", hash = "sha256:6d5267f22b6451eb1e2e1b88f6f78a2c9c8733a6ddefd4520d3968d26b824581", size = 3210669, upload-time = "2026-01-04T14:15:41.911Z" },
+    { url = "https://files.pythonhosted.org/packages/5e/91/4865fbfef1f6bb4f21d79c46104a53d1a3fa4348286237e15eafb26e0828/cython-3.2.4-cp39-abi3-manylinux2014_armv7l.manylinux_2_17_armv7l.manylinux_2_31_armv7l.whl", hash = "sha256:3b6e58f73a69230218d5381817850ce6d0da5bb7e87eb7d528c7027cbba40b06", size = 2856835, upload-time = "2026-01-04T14:15:43.815Z" },
+    { url = "https://files.pythonhosted.org/packages/fa/39/60317957dbef179572398253f29d28f75f94ab82d6d39ea3237fb6c89268/cython-3.2.4-cp39-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:e71efb20048358a6b8ec604a0532961c50c067b5e63e345e2e359fff72feaee8", size = 2994408, upload-time = "2026-01-04T14:15:45.422Z" },
+    { url = "https://files.pythonhosted.org/packages/8d/30/7c24d9292650db4abebce98abc9b49c820d40fa7c87921c0a84c32f4efe7/cython-3.2.4-cp39-abi3-musllinux_1_2_armv7l.whl", hash = "sha256:28b1e363b024c4b8dcf52ff68125e635cb9cb4b0ba997d628f25e32543a71103", size = 2891478, upload-time = "2026-01-04T14:15:47.394Z" },
+    { url = "https://files.pythonhosted.org/packages/86/70/03dc3c962cde9da37a93cca8360e576f904d5f9beecfc9d70b1f820d2e5f/cython-3.2.4-cp39-abi3-musllinux_1_2_i686.whl", hash = "sha256:31a90b4a2c47bb6d56baeb926948348ec968e932c1ae2c53239164e3e8880ccf", size = 3225663, upload-time = "2026-01-04T14:15:49.446Z" },
+    { url = "https://files.pythonhosted.org/packages/b1/97/10b50c38313c37b1300325e2e53f48ea9a2c078a85c0c9572057135e31d5/cython-3.2.4-cp39-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:e65e4773021f8dc8532010b4fbebe782c77f9a0817e93886e518c93bd6a44e9d", size = 3115628, upload-time = "2026-01-04T14:15:51.323Z" },
+    { url = "https://files.pythonhosted.org/packages/ff/fa/d3c15189f7c52aaefbaea76fb012119b04b9013f4bf446cb4eb4c26c4e6b/cython-3.2.4-py3-none-any.whl", hash = "sha256:732fc93bc33ae4b14f6afaca663b916c2fdd5dcbfad7114e17fb2434eeaea45c", size = 1257078, upload-time = "2026-01-04T14:14:12.373Z" },
+]
+
+[[package]]
 name = "cytoolz"
 version = "1.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1701,6 +1718,19 @@ sdist = { url = "https://files.pythonhosted.org/packages/9e/b2/451be65c13d2d69b7
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e3/a0/0d55c59ea8a5f1b13b3eb931e1c0eab9c2a07322cad79cb51a596d2d2a5c/mediapy-1.1.6-py3-none-any.whl", hash = "sha256:c74370808b445666f95272bfdf0eb5707a43b7e05e5527f2dd0830e6892f976f", size = 24955, upload-time = "2023-02-24T13:08:40.53Z" },
 ]
+
+[[package]]
+name = "meeteval"
+version = "0.4.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "cython", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+    { name = "kaldialign", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+    { name = "numpy", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+    { name = "packaging", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+    { name = "scipy", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d4/13/10edb36a8881b24690e27213bfb2395e8857a70eeef61d241a463cb5522c/meeteval-0.4.3.tar.gz", hash = "sha256:02d3a359f375d39c67dfb8fe1c061e7dac19d6fc1fb89ee72d793a5813dafeb2", size = 843558, upload-time = "2025-09-08T11:57:30.158Z" }
 
 [[package]]
 name = "ml-dtypes"
@@ -3373,6 +3403,7 @@ dependencies = [
     { name = "marimo", extra = ["recommended"], marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "mathspell", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "matplotlib", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+    { name = "meeteval", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "ml-dtypes", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "modelscope", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "nemo-toolkit", extra = ["asr"], marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
@@ -3381,6 +3412,7 @@ dependencies = [
     { name = "openai-whisper", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "pandas", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "pyannote-audio", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+    { name = "pyannote-metrics", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "python-dotenv", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "rich", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "simplejson", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
@@ -3413,6 +3445,7 @@ requires-dist = [
     { name = "marimo", extras = ["recommended"], specifier = ">=0.22.4" },
     { name = "mathspell" },
     { name = "matplotlib", specifier = ">=3.10.8" },
+    { name = "meeteval", specifier = ">=0.4.3" },
     { name = "ml-dtypes", specifier = ">=0.5,<0.6" },
     { name = "modelscope" },
     { name = "nemo-toolkit", extras = ["asr"] },
@@ -3421,6 +3454,7 @@ requires-dist = [
     { name = "openai-whisper", specifier = ">=20250625" },
     { name = "pandas", specifier = ">=2.3.3" },
     { name = "pyannote-audio", git = "https://github.com/BUTSpeechFIT/DiariZen.git?subdirectory=pyannote-audio" },
+    { name = "pyannote-metrics", specifier = ">=3.2.1" },
     { name = "python-dotenv", specifier = ">=1.2.1" },
     { name = "rich", specifier = ">=14.2.0" },
     { name = "simplejson", specifier = ">=3.20.2" },

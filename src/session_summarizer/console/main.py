@@ -20,6 +20,7 @@ from session_summarizer.commands.identify_speakers import IdentifySpeakersComman
 from session_summarizer.commands.score_confidence import ScoreConfidenceCommand
 from session_summarizer.commands.transcribe_audio import TranscribeAudioCommand
 from session_summarizer.commands.update_turn_end import UpdateTurnEndCommand
+from session_summarizer.commands.validate_diarization import ValidateDiarizationCommand
 from session_summarizer.commands.validate_transcribers import ValidateTranscribersCommand
 from session_summarizer.utils import common_paths
 
@@ -216,6 +217,17 @@ def process_pipeline(
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
     command: ProcessPipelineCommand = ProcessPipelineCommand(session)
+    command.execute(logger)
+
+
+@app.command("validate-diarization")
+def validate_diarization(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to use for validation"),
+) -> None:
+    """Evaluate diarization quality across pipeline stages and display a metrics comparison table."""
+    confirm_session(session)
+    logger: LoggingProtocol = create_logger()
+    command: ValidateDiarizationCommand = ValidateDiarizationCommand(session)
     command.execute(logger)
 
 

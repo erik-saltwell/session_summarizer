@@ -192,6 +192,36 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol):
                 f.write(f"{clip.text}\n")
                 f.write("\n")
 
+    def _speaker_label(self, clip: SpeechClip) -> str:
+        if clip.identity:
+            return clip.identity
+        return "+".join(sorted(clip.speakers))
+
+    def save_to_rttm(self, path: Path, file_id: str | None = None) -> None:
+        fid = file_id if file_id is not None else path.stem
+        with path.open("w", encoding="utf-8") as f:
+            for clip in self:
+                dur = clip.end_time - clip.start_time
+                if dur <= 0:
+                    continue
+                speaker = self._speaker_label(clip)
+                f.write(f"SPEAKER {fid} 1 {clip.start_time:.6f} {dur:.6f} <NA> <NA> {speaker} <NA> <NA>\n")
+
+    def save_to_seglst(self, path: Path, session_id: str | None = None) -> None:
+        sid = session_id if session_id is not None else path.stem
+        data = [
+            {
+                "session_id": sid,
+                "start_time": clip.start_time,
+                "end_time": clip.end_time,
+                "speaker": self._speaker_label(clip),
+                "words": clip.text,
+            }
+            for clip in self
+        ]
+        with path.open("w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+
     def save_to_json(self, path: Path) -> None:
         data = [
             {
@@ -229,6 +259,26 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol):
 
     def sort_clips(self) -> None:
         self.sort(key=lambda c: (c.start_time, c.end_time))
+
+    @classmethod
+    def load_from_test_meeting(cls) -> SpeechClipSet:
+        import session_summarizer.utils.common_paths as common_paths
+
+        data = json.loads(common_paths.test_transcript_path().read_text(encoding="utf-8"))
+        instance = cls()
+        for phrase in data["phrases"]:
+            speaker: str = phrase["speaker"]
+            instance.append(
+                SpeechClip(
+                    start_time=float(phrase["start"]),
+                    end_time=float(phrase["end"]),
+                    speakers={speaker},
+                    confidence_avg=1.0,
+                    text=phrase["text"],
+                    identity=speaker,
+                )
+            )
+        return instance
 
     @classmethod
     def load_from_json(cls, path: Path) -> SpeechClipSet:

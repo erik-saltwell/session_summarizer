@@ -1,0 +1,95 @@
+from __future__ import annotations
+
+import math
+import tempfile
+from dataclasses import dataclass
+from pathlib import Path
+
+from ..evaluation.evaluate_diatization import DiarizationValidationResult, evaluate_diarization_result
+from ..processing_results.speech_clip_set import SpeechClipSet
+from ..settings.session_settings import SessionSettings
+from .session_processing_command import SessionProcessingCommand
+
+# ---------------------------------------------------------------------------
+# Hypothesis registry
+# ---------------------------------------------------------------------------
+# Each entry is (display_name, path_to_SpeechClipSet_json).
+# To add a new hypothesis file, append one tuple here — nothing else to change.
+
+
+def get_diarization_registry(settings: SessionSettings, session_dir: Path) -> list[tuple[str, Path]]:
+    results: list[tuple[str, Path]] = []
+    results.append(("Base Diarization", session_dir / settings.base_diarized_path))
+    results.append(("Turn End Updated", session_dir / settings.turn_end_updated_path))
+    results.append(("First Stitched", session_dir / settings.first_stitched_path))
+    results.append(("Speaker Identified", session_dir / settings.identified_speaker_path))
+    results.append(("Identity Stitched", session_dir / settings.identity_stitched_path))
+
+    return results
+
+
+# _DIARIZATION_REGISTRY: list[tuple[str, Path]] = [
+#     ("Base Diarization", common_paths.data_dir() / "test" / "base_diarization.json"),
+#     ("Turn End Updated", common_paths.data_dir() / "test" / "turn_end_updated.json"),
+#     ("First Stitched", common_paths.data_dir() / "test" / "first_stitched.json"),
+#     ("Speaker Identified", common_paths.data_dir() / "test" / "identified_speakers.json"),
+#     ("Identity Stitched", common_paths.data_dir() / "test" / "identity_stitched.json"),
+# ]
+
+_METRIC_LABELS: list[str] = [
+    "DER",
+    "JER",
+    "tcpWER",
+]
+
+
+def _format_metric(value: float) -> str:
+    return "N/A" if math.isnan(value) else f"{value:.4f}"
+
+
+def _result_column(result: DiarizationValidationResult) -> list[str]:
+    return [
+        _format_metric(result.DER),
+        _format_metric(result.JER),
+        _format_metric(result.tcpWER),
+    ]
+
+
+@dataclass
+class ValidateDiarizationCommand(SessionProcessingCommand):
+    def name(self) -> str:
+        return "Validate Diarization"
+
+    def process_session(self, settings: SessionSettings, session_dir: Path) -> None:
+        results: dict[str, DiarizationValidationResult] = {}
+        failed: list[str] = []
+
+        with tempfile.TemporaryDirectory() as tmp:
+            ref_path = Path(tmp) / "reference.json"
+            reference_clips: SpeechClipSet = SpeechClipSet.load_from_test_meeting()
+            reference_clips.sort_clips()
+            reference_clips.save_to_json(ref_path)
+
+            for name, hyp_path in get_diarization_registry(settings, session_dir):
+                self.logger.report_message(f"[blue]Evaluating {name}...[/blue]")
+                try:
+                    result = evaluate_diarization_result(hyp_path, ref_path)
+                    results[name] = result
+                except Exception as exc:
+                    self.logger.report_error(f"[red]{name} failed: {exc}[/red]")
+                    failed.append(name)
+
+        # Build table: rows = metrics, columns = hypothesis names
+        names = list(results.keys())
+        headers: list[str] = ["Metric"] + names
+        columns = [_result_column(results[name]) for name in names]
+        rows: list[list[str]] = []
+        for i, label in enumerate(_METRIC_LABELS):
+            rows.append([label] + [col[i] for col in columns])
+
+        self.logger.add_break()
+        if results:
+            self.logger.report_message("[bold]Diarization Validation Results[/bold]")
+            self.logger.report_multicolumn_table(headers, rows)
+        if failed:
+            self.logger.report_message(f"[red bold]Failed evaluations: {', '.join(failed)}[/red bold]")

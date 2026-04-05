@@ -20,6 +20,7 @@ from .session_processing_command import SessionProcessingCommand
 from .stitch_identities import StitichIdentitiesCommand
 from .transcribe_audio import TranscribeAudioCommand
 from .update_turn_end import UpdateTurnEndCommand
+from .validate_diarization import ValidateDiarizationCommand
 
 
 @dataclass
@@ -48,3 +49,4 @@ class ProcessPipelineCommand(SessionProcessingCommand):
         StitichIdentitiesCommand(self.session_id).execute(self.logger)
         DumpAndCompareTextsCommand(self.session_id).execute(self.logger)
         DumpHumanFormatCommand(self.session_id).execute(self.logger)
+        ValidateDiarizationCommand(self.session_id).execute(self.logger)
