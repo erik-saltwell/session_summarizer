@@ -4,12 +4,13 @@ Use this skill when adding a new setting to `SessionSettings` or updating an exi
 
 ## Files to update
 
-There are four places that must all be kept in sync:
+There are five places that must all be kept in sync:
 
-1. `src/session_summarizer/protocols/session_settings.py` — the Pydantic model
+1. `src/session_summarizer/settings/session_settings.py` — the Pydantic model
 2. Validation rules — inside the same file, in `_validate_audio_file` (model validator) or a new `@field_validator`
 3. `src/session_summarizer/console/main.py` — the `_SAMPLE_SETTINGS` string
 4. `data/settings.yaml` — the live default settings file
+5. `tests/unit/test_session_settings.py` — unit tests for `SessionSettings`
 
 ---
 
@@ -85,6 +86,18 @@ Place the new block in the same relative position as in `_SAMPLE_SETTINGS`.
 
 ---
 
+## Step 5 — Update unit tests
+
+In `tests/unit/test_session_settings.py`, add the new field to **all** test helper dicts that construct a valid `SessionSettings`:
+
+- `_required_fields()` — uses Python types (e.g. `Path("foo.json")`)
+- `_required_yaml_fields()` — uses plain strings (e.g. `"foo.json"`)
+- The inline dict inside `test_load_resolves_all_paths` — uses plain strings
+
+Place the new key in the same relative position as in the model (near logically related fields). After editing, run the full test suite with `uv run python -m pytest tests/ -v` and confirm all tests pass.
+
+---
+
 ## Checklist
 
 Before finishing, verify:
@@ -95,3 +108,5 @@ Before finishing, verify:
 - [ ] `_SAMPLE_SETTINGS` block added with full documentation header, allowed values, default, and example
 - [ ] `data/settings.yaml` updated to match `_SAMPLE_SETTINGS` exactly
 - [ ] If it is a `Path` field that stores a file path, add the key to the `_resolve_paths` method so relative paths are resolved correctly
+- [ ] Unit tests updated: new field added to `_required_fields()`, `_required_yaml_fields()`, and the inline dict in `test_load_resolves_all_paths`
+- [ ] All tests pass (`uv run python -m pytest tests/ -v`)

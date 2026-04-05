@@ -91,6 +91,12 @@ class DiarizationStitchingSettings(BaseModel, frozen=True):
     # artificial breaks in ongoing speech, while respecting turn boundaries.
     unfinished_clip_merge_max_length: float
 
+    # Maximum gap (seconds) between two clips with the same identified
+    # speaker that can still be merged into a single clip during identity
+    # stitching.  Larger values allow merging across longer pauses; smaller
+    # values keep clips separate when the same speaker resumes after silence.
+    identity_stitching_max_gap: float
+
     # Widen each segment's time boundaries to fully contain its assigned
     # words.  Useful for UI rendering where words must not extend beyond
     # their parent segment, but reduces diarization boundary fidelity.
@@ -149,6 +155,7 @@ class DiarizationStitchingSettings(BaseModel, frozen=True):
         "anonymous_join_gap",
         "merge_gap_seconds",
         "unfinished_clip_merge_max_length",
+        "identity_stitching_max_gap",
         "expansion_limit_seconds",
         "max_backchannel_duration",
         "max_backchannel_prior_gap",

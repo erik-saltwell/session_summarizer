@@ -585,6 +585,15 @@ diarization_stitching:
   # Reasonable default: 2.0
   unfinished_clip_merge_max_length: 2.0
 
+  # Maximum gap (seconds) between two clips with the same identified
+  # speaker that can still be merged into a single clip during identity
+  # stitching. Larger values allow merging across longer pauses; smaller
+  # values keep clips separate when the same speaker resumes after silence.
+  #
+  # Allowed values: >= 0.0 (seconds)
+  # Reasonable default: 10.0
+  identity_stitching_max_gap: 10.0
+
   # Widen each segment's time boundaries to fully contain its assigned
   # words. Useful for UI rendering where words must not extend beyond
   # their parent segment, but reduces diarization boundary fidelity.
