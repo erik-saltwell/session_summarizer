@@ -108,7 +108,4 @@ def apply_identity_stitching(
     merge_selector: IdentityMergeSelector = IdentityMergeSelector()
     merged_clips = merge_clips(clips, merge_selector, settings.diarization_stitching, logger)
 
-    backchannel_merge_selector: IdentityBackchannelMerger = IdentityBackchannelMerger()
-    merged_clips = merge_clips(merged_clips, backchannel_merge_selector, settings.diarization_stitching, logger)
-
     return merged_clips

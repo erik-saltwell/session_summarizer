@@ -12,6 +12,8 @@ from .session_processing_command import SessionProcessingCommand
 
 @dataclass
 class DumpHumanFormatCommand(SessionProcessingCommand):
+    include_details: bool = False
+
     def name(self) -> str:
         return "Dump Human Format"
 
@@ -32,12 +34,12 @@ class DumpHumanFormatCommand(SessionProcessingCommand):
             clips: SpeechClipSet = SpeechClipSet.load_from_json(input_path)
             output_path: Path = input_path.with_stem(input_path.stem + "_human").with_suffix(".txt")
 
-            clips.save_to_human_format(output_path)
+            clips.save_to_human_format(output_path, include_details=self.include_details)
             self.logger.report_message(f"[green]Wrote {len(clips)} clips to {output_path}[/green]")
 
         ground_truth: SpeechClipSet = SpeechClipSet.load_from_test_meeting()
         ground_truth_path: Path = session_dir / "ground_truth_human.txt"
-        ground_truth.save_to_human_format(ground_truth_path)
+        ground_truth.save_to_human_format(ground_truth_path, include_details=self.include_details)
         self.logger.report_message(
             f"[green]Wrote {len(ground_truth)} ground truth clips to {ground_truth_path}[/green]"
         )

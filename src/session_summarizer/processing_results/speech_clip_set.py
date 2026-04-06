@@ -171,7 +171,7 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol):
     def plain_text(self) -> str:
         return " ".join(clip.text for clip in self)
 
-    def save_to_human_format(self, path: Path) -> None:
+    def save_to_human_format(self, path: Path, include_details: bool = False) -> None:
         with path.open("w", encoding="utf-8") as f:
             for clip in self:
                 speakers: str
@@ -180,15 +180,15 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol):
                 else:
                     speakers = clip.identity
 
-                flags = " ".join(
-                    flag.name for flag in SpeechClipFlags if flag and clip.has_flag(flag) and flag.name is not None
-                )
-                flag_str = f"[{flags if flags else 'NO_FLAGS'}]"
-                start_str = f"{clip.start_time: 0.5f}".strip()
-                end_str = f"{clip.end_time: 0.5f}".strip()
-
                 f.write(f"{speakers}\n")
-                f.write(f"({start_str},{end_str}): {flag_str}\n")
+                if include_details:
+                    flags = " ".join(
+                        flag.name for flag in SpeechClipFlags if flag and clip.has_flag(flag) and flag.name is not None
+                    )
+                    flag_str = f"[{flags if flags else 'NO_FLAGS'}]"
+                    start_str = f"{clip.start_time: 0.5f}".strip()
+                    end_str = f"{clip.end_time: 0.5f}".strip()
+                    f.write(f"({start_str},{end_str}): {flag_str}\n")
                 f.write(f"{clip.text}\n")
                 f.write("\n")
 

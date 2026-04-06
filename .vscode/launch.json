@@ -197,6 +197,18 @@
             ]
         },
         {
+            "name": "test",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "test",
+                "--session",
+                "test",
+            ]
+        },
+        {
             "name": "transcribe",
             "type": "debugpy",
             "request": "launch",

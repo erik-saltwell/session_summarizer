@@ -12,6 +12,7 @@ from pyannote.database.util import load_rttm
 from pyannote.metrics.diarization import DiarizationErrorRate, JaccardErrorRate
 
 from ..processing_results.speech_clip_set import SpeechClipSet
+from .evaluate_word_diarization import compute_wder
 
 
 @dataclass
@@ -20,6 +21,7 @@ class DiarizationValidationResult:
     DER: float
     JER: float
     tcpWER: float
+    WDER: float
 
 
 def evaluate_diarization_result(hypothesis_path: Path, reference_path: Path) -> DiarizationValidationResult:
@@ -58,9 +60,12 @@ def evaluate_diarization_result(hypothesis_path: Path, reference_path: Path) -> 
         except RuntimeError:
             tcp_wer = math.nan
 
+    wder = compute_wder(hyp, ref)
+
     return DiarizationValidationResult(
         name=hypothesis_path.stem,
         DER=der,
         JER=jer,
         tcpWER=tcp_wer,
+        WDER=wder,
     )

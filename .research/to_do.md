@@ -1,4 +1,6 @@
-# Make quality evaluation command for looking at diarization quality
+
+# Look at quality issues in diarization
+
 
 # Threshold for low cosine similarity and improve identification logic using this (also add a flag we can use for later creating speaker clips)
 - make the similarity a field on SpeechClips

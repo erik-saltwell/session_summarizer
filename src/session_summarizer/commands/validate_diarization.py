@@ -19,27 +19,17 @@ from .session_processing_command import SessionProcessingCommand
 
 def get_diarization_registry(settings: SessionSettings, session_dir: Path) -> list[tuple[str, Path]]:
     results: list[tuple[str, Path]] = []
-    results.append(("Base Diarization", session_dir / settings.base_diarized_path))
-    results.append(("Turn End Updated", session_dir / settings.turn_end_updated_path))
-    results.append(("First Stitched", session_dir / settings.first_stitched_path))
     results.append(("Speaker Identified", session_dir / settings.identified_speaker_path))
     results.append(("Identity Stitched", session_dir / settings.identity_stitched_path))
 
     return results
 
 
-# _DIARIZATION_REGISTRY: list[tuple[str, Path]] = [
-#     ("Base Diarization", common_paths.data_dir() / "test" / "base_diarization.json"),
-#     ("Turn End Updated", common_paths.data_dir() / "test" / "turn_end_updated.json"),
-#     ("First Stitched", common_paths.data_dir() / "test" / "first_stitched.json"),
-#     ("Speaker Identified", common_paths.data_dir() / "test" / "identified_speakers.json"),
-#     ("Identity Stitched", common_paths.data_dir() / "test" / "identity_stitched.json"),
-# ]
-
 _METRIC_LABELS: list[str] = [
     "DER",
     "JER",
     "tcpWER",
+    "WDER",
 ]
 
 
@@ -52,6 +42,7 @@ def _result_column(result: DiarizationValidationResult) -> list[str]:
         _format_metric(result.DER),
         _format_metric(result.JER),
         _format_metric(result.tcpWER),
+        _format_metric(result.WDER),
     ]
 
 
