@@ -8,6 +8,7 @@ from pathlib import Path
 from ..evaluation.evaluate_diatization import DiarizationValidationResult, evaluate_diarization_result
 from ..processing_results.speech_clip_set import SpeechClipSet
 from ..settings.session_settings import SessionSettings
+from .diarizationlm_command import DiarizationLMCommand
 from .session_processing_command import SessionProcessingCommand
 
 # ---------------------------------------------------------------------------
@@ -21,6 +22,7 @@ def get_diarization_registry(settings: SessionSettings, session_dir: Path) -> li
     results: list[tuple[str, Path]] = []
     results.append(("Speaker Identified", session_dir / settings.identified_speaker_path))
     results.append(("Identity Stitched", session_dir / settings.identity_stitched_path))
+    results.append(("DiarizationLM", session_dir / settings.diarizationlm_processed_path))
 
     return results
 
@@ -52,6 +54,8 @@ class ValidateDiarizationCommand(SessionProcessingCommand):
         return "Validate Diarization"
 
     def process_session(self, settings: SessionSettings, session_dir: Path) -> None:
+        DiarizationLMCommand(self.session_id).execute(self.logger)
+
         results: dict[str, DiarizationValidationResult] = {}
         failed: list[str] = []
 

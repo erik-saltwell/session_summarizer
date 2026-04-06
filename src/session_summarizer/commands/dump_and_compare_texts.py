@@ -12,6 +12,7 @@ from ..helpers.audio_diarizer import diarize_audio
 from ..helpers.audio_segmenter import SegmentSplitResultSet, compute_vad_segments
 from ..helpers.audio_transcriber import transcribe_from_cleaned_audio
 from ..helpers.confidence_scorer import score_confidence
+from ..helpers.diarizationlm_refiner import apply_diarizationlm
 from ..helpers.first_stitcher import apply_first_stitching
 from ..helpers.identity_stitch import apply_identity_stitching
 from ..helpers.speaker_identifier import identify_speakers
@@ -111,6 +112,13 @@ class DumpAndCompareTextsCommand(SessionProcessingCommand):
         )
         identity_stitched_eval = self.evaluate_texts(identified_text, identity_stitched_text, "Identities Stiched")
 
+        dlm_clips: SpeechClipSet = apply_diarizationlm(
+            settings, session_dir, identity_stitched_clips, True, self, self.logger
+        )
+        dlm_clips.sort_clips()
+        dlm_text = self.clean_and_dump_text(dlm_clips.plain_text(), session_dir / settings.diarizationlm_processed_path)
+        dlm_eval = self.evaluate_texts(identity_stitched_text, dlm_text, "DiarizationLM")
+
         results: list[TranscriptionValidationResult] = [
             transcription_eval,
             align_eval,
@@ -119,6 +127,7 @@ class DumpAndCompareTextsCommand(SessionProcessingCommand):
             merged_eval,
             identified_eval,
             identity_stitched_eval,
+            dlm_eval,
         ]
 
         # Build table: rows = metrics, columns = transcribers

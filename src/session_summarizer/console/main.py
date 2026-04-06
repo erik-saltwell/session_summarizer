@@ -13,6 +13,7 @@ from session_summarizer.commands.clean_audio import CleanAudioCommand
 from session_summarizer.commands.clean_session import CleanSessionCommand
 from session_summarizer.commands.compute_segments import ComputeSegmentsCommand
 from session_summarizer.commands.create_speaker_clips import CreateSpeakerClipsCommand
+from session_summarizer.commands.diarizationlm_command import DiarizationLMCommand
 from session_summarizer.commands.diarize_audio import DiarizeAudioCommand
 from session_summarizer.commands.dump_and_compare_texts import DumpAndCompareTextsCommand
 from session_summarizer.commands.dump_human_format import DumpHumanFormatCommand
@@ -197,6 +198,20 @@ first_stitched_path: first_stitched.json
 # Example:
 #   identity_stitched_path: identity_stitched.json
 identity_stitched_path: identity_stitched.json
+
+# ---------------------------------------------------------------------------
+# diarizationlm_processed_path  (REQUIRED)
+# ---------------------------------------------------------------------------
+# Path to the SpeechClipSet JSON file after DiarizationLM post-processing.
+# DiarizationLM uses a fine-tuned LLM to correct speaker attribution errors
+# in the diarized transcript. Written by the diarizationlm command.
+# Relative paths are resolved from this file's directory.
+#
+# Default: diarizationlm_processed.json
+#
+# Example:
+#   diarizationlm_processed_path: diarizationlm_processed.json
+diarizationlm_processed_path: diarizationlm_processed.json
 
 # ---------------------------------------------------------------------------
 # device  (REQUIRED)
@@ -622,6 +637,17 @@ def apply_identity_stitiching(
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
     command: StitichIdentitiesCommand = StitichIdentitiesCommand(session)
+    command.execute(logger)
+
+
+@app.command("diarizationlm")
+def diarizationlm(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to process"),
+) -> None:
+    """Post-process diarization with DiarizationLM to correct speaker attribution errors."""
+    confirm_session(session)
+    logger: LoggingProtocol = create_logger()
+    command: DiarizationLMCommand = DiarizationLMCommand(session)
     command.execute(logger)
 
 

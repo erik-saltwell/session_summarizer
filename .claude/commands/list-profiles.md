@@ -1,5 +1,5 @@
 ---
-name: list-skills
+name: list-profiles
 description: "List all available VSCode launch profiles from launch.json. Use when asked to see available profiles, list commands, or show what can be run with /cmd-test."
 allowed-tools: Bash
 ---

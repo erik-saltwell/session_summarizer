@@ -33,6 +33,7 @@ dependencies = [
     "matplotlib>=3.10.8",
     "meeteval>=0.4.3",
     "pyannote-metrics>=3.2.1",
+    "diarizationlm>=0.1.5",
 ]
 
 [project.scripts]

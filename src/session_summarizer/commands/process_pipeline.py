@@ -10,6 +10,7 @@ from .align_transcript import AlignTranscriptCommand
 from .clean_audio import CleanAudioCommand
 from .clean_session import CleanSessionCommand
 from .compute_segments import ComputeSegmentsCommand
+from .diarizationlm_command import DiarizationLMCommand
 from .diarize_audio import DiarizeAudioCommand
 from .dump_and_compare_texts import DumpAndCompareTextsCommand
 from .dump_human_format import DumpHumanFormatCommand
@@ -47,6 +48,7 @@ class ProcessPipelineCommand(SessionProcessingCommand):
         AddEmbeddingsCommand(self.session_id).execute(self.logger)
         IdentifySpeakersCommand(self.session_id).execute(self.logger)
         StitichIdentitiesCommand(self.session_id).execute(self.logger)
+        DiarizationLMCommand(self.session_id).execute(self.logger)
         DumpAndCompareTextsCommand(self.session_id).execute(self.logger)
         DumpHumanFormatCommand(self.session_id).execute(self.logger)
         ValidateDiarizationCommand(self.session_id).execute(self.logger)

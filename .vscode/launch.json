@@ -124,6 +124,18 @@
             ]
         },
         {
+            "name": "diarizationlm",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "diarizationlm",
+                "--session",
+                "test",
+            ]
+        },
+        {
             "name": "identify-speakers",
             "type": "debugpy",
             "request": "launch",
