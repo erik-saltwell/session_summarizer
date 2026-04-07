@@ -26,16 +26,16 @@ class DiarizationLMProcessor:
     def __init__(self, model: DiarizationLMModel):
         self._model = model
 
-    def process(self, clip_set: SpeechClipSet) -> SpeechClipSet:
+    def process(self, clip_set: SpeechClipSet, epsilon: float) -> SpeechClipSet:
         if not self._model.is_loaded:
             raise RuntimeError("Model not loaded. Call model.load() before processing.")
 
         # Step 1: Build speaker mapping.
-        mapping = SpeakerMapping.build_from_clip_set(clip_set)
+        mapping = SpeakerMapping.build_from_clip_set(clip_set, epsilon)
         logger.info("Speaker mapping: %d speakers", mapping.speaker_count)
 
         # Step 2: Convert to DiarizationLM utterance format.
-        conversion = clip_set_to_utterance(clip_set, mapping)
+        conversion = clip_set_to_utterance(clip_set, mapping, epsilon)
         if not conversion.word_records:
             logger.warning("No words found in clip set — returning original unchanged.")
             return clip_set

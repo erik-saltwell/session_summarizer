@@ -22,7 +22,9 @@ class DiarizationValidationResult:
     old_WDER: float
 
 
-def evaluate_diarization_result(hypothesis_path: Path, reference_path: Path) -> DiarizationValidationResult:
+def evaluate_diarization_result(
+    hypothesis_path: Path, reference_path: Path, epsilon: float
+) -> DiarizationValidationResult:
     FILE_ID = "session"
 
     hyp = SpeechClipSet.load_from_json(hypothesis_path)
@@ -58,7 +60,7 @@ def evaluate_diarization_result(hypothesis_path: Path, reference_path: Path) -> 
         # except RuntimeError:
         #     tcp_wer = math.nan
 
-    wder = compute_wder(hyp, ref)
+    wder = compute_wder(hyp, ref, epsilon)
     old_wder = compute_wder_old(hyp, ref)
     match_rate = compute_matched_words_ratio(hyp)
 

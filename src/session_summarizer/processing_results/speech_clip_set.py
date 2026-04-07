@@ -56,15 +56,71 @@ class SpeechClip:
     def is_multispeaker(self) -> bool:
         return len(self.speakers) > 1
 
-    @property
-    def single_speaker(self) -> str:
-        if self.identity is not None:
-            return self.identity
-        return min(self.speakers)
+    # @property
+    # def single_speaker(self) -> str:
+    #     if self.identity is not None:
+    #         return self.identity
+    #     return min(self.speakers)
 
     @property
     def is_anonymous(self) -> bool:
         return self.speakers == _ANONYMOUS_SPEAKER_SET
+
+    def compute_speaker_from_pair(self, other: SpeechClip, epsilon: float) -> str:
+        if self.identity is not None:
+            return self.identity
+
+        intersection = self.speakers & other.speakers
+        if len(intersection) > 0:
+            return min(intersection)
+        return min(self.speakers)
+
+    def compute_speaker(self, prior: SpeechClip | None, next: SpeechClip | None, epsilon: float) -> str:
+        if self.identity is not None:
+            return self.identity
+        if prior is None and next is None:
+            return min(self.speakers)
+        if prior is None:
+            assert next is not None
+            return self.compute_speaker_from_pair(next, epsilon)
+        if next is None:
+            assert prior is not None
+            return self.compute_speaker_from_pair(prior, epsilon)
+
+        set_with_prior = self.speakers & prior.speakers
+        set_with_next = self.speakers & next.speakers
+        set_of_all = set_with_prior & set_with_next
+        gap_with_prior = prior.gap_distance(self, epsilon)
+        gap_with_next = self.gap_distance(next, epsilon)
+        next_is_closer: bool = gap_with_next < gap_with_prior
+        set_withh_closer = set_with_next if next_is_closer else set_with_prior
+        if len(set_of_all) == 1:
+            return min(set_of_all)
+
+        if len(set_with_prior) == 0:
+            if len(set_with_next) == 0:
+                return min(self.speakers)
+            elif len(set_with_next) == 1:
+                return min(set_with_next)
+            else:
+                return min(set_with_next)
+        elif len(set_with_prior) == 1:
+            if len(set_with_next) == 0:
+                return min(set_with_prior)
+            elif len(set_with_next) == 1:
+                return min(set_withh_closer)
+            else:
+                return min(set_withh_closer)
+        else:
+            if len(set_with_next) == 0:
+                return min(set_with_prior)
+            elif len(set_with_next) == 1:
+                return min(set_withh_closer)
+            else:
+                if len(set_of_all) > 0:
+                    return min(set_of_all)
+                else:
+                    return min(set_with_next | set_with_prior)
 
     def has_flag(self, flag: SpeechClipFlags) -> bool:
         return bool(self.flags & flag)

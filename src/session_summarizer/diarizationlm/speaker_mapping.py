@@ -22,10 +22,12 @@ class SpeakerMapping:
     _int_to_str: dict[int, str] = field(default_factory=dict)
 
     @classmethod
-    def build_from_clip_set(cls, clip_set: SpeechClipSet) -> SpeakerMapping:
+    def build_from_clip_set(cls, clip_set: SpeechClipSet, epsilon: float) -> SpeakerMapping:
         unique_speakers: set[str] = set()
-        for clip in clip_set:
-            unique_speakers.add(_effective_speaker(clip))
+        for i, clip in enumerate(clip_set):
+            prior = clip_set[i - 1] if i > 0 else None
+            next_clip = clip_set[i + 1] if i < len(clip_set) - 1 else None
+            unique_speakers.add(clip.compute_speaker(prior, next_clip, epsilon))
 
         if len(unique_speakers) > _MAX_SPEAKERS:
             raise ValueError(

@@ -69,7 +69,7 @@ class ValidateDiarizationCommand(SessionProcessingCommand):
             for name, hyp_path in get_diarization_registry(settings, session_dir):
                 self.logger.report_message(f"[blue]Evaluating {name}...[/blue]")
                 try:
-                    result = evaluate_diarization_result(hyp_path, ref_path)
+                    result = evaluate_diarization_result(hyp_path, ref_path, settings.diarization_stitching.epsilon)
                     results[name] = result
                 except Exception as exc:
                     self.logger.report_error(f"[red]{name} failed: {exc}[/red]")

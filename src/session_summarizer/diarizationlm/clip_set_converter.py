@@ -46,6 +46,7 @@ class ConversionResult:
 def clip_set_to_utterance(
     clip_set: SpeechClipSet,
     mapping: SpeakerMapping,
+    epsilon: float,
 ) -> ConversionResult:
     """Convert a SpeechClipSet to the flat hyp_text + hyp_spk format used by DiarizationLM."""
     words: list[str] = []
@@ -58,7 +59,9 @@ def clip_set_to_utterance(
             passthrough_clip_indices.append(clip_idx)
             continue
 
-        speaker = _effective_speaker(clip)
+        prior = clip_set[clip_idx - 1] if clip_idx > 0 else None
+        next_clip = clip_set[clip_idx + 1] if clip_idx < len(clip_set) - 1 else None
+        speaker = clip.compute_speaker(prior, next_clip, epsilon)
         numeric_id = str(mapping.to_numeric(speaker))
 
         for w in clip.words:

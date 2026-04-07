@@ -28,7 +28,7 @@ def apply_diarizationlm(
     model.load()
     try:
         processor = DiarizationLMProcessor(model)
-        result = processor.process(clips)
+        result = processor.process(clips, settings.diarization_stitching.epsilon)
     finally:
         model.unload()
 

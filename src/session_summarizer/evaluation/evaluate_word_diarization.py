@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 from difflib import SequenceMatcher
 
-from ..processing_results.speech_clip_set import SpeechClipSet
+from ..processing_results.speech_clip_set import SpeechClip, SpeechClipSet
 from .text_cleaner import clean_text_for_evaluation
 
 
@@ -61,14 +61,24 @@ def compute_matched_words_ratio(hyp: SpeechClipSet) -> float:
     return matched_words / (total_words + matched_words)
 
 
-def compute_wder(hyp: SpeechClipSet, ref: SpeechClipSet) -> float:
+def compute_wder(hyp: SpeechClipSet, ref: SpeechClipSet, epsilon: float) -> float:
     correct_count: float = 0.0
     incorrect_count: float = 0.0
 
-    for clip in hyp:
+    last_clip_idx: int = len(hyp) - 1
+
+    for idx, clip in enumerate(hyp):
         if not clip.words:
             continue
-        identity: str = clip.single_speaker
+
+        prior: SpeechClip | None = None
+        next: SpeechClip | None = None
+        if idx > 0:
+            prior = hyp[idx - 1]
+        if idx < last_clip_idx:
+            next = hyp[idx + 1]
+
+        identity: str = clip.compute_speaker(prior, next, epsilon)
         for word in clip.words:
             if word.ground_truth is None:
                 continue
