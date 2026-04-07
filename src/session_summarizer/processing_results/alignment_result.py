@@ -21,6 +21,7 @@ class WordAlignment(TextPhraseBuilder):
     start_time: float  # seconds
     end_time: float  # seconds
     confidence: float = 0.0  # acoustic confidence [0.0, 1.0]
+    ground_truth: str | None = None
 
     @property
     def duration(self) -> float:
@@ -41,6 +42,10 @@ class WordAlignment(TextPhraseBuilder):
 
     def build_phrase_data(self, start_offset: int) -> TextPhrase:
         return TextPhrase(start_offset, len(self.word))
+
+    @property
+    def has_ground_truth(self) -> bool:
+        return self.ground_truth is not None
 
 
 @dataclass

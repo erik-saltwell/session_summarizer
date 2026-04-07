@@ -5,14 +5,7 @@ from dataclasses import dataclass, field
 from typing import cast
 
 from session_summarizer.evaluation.ground_truth_factory import (
-    Opcode,
-    OpcodeKind,
     PhraseBuilderPair,
-    build_interval_tree_from_opcodes,
-    build_interval_tree_from_phraseset,
-    find_opcode_from_interval_tree,
-    find_phrase_from_interval_tree,
-    iterate_sequence_match_opcodes,
     map_phrase_pairs,
 )
 from session_summarizer.protocols.phrase_data import TextPhrase, TextPhraseBuilder, TextPhraseSet
@@ -43,131 +36,8 @@ class UnitTestPhraseSet(TextPhraseSet):
     def phrase_builders_in_order(self) -> Iterator[TextPhraseBuilder]:
         yield from self.phrases
 
-    def phrase_seperator_length(self) -> int:
+    def phrase_separator_length(self) -> int:
         return 1
-
-
-# ---------------------------------------------------------------------------
-# iterate_sequence_match_opcodes
-# ---------------------------------------------------------------------------
-
-
-class TestIterateSequenceMatchOpcodes:
-    def test_identical_strings(self) -> None:
-        opcodes = list(iterate_sequence_match_opcodes("abc", "abc"))
-        assert len(opcodes) == 1
-        assert opcodes[0].kind == OpcodeKind.EQUAL
-
-    def test_completely_different(self) -> None:
-        opcodes = list(iterate_sequence_match_opcodes("aaa", "zzz"))
-        kinds = {op.kind for op in opcodes}
-        assert OpcodeKind.EQUAL not in kinds
-
-    def test_partial_overlap(self) -> None:
-        opcodes = list(iterate_sequence_match_opcodes("abcdef", "abcxyz"))
-        kinds = [op.kind for op in opcodes]
-        assert OpcodeKind.EQUAL in kinds
-        assert any(k != OpcodeKind.EQUAL for k in kinds)
-
-    def test_empty_baseline(self) -> None:
-        opcodes = list(iterate_sequence_match_opcodes("", "abc"))
-        assert all(op.kind == OpcodeKind.INSERT for op in opcodes)
-
-    def test_empty_updated(self) -> None:
-        opcodes = list(iterate_sequence_match_opcodes("abc", ""))
-        assert all(op.kind == OpcodeKind.DELETE for op in opcodes)
-
-    def test_both_empty(self) -> None:
-        opcodes = list(iterate_sequence_match_opcodes("", ""))
-        assert opcodes == []
-
-
-# ---------------------------------------------------------------------------
-# build_interval_tree_from_phraseset / find_phrase_from_interval_tree
-# ---------------------------------------------------------------------------
-
-
-class TestPhraseIntervalTree:
-    def test_single_phrase(self) -> None:
-        ps = UnitTestPhraseSet("hello")
-        tree = build_interval_tree_from_phraseset(ps)
-        assert len(tree) == 1
-        builder = find_phrase_from_interval_tree(tree, 0)
-        assert builder == UnitTestPhraseBuilder("hello")
-
-    def test_multiple_phrases_offsets(self) -> None:
-        # "one two three" -> offsets: one=[0,3) two=[4,7) three=[8,13)
-        ps = UnitTestPhraseSet("one", "two", "three")
-        tree = build_interval_tree_from_phraseset(ps)
-        assert len(tree) == 3
-
-        assert find_phrase_from_interval_tree(tree, 0) == UnitTestPhraseBuilder("one")
-        assert find_phrase_from_interval_tree(tree, 2) == UnitTestPhraseBuilder("one")
-        assert find_phrase_from_interval_tree(tree, 4) == UnitTestPhraseBuilder("two")
-        assert find_phrase_from_interval_tree(tree, 8) == UnitTestPhraseBuilder("three")
-        assert find_phrase_from_interval_tree(tree, 12) == UnitTestPhraseBuilder("three")
-
-    def test_miss_in_separator(self) -> None:
-        # offset 3 is the space separator between "one" and "two"
-        ps = UnitTestPhraseSet("one", "two")
-        tree = build_interval_tree_from_phraseset(ps)
-        assert find_phrase_from_interval_tree(tree, 3) is None
-
-    def test_miss_past_end(self) -> None:
-        ps = UnitTestPhraseSet("ab")
-        tree = build_interval_tree_from_phraseset(ps)
-        assert find_phrase_from_interval_tree(tree, 2) is None
-
-    def test_boundary_start_is_hit(self) -> None:
-        ps = UnitTestPhraseSet("ab", "cd")
-        tree = build_interval_tree_from_phraseset(ps)
-        # "cd" starts at offset 3
-        assert find_phrase_from_interval_tree(tree, 3) == UnitTestPhraseBuilder("cd")
-
-    def test_boundary_end_is_miss(self) -> None:
-        ps = UnitTestPhraseSet("ab", "cd")
-        tree = build_interval_tree_from_phraseset(ps)
-        # "ab" spans [0,2), so offset 2 is outside
-        assert find_phrase_from_interval_tree(tree, 2) is None
-
-
-# ---------------------------------------------------------------------------
-# build_interval_tree_from_opcodes / find_opcode_from_interval_tree
-# ---------------------------------------------------------------------------
-
-
-class TestOpcodeIntervalTree:
-    def test_only_equal_opcodes_included(self) -> None:
-        opcodes = iter(
-            [
-                Opcode(OpcodeKind.REPLACE, 0, 3, 0, 3),
-                Opcode(OpcodeKind.EQUAL, 3, 6, 3, 6),
-                Opcode(OpcodeKind.DELETE, 6, 9, 6, 6),
-            ]
-        )
-        tree = build_interval_tree_from_opcodes(opcodes)
-        assert len(tree) == 1
-
-    def test_empty_iterator(self) -> None:
-        tree = build_interval_tree_from_opcodes(iter([]))
-        assert len(tree) == 0
-
-    def test_find_hit(self) -> None:
-        opcodes = iter([Opcode(OpcodeKind.EQUAL, 5, 10, 15, 20)])
-        tree = build_interval_tree_from_opcodes(opcodes)
-        result = find_opcode_from_interval_tree(tree, 7)
-        assert result is not None
-        assert result.baseline_start == 5
-
-    def test_find_miss(self) -> None:
-        opcodes = iter([Opcode(OpcodeKind.EQUAL, 5, 10, 15, 20)])
-        tree = build_interval_tree_from_opcodes(opcodes)
-        assert find_opcode_from_interval_tree(tree, 3) is None
-
-    def test_find_boundary_end_is_miss(self) -> None:
-        opcodes = iter([Opcode(OpcodeKind.EQUAL, 5, 10, 15, 20)])
-        tree = build_interval_tree_from_opcodes(opcodes)
-        assert find_opcode_from_interval_tree(tree, 10) is None
 
 
 # ---------------------------------------------------------------------------

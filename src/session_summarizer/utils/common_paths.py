@@ -14,6 +14,7 @@ _REPORTS_DIR = _PROJECT_ROOT / "test_reports"
 _TEST_DATA = _PROJECT_ROOT / "test_meeting"
 _TEST_TRANSCRIPT_FILENAME = "SimpleTranscript.json"
 _TEST_ORIGINAL_FILEPATH = "original.m4a"
+_TEST_SESSION = "test"
 
 
 def ensure_directory(dir: Path) -> None:
@@ -96,3 +97,7 @@ def test_transcript_path() -> Path:
 
 def test_recording_path() -> Path:
     return test_data_dir() / _TEST_ORIGINAL_FILEPATH
+
+
+def is_test_session(session_id: str) -> bool:
+    return session_id == _TEST_SESSION

@@ -41,15 +41,15 @@ class TestMeeting(TextPhraseSet):
             ]
         )
 
-    def phrase_seperator_length(self) -> int:
+    def phrase_separator_length(self) -> int:
         return 1
 
     @classmethod
-    def phrase_seperator(cls) -> str:
+    def phrase_separator(cls) -> str:
         return " "
 
     def plain_text(self) -> str:
-        return TestMeeting.phrase_seperator().join(phrase.text for phrase in self.phrases)
+        return TestMeeting.phrase_separator().join(phrase.text for phrase in self.phrases)
 
     def phrase_builders_in_order(self) -> Iterator[TextPhraseBuilder]:
         yield from self.phrases

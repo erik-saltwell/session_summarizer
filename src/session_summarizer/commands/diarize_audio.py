@@ -12,6 +12,7 @@ from ..helpers.audio_cleaner import clean_audio
 from ..helpers.audio_segmenter import SegmentSplitResultSet, compute_vad_segments
 from ..helpers.audio_transcriber import transcribe_from_cleaned_audio
 from ..helpers.confidence_scorer import score_confidence
+from ..helpers.ground_truth_adder import enhance_words_with_ground_truth
 from ..helpers.transcript_aligner import align_transcript
 from ..processing_results.transcriber_protocol import TranscriptionResult
 from .session_processing_command import SessionProcessingCommand
@@ -32,4 +33,8 @@ class DiarizeAudioCommand(SessionProcessingCommand):
         alignment: AlignmentResult = align_transcript(settings, session_dir, result, segments, True, self, self.logger)
         alignment = score_confidence(settings, session_dir, alignment, segments, True, self, self.logger)
         clips: SpeechClipSet = diarize_audio(settings, session_dir, alignment, False, self, self.logger)
+
+        if common_paths.is_test_session(self.session_id):
+            enhance_words_with_ground_truth(clips)
+
         clips.save_to_json(session_dir / settings.base_diarized_path)

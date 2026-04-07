@@ -1,18 +1,15 @@
 from __future__ import annotations
 
-import math
 import tempfile
 from dataclasses import dataclass
-from decimal import Decimal
 from pathlib import Path
 from typing import cast
 
-from meeteval.wer.api import tcpwer
 from pyannote.database.util import load_rttm
 from pyannote.metrics.diarization import DiarizationErrorRate, JaccardErrorRate
 
 from ..processing_results.speech_clip_set import SpeechClipSet
-from .evaluate_word_diarization import compute_wder
+from .evaluate_word_diarization import compute_matched_words_ratio, compute_wder, compute_wder_old
 
 
 @dataclass
@@ -20,8 +17,9 @@ class DiarizationValidationResult:
     name: str
     DER: float
     JER: float
-    tcpWER: float
+    wder_match_rate: float
     WDER: float
+    old_WDER: float
 
 
 def evaluate_diarization_result(hypothesis_path: Path, reference_path: Path) -> DiarizationValidationResult:
@@ -54,18 +52,16 @@ def evaluate_diarization_result(hypothesis_path: Path, reference_path: Path) -> 
 
         # tcpWER via meeteval (collar=5.0s per research guidance).
         # Pre-identity stages may have >20 diarization clusters; meeteval refuses above that limit.
-        try:
-            tcp_results = tcpwer(reference=str(ref_seglst), hypothesis=str(hyp_seglst), collar=Decimal("5.0"))
-            tcp_wer = float(next(iter(tcp_results.values())).error_rate)
-        except RuntimeError:
-            tcp_wer = math.nan
+        # try:
+        #     tcp_results = tcpwer(reference=str(ref_seglst), hypothesis=str(hyp_seglst), collar=Decimal("5.0"))
+        #     tcp_wer = float(next(iter(tcp_results.values())).error_rate)
+        # except RuntimeError:
+        #     tcp_wer = math.nan
 
     wder = compute_wder(hyp, ref)
+    old_wder = compute_wder_old(hyp, ref)
+    match_rate = compute_matched_words_ratio(hyp)
 
     return DiarizationValidationResult(
-        name=hypothesis_path.stem,
-        DER=der,
-        JER=jer,
-        tcpWER=tcp_wer,
-        WDER=wder,
+        name=hypothesis_path.stem, DER=der, JER=jer, wder_match_rate=match_rate, WDER=wder, old_WDER=old_wder
     )

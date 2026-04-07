@@ -45,7 +45,43 @@ def _hyp_words(clips: SpeechClipSet) -> list[tuple[str, str]]:
     return result
 
 
+def compute_matched_words_ratio(hyp: SpeechClipSet) -> float:
+    total_words: float = 0.0
+    matched_words: float = 0.0
+    for clip in hyp:
+        if not clip.words:
+            continue
+        for word in clip.words:
+            total_words += 1.0
+            if word.ground_truth is not None:
+                matched_words += 1.0
+
+    if total_words == 0.0 and matched_words == 0.0:
+        return 0.0
+    return matched_words / (total_words + matched_words)
+
+
 def compute_wder(hyp: SpeechClipSet, ref: SpeechClipSet) -> float:
+    correct_count: float = 0.0
+    incorrect_count: float = 0.0
+
+    for clip in hyp:
+        if not clip.words:
+            continue
+        identity: str = clip.single_speaker
+        for word in clip.words:
+            if word.ground_truth is None:
+                continue
+            if word.ground_truth == identity:
+                correct_count += 1.0
+            else:
+                incorrect_count += 1.0
+    if correct_count == 0.0 and incorrect_count == 0.0:
+        return 0.0
+    return incorrect_count / (correct_count + incorrect_count)
+
+
+def compute_wder_old(hyp: SpeechClipSet, ref: SpeechClipSet) -> float:
     """Word Diarization Error Rate.
 
     Aligns hypothesis and reference word sequences using LCS (via

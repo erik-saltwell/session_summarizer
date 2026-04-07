@@ -8,7 +8,6 @@ from pathlib import Path
 from ..evaluation.evaluate_diatization import DiarizationValidationResult, evaluate_diarization_result
 from ..processing_results.speech_clip_set import SpeechClipSet
 from ..settings.session_settings import SessionSettings
-from .diarizationlm_command import DiarizationLMCommand
 from .session_processing_command import SessionProcessingCommand
 
 # ---------------------------------------------------------------------------
@@ -30,8 +29,9 @@ def get_diarization_registry(settings: SessionSettings, session_dir: Path) -> li
 _METRIC_LABELS: list[str] = [
     "DER",
     "JER",
-    "tcpWER",
+    "WDER Match Rate",
     "WDER",
+    "old_WDER",
 ]
 
 
@@ -43,8 +43,9 @@ def _result_column(result: DiarizationValidationResult) -> list[str]:
     return [
         _format_metric(result.DER),
         _format_metric(result.JER),
-        _format_metric(result.tcpWER),
+        _format_metric(result.wder_match_rate),
         _format_metric(result.WDER),
+        _format_metric(result.old_WDER),
     ]
 
 
@@ -54,7 +55,7 @@ class ValidateDiarizationCommand(SessionProcessingCommand):
         return "Validate Diarization"
 
     def process_session(self, settings: SessionSettings, session_dir: Path) -> None:
-        DiarizationLMCommand(self.session_id).execute(self.logger)
+        # DiarizationLMCommand(self.session_id).execute(self.logger)
 
         results: dict[str, DiarizationValidationResult] = {}
         failed: list[str] = []

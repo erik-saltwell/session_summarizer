@@ -57,6 +57,12 @@ class SpeechClip:
         return len(self.speakers) > 1
 
     @property
+    def single_speaker(self) -> str:
+        if self.identity is not None:
+            return self.identity
+        return min(self.speakers)
+
+    @property
     def is_anonymous(self) -> bool:
         return self.speakers == _ANONYMOUS_SPEAKER_SET
 
@@ -165,6 +171,10 @@ class SpeechClip:
         if expand_right > epsilon:
             self.end_time = self.end_time + min(expand_right, expansion_limit_seconds)
 
+    def sort_words(self) -> None:
+        if self.words is not None:
+            self.words.sort(key=lambda k: (k.start_time, k.end_time))
+
 
 class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol, TextPhraseSet):
     def name(self) -> str:
@@ -174,14 +184,17 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol, TextPhraseSet):
         return " ".join(clip.text for clip in self)
 
     def phrase_builders_in_order(self) -> Iterator[TextPhraseBuilder]:
+        return self.all_words_in_order()
+
+    def all_words_in_order(self) -> Iterator[WordAlignment]:
         self.sort_clips()
         for clip in self:
             if clip.words is None:
                 continue
-            words: list[WordAlignment] = sorted(clip.words, key=lambda k: (k.start_time, k.end_time))
-            yield from words
+            clip.sort_words()
+            yield from clip.words
 
-    def phrase_seperator_length(self) -> int:
+    def phrase_separator_length(self) -> int:
         return 1
 
     def save_to_human_format(self, path: Path, include_details: bool = False) -> None:
@@ -253,6 +266,7 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol, TextPhraseSet):
                         "start_time": w.start_time,
                         "end_time": w.end_time,
                         "confidence": w.confidence,
+                        "ground_truth": w.ground_truth,
                     }
                     for w in clip.words
                 ]
@@ -307,6 +321,7 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol, TextPhraseSet):
                         start_time=w["start_time"],
                         end_time=w["end_time"],
                         confidence=w.get("confidence", 0.0),
+                        ground_truth=w.get("ground_truth", None),
                     )
                     for w in raw_words
                 ]
