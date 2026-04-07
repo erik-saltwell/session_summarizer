@@ -6,8 +6,8 @@ from pathlib import Path
 
 from ..helpers.audio_cleaner import clean_audio
 from ..helpers.audio_segmenter import compute_vad_segments
-from ..protocols import SessionSettings, TranscriberProtocol
-from ..protocols.transcriber_protocol import TranscriptionResult
+from ..processing_results.transcriber_protocol import TranscriberProtocol, TranscriptionResult
+from ..protocols import SessionSettings
 from ..transcription import CanaryQwenTranscriber, WhisperTranscriber
 from ..transcription.transcription_validator import TranscriptionValidationResult, validate_transcriber
 from ..vad import SegmentSplitResultSet

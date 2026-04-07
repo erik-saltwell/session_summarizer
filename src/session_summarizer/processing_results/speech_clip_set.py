@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from enum import IntFlag, auto
 from pathlib import Path
 
+from ..protocols import TextPhraseBuilder, TextPhraseSet
 from .alignment_result import WordAlignment
 from .process_result_protocol import ProcessResultProtocol
 from .segment_protocol import (
@@ -164,12 +166,23 @@ class SpeechClip:
             self.end_time = self.end_time + min(expand_right, expansion_limit_seconds)
 
 
-class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol):
+class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol, TextPhraseSet):
     def name(self) -> str:
         return "SpeechClipSet"
 
     def plain_text(self) -> str:
         return " ".join(clip.text for clip in self)
+
+    def phrase_builders_in_order(self) -> Iterator[TextPhraseBuilder]:
+        self.sort_clips()
+        for clip in self:
+            if clip.words is None:
+                continue
+            words: list[WordAlignment] = sorted(clip.words, key=lambda k: (k.start_time, k.end_time))
+            yield from words
+
+    def phrase_seperator_length(self) -> int:
+        return 1
 
     def save_to_human_format(self, path: Path, include_details: bool = False) -> None:
         with path.open("w", encoding="utf-8") as f:

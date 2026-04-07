@@ -7,8 +7,8 @@ from typing import cast
 import jiwer
 from mathspell import analyze_text
 
+from session_summarizer.processing_results.transcriber_protocol import TranscriptionResult
 from session_summarizer.protocols.logging_protocol import LoggingProtocol
-from session_summarizer.protocols.transcriber_protocol import TranscriptionResult
 from session_summarizer.settings.session_settings import SessionSettings
 
 

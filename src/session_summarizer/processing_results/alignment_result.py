@@ -5,6 +5,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Self
 
+from ..protocols import TextPhrase, TextPhraseBuilder
 from .process_result_protocol import ProcessResultProtocol
 from .segment_protocol import (
     SegmentProtocol,
@@ -15,7 +16,7 @@ from .segment_protocol import (
 
 
 @dataclass
-class WordAlignment:
+class WordAlignment(TextPhraseBuilder):
     word: str
     start_time: float  # seconds
     end_time: float  # seconds
@@ -38,27 +39,8 @@ class WordAlignment:
     def duration_inside_meaningful_boundaries(self, epsilon: float) -> float:
         return compute_duration_inside_meaningful_boundaries(self, epsilon)
 
-
-# def word_is_contained_in(word: WordAlignment, start_time: float, end_time: float) -> bool:
-#     if word.start_time > end_time:
-#         return False
-#     debug_str = f"  '{word.word}'({word.start_time:.4f}-{word.end_time:.4f}):seg({start_time:.4f}-{end_time:.4f})"
-#     return_value: bool = False
-#     if word.start_time >= start_time and word.end_time <= end_time:
-#         debug_str += " word inside segment"
-#         return_value = True
-#     elif word.start_time < start_time and word.end_time > end_time:
-#         debug_str += " segment inside word"
-#         return_value = True
-#     elif word.start_time >= start_time and word.start_time <= end_time
-#         debug_str += " word starts in segment"
-#         return_value = True
-
-
-#     return return_value
-
-# midpoint = (word.start + word.end) / 2
-# return start_time <= midpoint < end_time
+    def build_phrase_data(self, start_offset: int) -> TextPhrase:
+        return TextPhrase(start_offset, len(self.word))
 
 
 @dataclass
@@ -83,12 +65,6 @@ class AlignmentResult(ProcessResultProtocol):
 
     def plain_text(self) -> str:
         return " ".join(w.word for w in self.words)
-
-    # def get_words_for_time_range(self, start_time: float, end_time: float) -> list[WordAlignment]:
-    #     return sorted(
-    #         [w for w in self.words if word_is_contained_in(w, start_time, end_time)],
-    #         key=lambda w: w.start_time,
-    #     )
 
     def sort(self) -> None:
         self.words.sort(key=lambda w: (w.start_time, w.end_time))

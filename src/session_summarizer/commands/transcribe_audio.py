@@ -8,7 +8,7 @@ from session_summarizer.settings.session_settings import SessionSettings
 from ..helpers.audio_cleaner import clean_audio
 from ..helpers.audio_segmenter import SegmentSplitResultSet, compute_vad_segments
 from ..helpers.audio_transcriber import transcribe_from_cleaned_audio
-from ..protocols.transcriber_protocol import TranscriptionResult
+from ..processing_results.transcriber_protocol import TranscriptionResult
 from .session_processing_command import SessionProcessingCommand
 
 

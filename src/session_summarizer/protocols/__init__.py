@@ -10,7 +10,7 @@ from .logging_protocol import (
     _NullProgress,
     _NullStatus,
 )
-from .transcriber_protocol import TranscriberProtocol
+from .phrase_data import TextPhrase, TextPhraseBuilder, TextPhraseSet
 
 __all__ = [
     "LoggingProtocol",
@@ -20,8 +20,10 @@ __all__ = [
     "_NullProgress",
     "_NullStatus",
     "NullLogger",
-    "TranscriberProtocol",
     "EmbeddingFactory",
     "SessionSettings",
     "GpuLogger",
+    "TextPhrase",
+    "TextPhraseBuilder",
+    "TextPhraseSet",
 ]

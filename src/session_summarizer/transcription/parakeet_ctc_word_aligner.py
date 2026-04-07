@@ -6,8 +6,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from ..processing_results.transcriber_protocol import TranscriptionResult
 from ..protocols import LoggingProtocol
-from ..protocols.transcriber_protocol import TranscriptionResult
 from ..vad.segment_splitter import SegmentSplitResultSet
 from .parakeet_ctc_confidence_scorer import AlignmentResult, WordAlignment
 

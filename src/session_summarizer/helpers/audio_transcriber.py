@@ -2,12 +2,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ..processing_results import TranscriptionResult
+from ..processing_results import TranscriberProtocol, TranscriptionResult
 from ..protocols import (
     GpuLogger,
     LoggingProtocol,
     SessionSettings,
-    TranscriberProtocol,
 )
 from ..transcription import CanaryQwenTranscriber
 from ..vad import SegmentSplitResultSet

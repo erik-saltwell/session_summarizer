@@ -3545,6 +3545,7 @@ dependencies = [
     { name = "en-core-web-sm", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "google-cloud-speech", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "google-cloud-storage", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+    { name = "intervaltree", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "jiwer", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "marimo", extra = ["recommended"], marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "mathspell", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
@@ -3588,6 +3589,7 @@ requires-dist = [
     { name = "en-core-web-sm", url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" },
     { name = "google-cloud-speech", specifier = ">=2.0.0" },
     { name = "google-cloud-storage", specifier = ">=2.0.0" },
+    { name = "intervaltree", specifier = ">=3.2.1" },
     { name = "jiwer", specifier = ">=3.1.0" },
     { name = "marimo", extras = ["recommended"], specifier = ">=0.22.4" },
     { name = "mathspell" },
@@ -4184,8 +4186,8 @@ dependencies = [
     { name = "typing-extensions", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
 ]
 wheels = [
-    { url = "https://download.pytorch.org/whl/cu128/torch-2.10.0%2Bcu128-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:6f09cdf2415516be028ae82e6b985bcfc3eac37bc52ab401142689f6224516ca" },
-    { url = "https://download.pytorch.org/whl/cu128/torch-2.10.0%2Bcu128-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:628e89bd5110ced7debee2a57c69959725b7fbc64eab81a39dd70e46c7e28ba5" },
+    { url = "https://download-r2.pytorch.org/whl/cu128/torch-2.10.0%2Bcu128-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:6f09cdf2415516be028ae82e6b985bcfc3eac37bc52ab401142689f6224516ca" },
+    { url = "https://download-r2.pytorch.org/whl/cu128/torch-2.10.0%2Bcu128-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:628e89bd5110ced7debee2a57c69959725b7fbc64eab81a39dd70e46c7e28ba5" },
 ]
 
 [[package]]

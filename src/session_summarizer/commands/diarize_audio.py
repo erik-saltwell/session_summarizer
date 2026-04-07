@@ -13,7 +13,7 @@ from ..helpers.audio_segmenter import SegmentSplitResultSet, compute_vad_segment
 from ..helpers.audio_transcriber import transcribe_from_cleaned_audio
 from ..helpers.confidence_scorer import score_confidence
 from ..helpers.transcript_aligner import align_transcript
-from ..protocols.transcriber_protocol import TranscriptionResult
+from ..processing_results.transcriber_protocol import TranscriptionResult
 from .session_processing_command import SessionProcessingCommand
 
 

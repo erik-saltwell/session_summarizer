@@ -1,4 +1,6 @@
 
+# Confidence is zero during first 80 seconds
+
 # Look at quality issues in diarization
 
 
