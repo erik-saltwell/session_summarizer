@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from dataclasses import dataclass, field
+from typing import cast
 
 from session_summarizer.evaluation.ground_truth_factory import (
     Opcode,
@@ -231,7 +232,7 @@ class TestMapPhrasePairs:
         pairs = map_phrase_pairs(baseline, updated)
         assert PhraseBuilderPair(UnitTestPhraseBuilder("two"), UnitTestPhraseBuilder("two")) in pairs
         assert PhraseBuilderPair(UnitTestPhraseBuilder("three"), UnitTestPhraseBuilder("three")) in pairs
-        assert all(p.baseline.text != "qqq" for p in pairs)
+        assert all(cast(UnitTestPhraseBuilder, p.baseline).text != "qqq" for p in pairs)
 
     def test_partial_match_at_start(self) -> None:
         baseline = UnitTestPhraseSet("one", "two", "three")
@@ -239,7 +240,7 @@ class TestMapPhrasePairs:
         pairs = map_phrase_pairs(baseline, updated)
         assert PhraseBuilderPair(UnitTestPhraseBuilder("one"), UnitTestPhraseBuilder("one")) in pairs
         assert PhraseBuilderPair(UnitTestPhraseBuilder("two"), UnitTestPhraseBuilder("two")) in pairs
-        assert all(p.baseline.text != "three" for p in pairs)
+        assert all(cast(UnitTestPhraseBuilder, p.baseline).text != "three" for p in pairs)
 
     def test_many_to_one_mapping(self) -> None:
         baseline = UnitTestPhraseSet("a", "b", "c", "d", "e", "f")
@@ -290,4 +291,4 @@ class TestMapPhrasePairs:
         updated = UnitTestPhraseSet("the cat", "the dog")
         pairs = map_phrase_pairs(baseline, updated)
         assert PhraseBuilderPair(UnitTestPhraseBuilder("cat"), UnitTestPhraseBuilder("the cat")) in pairs
-        assert all(p.baseline.text != "zzz" for p in pairs)
+        assert all(cast(UnitTestPhraseBuilder, p.baseline).text != "zzz" for p in pairs)
