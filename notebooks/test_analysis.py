@@ -6,218 +6,91 @@ app = marimo.App(width="medium")
 
 @app.cell
 def _():
-    return
-
-
-@app.cell
-def _():
-    import json
     from pathlib import Path
-
+    import json
     import matplotlib.pyplot as plt
-    import pandas as pd
 
-    return Path, json, pd, plt
+    _path = Path("../data/test/identity_stitched.json")
+    with _path.open("r", encoding="utf-8") as _f:
+        _data = json.load(_f)
 
+    def _first_present(_d, _keys):
+        for _k in _keys:
+            if _k in _d:
+                return _d[_k]
+        return None
 
-@app.cell
-def _(Path, json):
-    print(Path.cwd())
-    base_diarization_path = Path("data/test/base_diarization.json")
-    turn_end_path = Path("data/test/turn_end_updated.json")
-    first_stitched_path = Path("data/test/first_stitched.json")
+    def _to_float(_value):
+        if isinstance(_value, (int, float)):
+            return float(_value)
+        if isinstance(_value, str):
+            try:
+                return float(_value)
+            except ValueError:
+                return None
+        return None
 
-    base_diarization_text = base_diarization_path.read_text()
-    turn_end_text = turn_end_path.read_text()
-    first_stitched_text = first_stitched_path.read_text()
+    _word_points = []
 
-    try:
-        base_diarization_data = json.loads(base_diarization_text)
-    except json.JSONDecodeError:
-        base_diarization_data = [json.loads(line) for line in base_diarization_text.splitlines() if line.strip()]
+    def _walk(_obj):
+        if isinstance(_obj, dict):
+            _text = _first_present(_obj, ["word", "text", "punctuated_word", "token", "value"])
+            _start = _first_present(_obj, ["start", "start_time", "begin", "offset"])
+            _confidence = _first_present(_obj, ["confidence", "score", "conf"])
+            _start_num = _to_float(_start)
+            _confidence_num = _to_float(_confidence)
 
-    try:
-        turn_end_data = json.loads(turn_end_text)
-    except:
-        turn_end_data = [json.loads(line) for line in turn_end_text.splitlines() if line.strip()]
+            if _start_num is not None and _confidence_num is not None and isinstance(_text, str):
+                _word_points.append((_start_num, _confidence_num, _text))
 
-    try:
-        first_stitched_data = json.loads(first_stitched_text)
-    except:
-        first_stitched_data = [json.loads(line) for line in first_stitched_text.splitlines() if line.strip()]
-    return (
-        base_diarization_data,
-        base_diarization_path,
-        first_stitched_data,
-        first_stitched_path,
-        turn_end_data,
-        turn_end_path,
-    )
+            for _v in _obj.values():
+                _walk(_v)
+        elif isinstance(_obj, list):
+            for _item in _obj:
+                _walk(_item)
 
+    _walk(_data)
 
-@app.cell
-def _(first_stitched_data, pd, plt):
-    def collect_time_segments(obj):
-        segments = []
-        if isinstance(obj, dict):
-            if "start_time" in obj and "end_time" in obj:
-                segments.append(
-                    {
-                        "start_time": obj.get("start_time"),
-                        "end_time": obj.get("end_time"),
-                    }
-                )
-            for value in obj.values():
-                segments.extend(collect_time_segments(value))
-        elif isinstance(obj, list):
-            for item in obj:
-                segments.extend(collect_time_segments(item))
-        return segments
+    _seen = set()
+    _word_points = [
+        _row for _row in _word_points
+        if not ((_row[0], _row[1], _row[2]) in _seen or _seen.add((_row[0], _row[1], _row[2])))
+    ]
 
-    diarization_segments = collect_time_segments(first_stitched_data)
+    if not _word_points:
+        raise ValueError("No word-level entries with both start time and confidence were found in ../data/test/identity_stiched.json")
 
-    diarization_df = pd.DataFrame(diarization_segments)
-    diarization_df["start_time"] = pd.to_numeric(diarization_df["start_time"], errors="coerce")
-    diarization_df["end_time"] = pd.to_numeric(diarization_df["end_time"], errors="coerce")
-    diarization_df = (
-        diarization_df.dropna(subset=["start_time", "end_time"])
-        .query("end_time >= start_time")
-        .sort_values("start_time")
-        .reset_index(drop=True)
-    )
+    _x = [_row[0] for _row in _word_points]
+    _y = [_row[1] for _row in _word_points]
+    _labels = [_row[2] for _row in _word_points]
 
-    diarization_plot_df = diarization_df.assign(
-        duration=diarization_df["end_time"] - diarization_df["start_time"],
-        gap=diarization_df["start_time"] - diarization_df["end_time"].shift(1),
-    ).dropna(subset=["gap"])
-
-    plt.figure(figsize=(9, 6))
-    plt.scatter(
-        diarization_plot_df["duration"],
-        diarization_plot_df["gap"],
-        alpha=0.7,
-        color="#4C78A8",
+    plt.figure(figsize=(10, 6))
+    _scatter = plt.scatter(
+        _x,
+        _y,
+        c=_y,
+        cmap="viridis",
+        alpha=0.8,
+        s=36,
         edgecolors="white",
-        linewidths=0.5,
+        linewidths=0.4,
     )
-    plt.title("Diarization Segment Duration vs Gap")
-    plt.xlabel("Duration (end_time - start_time)")
-    plt.ylabel("Gap from Prior Segment (start_time - previous end_time)")
-    plt.xlim(right=2, left=0)
-    plt.ylim(top=0.5, bottom=0)
+    plt.xlabel("Start time (s)")
+    plt.ylabel("Confidence score")
+    plt.title("Word Confidence Score vs Start Time")
     plt.grid(True, alpha=0.3)
-    plt.gca()
-    return (diarization_df,)
 
+    _colorbar = plt.colorbar(_scatter)
+    _colorbar.set_label("Confidence score")
 
-@app.cell
-def _(pd, plt, turn_end_data):
-    def collect_field_values(obj, field_name):
-        collected = []
-        if isinstance(obj, dict):
-            if field_name in obj:
-                collected.append(obj[field_name])
-            for value in obj.values():
-                collected.extend(collect_field_values(value, field_name))
-        elif isinstance(obj, list):
-            for item in obj:
-                collected.extend(collect_field_values(item, field_name))
-        return collected
+    if len(_word_points) <= 20:
+        for _sx, _sy, _label in _word_points:
+            plt.annotate(_label, (_sx, _sy), xytext=(4, 4), textcoords="offset points", fontsize=8, alpha=0.8)
+    else:
+        _lowest = sorted(_word_points, key=lambda _r: _r[1])[:10]
+        for _sx, _sy, _label in _lowest:
+            plt.annotate(_label, (_sx, _sy), xytext=(4, 4), textcoords="offset points", fontsize=8, alpha=0.8)
 
-    end_turn_probability_values = collect_field_values(turn_end_data, "end_of_turn_probability")
-    end_turn_probability_series = pd.to_numeric(pd.Series(end_turn_probability_values), errors="coerce").dropna()
-    end_turn_probability_df = pd.DataFrame({"end_of_turn_probability": end_turn_probability_series})
-
-    end_turn_probability_df.head()
-
-    plt.figure(figsize=(8, 5))
-    plt.hist(end_turn_probability_df["end_of_turn_probability"], bins=30, color="#4C78A8", edgecolor="white")
-    plt.title("Histogram of end_turn_probability")
-    plt.xlabel("end_turn_probability")
-    plt.ylabel("Count")
-    plt.grid(axis="y", alpha=0.3)
-    plt.gca()
-    return
-
-
-@app.cell
-def _(
-    base_diarization_data,
-    base_diarization_path,
-    first_stitched_data,
-    first_stitched_path,
-    pd,
-    turn_end_data,
-    turn_end_path,
-):
-    record_count_df = pd.DataFrame(
-        {
-            "file": [
-                str(base_diarization_path),
-                str(turn_end_path),
-                str(first_stitched_path),
-            ],
-            "record_count": [
-                len(base_diarization_data) if isinstance(base_diarization_data, list) else 1,
-                len(turn_end_data) if isinstance(turn_end_data, list) else 1,
-                len(first_stitched_data) if isinstance(first_stitched_data, list) else 1,
-            ],
-        }
-    )
-    return (record_count_df,)
-
-
-@app.cell
-def _(plt, record_count_df):
-    plt.figure(figsize=(8, 5))
-    plt.bar(
-        record_count_df["file"],
-        record_count_df["record_count"],
-        color=["#4C78A8", "#F58518"],
-        edgecolor="white",
-    )
-    plt.title("Record Counts by JSON File")
-    plt.xlabel("File")
-    plt.ylabel("Number of Records")
-    plt.xticks(rotation=15, ha="right")
-    plt.grid(axis="y", alpha=0.3)
-    plt.gca()
-    return
-
-
-@app.cell
-def _(diarization_df):
-    filtered_first_stitched_gap_df = (
-        diarization_df.sort_values("start_time")
-        .reset_index(drop=True)
-        .assign(
-            duration=lambda df: df["end_time"] - df["start_time"],
-            previous_end_time=lambda df: df["end_time"].shift(1),
-        )
-        .assign(gap_from_previous=lambda df: df["start_time"] - df["previous_end_time"])
-        .loc[
-            lambda df: (df["duration"] <= 0.5) & (df["gap_from_previous"] < 2.0)
-        ]
-        .copy()
-    )
-
-    filtered_first_stitched_gap_df.head()
-    return (filtered_first_stitched_gap_df,)
-
-
-@app.cell
-def _(filtered_first_stitched_gap_df, plt):
-    plt.figure(figsize=(8, 5))
-    plt.hist(
-        filtered_first_stitched_gap_df["gap_from_previous"].dropna(),
-        bins=30,
-        color="#4C78A8",
-        edgecolor="white",
-    )
-    plt.title("Gap to Previous Clip for First-Stitched Clips ≤ 0.5s and Gap < 4.0s")
-    plt.xlabel("Gap from previous clip end to current clip start (seconds)")
-    plt.ylabel("Count")
-    plt.grid(axis="y", alpha=0.1)
     plt.gca()
     return
 

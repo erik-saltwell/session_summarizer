@@ -143,7 +143,7 @@ class ParakeetCTCConfidenceScorer:
 
             logger.report_message("[blue]Running free transcription pass for confidence scores...[/blue]")
             parakeet_word_timestamps, parakeet_word_confidence = self._transcribe_segments(
-                audio_path, ctc_model, stride, segments.long.segments, logger
+                audio_path, ctc_model, stride, segments.short.segments, logger
             )
 
             _map_confidence_by_time(
