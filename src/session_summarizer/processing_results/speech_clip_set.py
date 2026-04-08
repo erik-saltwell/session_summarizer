@@ -31,6 +31,7 @@ class SpeechClip:
     end_time: float
     speakers: set[str]
     text: str
+    cosine_similarity: float | None = None
     identity: str | None = None
     embedding: list[float] | None = None
     flags: SpeechClipFlags = field(default=SpeechClipFlags.NONE)
@@ -76,12 +77,6 @@ class SpeechClip:
     @property
     def is_multispeaker(self) -> bool:
         return len(self.speakers) > 1
-
-    # @property
-    # def single_speaker(self) -> str:
-    #     if self.identity is not None:
-    #         return self.identity
-    #     return min(self.speakers)
 
     @property
     def is_anonymous(self) -> bool:
@@ -332,6 +327,7 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol, TextPhraseSet):
                 "identity": clip.identity,
                 "embedding": clip.embedding,
                 "flags": int(clip.flags),
+                "cosine_similarity": clip.cosine_similarity,
                 "end_of_turn_probability": clip.end_of_turn_probability,
                 "words": [
                     {
@@ -407,6 +403,7 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol, TextPhraseSet):
                 text=item["text"],
                 identity=item.get("identity"),
                 embedding=item.get("embedding"),
+                cosine_similarity=item.get("cosine_similarity"),
                 flags=SpeechClipFlags(item.get("flags", 0)),
                 end_of_turn_probability=item.get("end_of_turn_probability"),
                 words=words,

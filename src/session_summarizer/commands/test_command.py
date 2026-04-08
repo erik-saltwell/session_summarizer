@@ -19,7 +19,16 @@ class TestCommand(SessionProcessingCommand):
         return
 
     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
-        test_clips = SpeechClipSet.load_from_test_meeting()
-        identity_stitched_cips = SpeechClipSet.load_from_json(session_dir / settings.identity_stitched_path)
-        test_clips.save_to_rttm(session_dir / "ground_truth.rttm")
-        identity_stitched_cips.save_to_rttm(session_dir / "identity_stitched.rttm")
+        csv_path = session_dir / "conf_wder.csv"
+
+        with csv_path.open("a") as writer:
+            writer.write("confidence,success_rate\n")
+            clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.identity_stitched_path)
+            for clip in clips:
+                assert clip.identity is not None
+                identity: str = clip.identity.lower()
+                if clip.words is None:
+                    continue
+                for word in clip.words:
+                    if word.ground_truth is not None:
+                        writer.write(f"{word.confidence},{1.0 if word.ground_truth.lower() == identity else 0.0}\n")
