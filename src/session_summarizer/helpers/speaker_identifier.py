@@ -55,6 +55,8 @@ def identify_speakers(
             similarities = torch.nn.functional.cosine_similarity(clip_tensor, attendee_tensor)
             best_idx = int(similarities.argmax())
             clip.identity = names[best_idx]
+            clip.cosine_similarity = float(similarities[best_idx])
+            clip.similarity_residual = float(similarities[best_idx] - similarities.mean())
             assigned += 1
             progress.advance()
 

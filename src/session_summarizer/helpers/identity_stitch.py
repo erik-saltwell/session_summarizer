@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 from session_summarizer.processing_results.speech_clip_set import SpeechClip
-from session_summarizer.settings.diarization_stitching_settings import DiarizationStitchingSettings
 
 from ..diarization import MergeSelector, MergeType
 from ..diarization.clip_merger import (
@@ -24,7 +23,7 @@ class IdentityBackchannelMerger(MergeSelector):
         prior_clip: SpeechClip,
         current_clip: SpeechClip,
         next_clip: SpeechClip | None,
-        settings: DiarizationStitchingSettings,
+        settings: SessionSettings,
         logger: LoggingProtocol,
     ) -> MergeType:
         if (
@@ -41,14 +40,14 @@ class IdentityBackchannelMerger(MergeSelector):
         if not prior_clip.identity == next_clip.identity:
             return MergeType.NO_MERGE
 
-        if current_clip.duration > settings.max_identity_backchannel_duration:
+        if current_clip.duration > settings.diarization_stitching.max_identity_backchannel_duration:
             return MergeType.NO_MERGE
 
         if not clips_are_close_enough(
             prior_clip,
             current_clip,
-            settings.max_identity_backchannel_prior_gap,
-            settings.epsilon,
+            settings.diarization_stitching.max_identity_backchannel_prior_gap,
+            settings.diarization_stitching.epsilon,
             logger,
         ):
             return MergeType.NO_MERGE
@@ -56,8 +55,8 @@ class IdentityBackchannelMerger(MergeSelector):
         if not clips_are_close_enough(
             current_clip,
             next_clip,
-            settings.max_identity_backchannel_next_gap,
-            settings.epsilon,
+            settings.diarization_stitching.max_identity_backchannel_next_gap,
+            settings.diarization_stitching.epsilon,
             logger,
         ):
             return MergeType.NO_MERGE
@@ -71,7 +70,7 @@ class IdentityMergeSelector(MergeSelector):
         prior_clip: SpeechClip,
         current_clip: SpeechClip,
         next_clip: SpeechClip | None,
-        settings: DiarizationStitchingSettings,
+        settings: SessionSettings,
         logger: LoggingProtocol,
     ) -> MergeType:
         if prior_clip.identity is None or current_clip.identity is None:
@@ -83,8 +82,8 @@ class IdentityMergeSelector(MergeSelector):
         if not clips_are_close_enough(
             prior_clip,
             current_clip,
-            settings.identity_stitching_max_gap,
-            settings.epsilon,
+            settings.diarization_stitching.identity_stitching_max_gap,
+            settings.diarization_stitching.epsilon,
             logger,
         ):
             return MergeType.NO_MERGE
@@ -100,6 +99,6 @@ def apply_identity_stitching(
     logger: LoggingProtocol,
 ) -> SpeechClipSet:
     merge_selector: IdentityMergeSelector = IdentityMergeSelector()
-    merged_clips = merge_clips(identified_clips, merge_selector, settings.diarization_stitching, logger)
+    merged_clips = merge_clips(identified_clips, merge_selector, settings, logger)
 
     return merged_clips

@@ -18,10 +18,10 @@ class TestCommand(SessionProcessingCommand):
     def add_dependencies(self, settings: SessionSettings, session_dir: Path) -> None:
         return
 
-    def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
+    def output_confidence_success_map(self, settings: SessionSettings, session_dir: Path) -> None:
         csv_path = session_dir / "conf_wder.csv"
 
-        with csv_path.open("a") as writer:
+        with csv_path.open("w") as writer:
             writer.write("confidence,success_rate\n")
             clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.identity_stitched_path)
             for clip in clips:
@@ -32,3 +32,20 @@ class TestCommand(SessionProcessingCommand):
                 for word in clip.words:
                     if word.ground_truth is not None:
                         writer.write(f"{word.confidence},{1.0 if word.ground_truth.lower() == identity else 0.0}\n")
+
+    def output_success_data(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
+        csv_path = session_dir / "similarity_succes.csv"
+
+        with csv_path.open("w") as writer:
+            writer.write("word_count,similarity,similarity_residual,avg_confidence,success_rate\n")
+            clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.identity_stitched_path)
+            for clip in clips:
+                if clip.cosine_similarity and clip.words:
+                    writer.write(
+                        f"{clip.word_count},{clip.cosine_similarity},"
+                        f"{clip.similarity_residual},{clip.confidence_avg},"
+                        f"{1.0 - clip.wder}\n"
+                    )
+
+    def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
+        self.output_success_data(settings, session_dir)

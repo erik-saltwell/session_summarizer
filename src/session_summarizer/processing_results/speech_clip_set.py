@@ -32,6 +32,7 @@ class SpeechClip:
     speakers: set[str]
     text: str
     cosine_similarity: float | None = None
+    similarity_residual: float | None = None
     identity: str | None = None
     embedding: list[float] | None = None
     flags: SpeechClipFlags = field(default=SpeechClipFlags.NONE)
@@ -328,6 +329,7 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol, TextPhraseSet):
                 "embedding": clip.embedding,
                 "flags": int(clip.flags),
                 "cosine_similarity": clip.cosine_similarity,
+                "similarity_residual": clip.similarity_residual,
                 "end_of_turn_probability": clip.end_of_turn_probability,
                 "words": [
                     {
@@ -404,6 +406,7 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol, TextPhraseSet):
                 identity=item.get("identity"),
                 embedding=item.get("embedding"),
                 cosine_similarity=item.get("cosine_similarity"),
+                similarity_residual=item.get("similarity_residual"),
                 flags=SpeechClipFlags(item.get("flags", 0)),
                 end_of_turn_probability=item.get("end_of_turn_probability"),
                 words=words,

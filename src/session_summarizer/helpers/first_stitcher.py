@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 from session_summarizer.processing_results.speech_clip_set import SpeechClip, SpeechClipFlags
-from session_summarizer.settings.diarization_stitching_settings import DiarizationStitchingSettings
 
 from ..diarization import MergeSelector, MergeType
 from ..diarization.clip_merger import (
@@ -26,7 +25,7 @@ class BackchannelMerger(MergeSelector):
         prior_clip: SpeechClip,
         current_clip: SpeechClip,
         next_clip: SpeechClip | None,
-        settings: DiarizationStitchingSettings,
+        settings: SessionSettings,
         logger: LoggingProtocol,
     ) -> MergeType:
         if clips_are_same_speaker(prior_clip, current_clip, settings, True, logger):
@@ -37,14 +36,14 @@ class BackchannelMerger(MergeSelector):
         if not clips_are_same_speaker(prior_clip, next_clip, settings, True, logger):
             return MergeType.NO_MERGE
 
-        if current_clip.duration > settings.max_backchannel_duration:
+        if current_clip.duration > settings.diarization_stitching.max_backchannel_duration:
             return MergeType.NO_MERGE
 
         if not clips_are_close_enough(
             prior_clip,
             current_clip,
-            settings.max_backchannel_prior_gap,
-            settings.epsilon,
+            settings.diarization_stitching.max_backchannel_prior_gap,
+            settings.diarization_stitching.epsilon,
             logger,
         ):
             return MergeType.NO_MERGE
@@ -52,8 +51,8 @@ class BackchannelMerger(MergeSelector):
         if not clips_are_close_enough(
             current_clip,
             next_clip,
-            settings.max_backchannel_next_gap,
-            settings.epsilon,
+            settings.diarization_stitching.max_backchannel_next_gap,
+            settings.diarization_stitching.epsilon,
             logger,
         ):
             return MergeType.NO_MERGE
@@ -67,7 +66,7 @@ class MergeUnfinishedSegmentsWithSameSpeakerOrAnonymous(MergeSelector):
         prior_clip: SpeechClip,
         current_clip: SpeechClip,
         next_clip: SpeechClip | None,
-        settings: DiarizationStitchingSettings,
+        settings: SessionSettings,
         logger: LoggingProtocol,
     ) -> MergeType:
         if prior_clip.has_flag(SpeechClipFlags.END_OF_TURN):
@@ -77,8 +76,8 @@ class MergeUnfinishedSegmentsWithSameSpeakerOrAnonymous(MergeSelector):
         if not clips_are_close_enough(
             prior_clip,
             current_clip,
-            settings.unfinished_clip_merge_max_length,
-            settings.epsilon,
+            settings.diarization_stitching.unfinished_clip_merge_max_length,
+            settings.diarization_stitching.epsilon,
             logger,
         ):
             return MergeType.NO_MERGE
@@ -94,12 +93,11 @@ def apply_first_stitching(
     logger: LoggingProtocol,
 ) -> SpeechClipSet:
     backchannel_selector: BackchannelMerger = BackchannelMerger()
-    merged_clips = merge_clips(clips, backchannel_selector, settings.diarization_stitching, logger)
-    # merged_clips = clips
+    merged_clips = merge_clips(clips, backchannel_selector, settings, logger)
 
     merge_selector: MergeUnfinishedSegmentsWithSameSpeakerOrAnonymous = (
         MergeUnfinishedSegmentsWithSameSpeakerOrAnonymous()
     )
-    merged_clips = merge_clips(merged_clips, merge_selector, settings.diarization_stitching, logger)
+    merged_clips = merge_clips(merged_clips, merge_selector, settings, logger)
 
     return merged_clips

@@ -56,10 +56,16 @@ class SimpleMergeSelector(MergeSelector):
         prior_clip: SpeechClip,
         current_clip: SpeechClip,
         next_clip: SpeechClip | None,
-        settings: DiarizationStitchingSettings,
+        settings: SessionSettings,
         logger: LoggingProtocol,
     ) -> MergeType:
-        if not clips_are_close_enough(prior_clip, current_clip, settings.merge_gap_seconds, settings.epsilon, logger):
+        if not clips_are_close_enough(
+            prior_clip,
+            current_clip,
+            settings.diarization_stitching.merge_gap_seconds,
+            settings.diarization_stitching.epsilon,
+            logger,
+        ):
             return MergeType.NO_MERGE
         if not clips_are_same_speaker(prior_clip, current_clip, settings, self.exempt_anonymous, logger):
             return MergeType.NO_MERGE
@@ -111,7 +117,7 @@ def create_speech_clips(
     logger: LoggingProtocol,
 ) -> SpeechClipSet:
     speech_clips = _create_initial_clips(diarization_result)
-    speech_clips = merge_clips(speech_clips, SimpleMergeSelector(), settings.diarization_stitching, logger)
+    speech_clips = merge_clips(speech_clips, SimpleMergeSelector(), settings, logger)
     pool: CandidatePool = CandidatePool()
     anonymous_clips: AnonymousClips = AnonymousClips([])
 
@@ -153,7 +159,7 @@ def create_speech_clips(
         for clip in speech_clips:
             clip.expand_bounds_to_include_words(epsilon, settings.diarization_stitching.expansion_limit_seconds)
 
-    speech_clips = merge_clips(speech_clips, SimpleMergeSelector(), settings.diarization_stitching, logger)
+    speech_clips = merge_clips(speech_clips, SimpleMergeSelector(), settings, logger)
     speech_clips = _remove_empty_clips(speech_clips)
     speech_clips.sort_clips()
 

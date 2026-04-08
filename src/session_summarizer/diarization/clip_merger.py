@@ -4,7 +4,7 @@ from enum import IntEnum, auto
 from typing import Protocol
 
 from session_summarizer.protocols.logging_protocol import LoggingProtocol
-from session_summarizer.settings.diarization_stitching_settings import DiarizationStitchingSettings
+from session_summarizer.settings.session_settings import SessionSettings
 
 from ..processing_results import SpeechClip, SpeechClipSet
 
@@ -22,7 +22,7 @@ class MergeSelector(Protocol):
         prior_clip: SpeechClip,
         current_clip: SpeechClip,
         next_clip: SpeechClip | None,
-        settings: DiarizationStitchingSettings,
+        settings: SessionSettings,
         logger: LoggingProtocol,
     ) -> MergeType: ...
 
@@ -41,7 +41,7 @@ def clips_are_close_enough(
 def clips_are_same_speaker(
     first: SpeechClip,
     second: SpeechClip,
-    settings: DiarizationStitchingSettings,
+    settings: SessionSettings,
     exempt_anonymous: bool,
     logger: LoggingProtocol,
 ) -> bool:
@@ -53,7 +53,7 @@ def clips_are_same_speaker(
 def clips_have_subset_superset_relationship(
     first: SpeechClip,
     second: SpeechClip,
-    settings: DiarizationStitchingSettings,
+    settings: SessionSettings,
     exempt_anonymous: bool,
     logger: LoggingProtocol,
 ) -> bool:
@@ -65,7 +65,7 @@ def clips_have_subset_superset_relationship(
 def second_clip_is_superset(
     first: SpeechClip,
     second: SpeechClip,
-    settings: DiarizationStitchingSettings,
+    settings: SessionSettings,
     exempt_anonymous: bool,
     logger: LoggingProtocol,
 ) -> bool:
@@ -77,7 +77,7 @@ def second_clip_is_superset(
 def merge_clips(
     initial_clips: SpeechClipSet,
     selector: MergeSelector,
-    settings: DiarizationStitchingSettings,
+    settings: SessionSettings,
     logger: LoggingProtocol,
 ) -> SpeechClipSet:
     if len(initial_clips) <= 1:
