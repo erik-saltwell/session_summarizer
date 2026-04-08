@@ -602,7 +602,7 @@ def add_embeddings(
     """Generate speaker embeddings for each speech clip and save to disk."""
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
-    command: AddEmbeddingsCommand = AddEmbeddingsCommand(session)
+    command: AddEmbeddingsCommand = AddEmbeddingsCommand(session, force=True)
     command.execute(logger)
 
 
@@ -612,7 +612,7 @@ def align_transcription(
 ) -> None:
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
-    command: AlignTranscriptCommand = AlignTranscriptCommand(session)
+    command: AlignTranscriptCommand = AlignTranscriptCommand(session, force=True)
     command.execute(logger)
 
 
@@ -623,7 +623,7 @@ def apply_first_stitching(
     """Score each speech clip with end-of-turn probability and set the END_OF_TURN flag."""
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
-    command: FirstStitchClipsCommand = FirstStitchClipsCommand(session)
+    command: FirstStitchClipsCommand = FirstStitchClipsCommand(session, force=True)
     command.execute(logger)
 
 
@@ -634,7 +634,7 @@ def apply_identity_stitiching(
     """Score each speech clip with end-of-turn probability and set the END_OF_TURN flag."""
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
-    command: StitichIdentitiesCommand = StitichIdentitiesCommand(session)
+    command: StitichIdentitiesCommand = StitichIdentitiesCommand(session, force=True)
     command.execute(logger)
 
 
@@ -645,7 +645,7 @@ def diarizationlm(
     """Post-process diarization with DiarizationLM to correct speaker attribution errors."""
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
-    command: DiarizationLMCommand = DiarizationLMCommand(session)
+    command: DiarizationLMCommand = DiarizationLMCommand(session, force=True)
     command.execute(logger)
 
 
@@ -655,7 +655,7 @@ def clean_audio(
 ) -> None:
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
-    command: CleanAudioCommand = CleanAudioCommand(session)
+    command: CleanAudioCommand = CleanAudioCommand(session, force=True)
     command.execute(logger)
 
 
@@ -666,7 +666,7 @@ def clean_session(
     """Delete all generated files in a session folder, keeping settings.yaml and the original audio."""
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
-    command: CleanSessionCommand = CleanSessionCommand(session)
+    command: CleanSessionCommand = CleanSessionCommand(session, force=True)
     command.execute(logger)
 
 
@@ -677,7 +677,7 @@ def compute_vad_segments(
     """Run VAD on cleaned audio and compute optimal cut points for chunked processing."""
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
-    command: ComputeSegmentsCommand = ComputeSegmentsCommand(session)
+    command: ComputeSegmentsCommand = ComputeSegmentsCommand(session, force=True)
     command.execute(logger)
 
 
@@ -705,7 +705,7 @@ def diarize_audio(
 ) -> None:
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
-    command: DiarizeAudioCommand = DiarizeAudioCommand(session)
+    command: DiarizeAudioCommand = DiarizeAudioCommand(session, force=True)
     command.execute(logger)
 
 
@@ -715,7 +715,7 @@ def compare_texts(
 ) -> None:
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
-    command: CompareFullTextCommand = CompareFullTextCommand(session)
+    command: CompareFullTextCommand = CompareFullTextCommand(session, force=True)
     command.execute(logger)
 
 
@@ -738,7 +738,7 @@ def identify_speakers(
     """Identify speakers in each speech clip by comparing embeddings to registered attendees."""
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
-    command: IdentifySpeakersCommand = IdentifySpeakersCommand(session)
+    command: IdentifySpeakersCommand = IdentifySpeakersCommand(session, force=True)
     command.execute(logger)
 
 
@@ -767,7 +767,7 @@ def score_confidence(
 ) -> None:
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
-    command: ScoreConfidenceCommand = ScoreConfidenceCommand(session)
+    command: ScoreConfidenceCommand = ScoreConfidenceCommand(session, force=True)
     command.execute(logger)
 
 
@@ -777,7 +777,7 @@ def test(
 ) -> None:
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
-    command: TestCommand = TestCommand(session)
+    command: TestCommand = TestCommand(session, force=True)
     command.execute(logger)
 
 
@@ -787,7 +787,7 @@ def transcribe(
 ) -> None:
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
-    command: TranscribeAudioCommand = TranscribeAudioCommand(session)
+    command: TranscribeAudioCommand = TranscribeAudioCommand(session, force=True)
     command.execute(logger)
 
 
@@ -798,7 +798,7 @@ def update_turn_end(
     """Score each speech clip with end-of-turn probability and set the END_OF_TURN flag."""
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
-    command: UpdateTurnEndCommand = UpdateTurnEndCommand(session)
+    command: UpdateTurnEndCommand = UpdateTurnEndCommand(session, force=True)
     command.execute(logger)
 
 
@@ -809,7 +809,7 @@ def validate_diarization(
     """Evaluate diarization quality across pipeline stages and display a metrics comparison table."""
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
-    command: ValidateDiarizationCommand = ValidateDiarizationCommand(session)
+    command: ValidateDiarizationCommand = ValidateDiarizationCommand(session, force=True)
     command.execute(logger)
 
 
@@ -820,7 +820,7 @@ def validate_transcribers(
     """Transcribe test audio with every registered transcriber and compare accuracy metrics."""
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
-    command: ValidateTranscribersCommand = ValidateTranscribersCommand(session)
+    command: ValidateTranscribersCommand = ValidateTranscribersCommand(session, force=True)
     command.execute(logger)
 
 
