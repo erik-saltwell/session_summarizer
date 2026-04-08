@@ -66,25 +66,13 @@
             ]
         },
         {
-            "name": "dump-and-compare",
+            "name": "compare-texts",
             "type": "debugpy",
             "request": "launch",
             "module": "session_summarizer",
             "console": "integratedTerminal",
             "args": [
-                "dump-and-compare-texts",
-                "--session",
-                "test",
-            ]
-        },
-        {
-            "name": "dump-human",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "session_summarizer",
-            "console": "integratedTerminal",
-            "args": [
-                "dump-human-format",
+                "compare-texts",
                 "--session",
                 "test",
             ]

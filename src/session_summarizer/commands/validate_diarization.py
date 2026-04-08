@@ -8,7 +8,12 @@ from pathlib import Path
 from ..evaluation.evaluate_diatization import DiarizationValidationResult, evaluate_diarization_result
 from ..processing_results.speech_clip_set import SpeechClipSet
 from ..settings.session_settings import SessionSettings
+from .add_embeddings import AddEmbeddingsCommand
+from .diarizationlm_command import DiarizationLMCommand
+from .diarize_audio import DiarizeAudioCommand
+from .identify_speakers import IdentifySpeakersCommand
 from .session_processing_command import SessionProcessingCommand
+from .stitch_identities import StitichIdentitiesCommand
 
 # ---------------------------------------------------------------------------
 # Hypothesis registry
@@ -19,10 +24,11 @@ from .session_processing_command import SessionProcessingCommand
 
 def get_diarization_registry(settings: SessionSettings, session_dir: Path) -> list[tuple[str, Path]]:
     results: list[tuple[str, Path]] = []
-    results.append(("Speaker Identified", session_dir / settings.identified_speaker_path))
-    results.append(("Identity Stitched", session_dir / settings.identity_stitched_path))
-    results.append(("DiarizationLM", session_dir / settings.diarizationlm_processed_path))
-
+    results.append(("Speaker Identified", session_dir / settings.base_diarized_path))
+    results.append(("BaseDiarization", session_dir / settings.diarizationlm_processed_path))
+    results.append(("Embedded", session_dir / settings.speech_clips_with_embedding))
+    results.append(("Identified Speakers", session_dir / settings.identified_speaker_path))
+    results.append(("Identity Stitched", settings.identity_stitched_path))
     return results
 
 
@@ -53,6 +59,18 @@ def _result_column(result: DiarizationValidationResult) -> list[str]:
 class ValidateDiarizationCommand(SessionProcessingCommand):
     def name(self) -> str:
         return "Validate Diarization"
+
+    def add_dependencies(self, settings: SessionSettings, session_dir: Path) -> None:
+        self.inputs.extend(item[1] for item in get_diarization_registry(settings, session_dir))
+        self.dependencies.extend(
+            [
+                DiarizeAudioCommand(self.session_id),
+                DiarizationLMCommand(self.session_id),
+                AddEmbeddingsCommand(self.session_id),
+                IdentifySpeakersCommand(self.session_id),
+                StitichIdentitiesCommand(self.session_id),
+            ]
+        )
 
     def process_session(self, settings: SessionSettings, session_dir: Path) -> None:
         # DiarizationLMCommand(self.session_id).execute(self.logger)

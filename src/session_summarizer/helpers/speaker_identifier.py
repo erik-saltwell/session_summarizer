@@ -24,23 +24,17 @@ def _resolve_speakers_file(session_dir: Path) -> Path:
 def identify_speakers(
     settings: SessionSettings,
     session_dir: Path,
-    clips: SpeechClipSet,
-    use_cache_if_present: bool,
+    clips_with_embeddings: SpeechClipSet,
     gpu_logger: GpuLogger,
     logger: LoggingProtocol,
 ) -> SpeechClipSet:
-    final_path: Path = session_dir / settings.identified_speaker_path
-    if final_path.exists() and use_cache_if_present:
-        logger.report_message(f"[yellow]{final_path} already exists, returning cached instance.[/yellow]")
-        return SpeechClipSet.load_from_json(final_path)
-
     speakers = RegisteredSpeakers.load(_resolve_speakers_file(session_dir))
     attendee_names: set[str] = set(settings.attendees)
     filtered: dict[str, list[float]] = {name: emb for name, emb in speakers.items() if name in attendee_names}
 
     if not filtered:
         logger.report_message("[yellow]No registered speakers match the attendee list.[/yellow]")
-        return clips
+        return clips_with_embeddings
 
     logger.report_message(f"Matching against {len(filtered)} attendee(s): {sorted(filtered.keys())}")
 
@@ -50,8 +44,8 @@ def identify_speakers(
 
     assigned = 0
     skipped = 0
-    with logger.progress("Identifying speakers", total=len(clips)) as progress:
-        for clip in clips:
+    with logger.progress("Identifying speakers", total=len(clips_with_embeddings)) as progress:
+        for clip in clips_with_embeddings:
             if clip.embedding is None:
                 skipped += 1
                 progress.advance()
@@ -65,4 +59,4 @@ def identify_speakers(
             progress.advance()
 
     logger.report_message(f"Assigned {assigned} clip(s), skipped {skipped} (no embedding)")
-    return clips
+    return clips_with_embeddings

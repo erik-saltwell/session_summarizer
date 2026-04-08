@@ -7,29 +7,27 @@ import typer
 from dotenv import load_dotenv
 from rich.console import Console
 
-from session_summarizer.commands.add_embeddings import AddEmbeddingsCommand
-from session_summarizer.commands.align_transcript import AlignTranscriptCommand
-from session_summarizer.commands.clean_audio import CleanAudioCommand
-from session_summarizer.commands.clean_session import CleanSessionCommand
-from session_summarizer.commands.compute_segments import ComputeSegmentsCommand
-from session_summarizer.commands.create_speaker_clips import CreateSpeakerClipsCommand
-from session_summarizer.commands.diarizationlm_command import DiarizationLMCommand
-from session_summarizer.commands.diarize_audio import DiarizeAudioCommand
-from session_summarizer.commands.dump_and_compare_texts import DumpAndCompareTextsCommand
-from session_summarizer.commands.dump_human_format import DumpHumanFormatCommand
-from session_summarizer.commands.identify_speakers import IdentifySpeakersCommand
-from session_summarizer.commands.score_confidence import ScoreConfidenceCommand
-from session_summarizer.commands.transcribe_audio import TranscribeAudioCommand
-from session_summarizer.commands.update_turn_end import UpdateTurnEndCommand
-from session_summarizer.commands.validate_diarization import ValidateDiarizationCommand
-from session_summarizer.commands.validate_transcribers import ValidateTranscribersCommand
 from session_summarizer.utils import common_paths
 
+from ..commands.add_embeddings import AddEmbeddingsCommand
+from ..commands.align_transcript import AlignTranscriptCommand
+from ..commands.clean_audio import CleanAudioCommand
+from ..commands.clean_session import CleanSessionCommand
+from ..commands.compare_fulltext import CompareFullTextCommand
+from ..commands.compute_segments import ComputeSegmentsCommand
+from ..commands.create_speaker_clips import CreateSpeakerClipsCommand
+from ..commands.diarizationlm_command import DiarizationLMCommand
+from ..commands.diarize_audio import DiarizeAudioCommand
 from ..commands.first_stitch_clips import FirstStitchClipsCommand
-from ..commands.process_pipeline import ProcessPipelineCommand
+from ..commands.identify_speakers import IdentifySpeakersCommand
 from ..commands.register_speakers import RegisterSpeakersCommand
+from ..commands.score_confidence import ScoreConfidenceCommand
 from ..commands.stitch_identities import StitichIdentitiesCommand
 from ..commands.test_command import TestCommand
+from ..commands.transcribe_audio import TranscribeAudioCommand
+from ..commands.update_turn_end import UpdateTurnEndCommand
+from ..commands.validate_diarization import ValidateDiarizationCommand
+from ..commands.validate_transcribers import ValidateTranscribersCommand
 from ..logging import CompositeLogger, FileLogger, RichConsoleLogger
 from ..protocols import LoggingProtocol
 from ..utils import flush_gpu_memory
@@ -711,27 +709,13 @@ def diarize_audio(
     command.execute(logger)
 
 
-@app.command("dump-and-compare-texts")
-def dump_and_compare_texts(
+@app.command("compare-texts")
+def compare_texts(
     session: str = typer.Option(..., "--session", "-s", help="ID of the session to transcribe"),
 ) -> None:
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
-    command: DumpAndCompareTextsCommand = DumpAndCompareTextsCommand(session)
-    command.execute(logger)
-
-
-@app.command("dump-human-format")
-def dump_human_format(
-    session: str = typer.Option(..., "--session", "-s", help="ID of the session"),
-    include_details: bool = typer.Option(
-        False, "--include-details", help="Include start time, end time, and flags line for each clip"
-    ),
-) -> None:
-    """Export base_diarization, update_turn, and first_stitch to human-readable text format."""
-    confirm_session(session)
-    logger: LoggingProtocol = create_logger()
-    command: DumpHumanFormatCommand = DumpHumanFormatCommand(session, include_details=include_details)
+    command: CompareFullTextCommand = CompareFullTextCommand(session)
     command.execute(logger)
 
 
@@ -755,17 +739,6 @@ def identify_speakers(
     confirm_session(session)
     logger: LoggingProtocol = create_logger()
     command: IdentifySpeakersCommand = IdentifySpeakersCommand(session)
-    command.execute(logger)
-
-
-@app.command("process-pipeline")
-def process_pipeline(
-    session: str = typer.Option(..., "--session", "-s", help="ID of the session to use for validation"),
-) -> None:
-    """Clean the session and run the full pipeline."""
-    confirm_session(session)
-    logger: LoggingProtocol = create_logger()
-    command: ProcessPipelineCommand = ProcessPipelineCommand(session)
     command.execute(logger)
 
 

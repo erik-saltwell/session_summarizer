@@ -14,21 +14,15 @@ from ..protocols import (
 def apply_diarizationlm(
     settings: SessionSettings,
     session_dir: Path,
-    clips: SpeechClipSet,
-    use_cache_if_present: bool,
+    diarized_clips: SpeechClipSet,
     gpu_logger: GpuLogger,
     logger: LoggingProtocol,
 ) -> SpeechClipSet:
-    final_path: Path = session_dir / settings.diarizationlm_processed_path
-    if final_path.exists() and use_cache_if_present:
-        logger.report_message(f"[yellow]{final_path} already exists, returning cached instance.[/yellow]")
-        return SpeechClipSet.load_from_json(final_path)
-
     model = DiarizationLMModel(device=settings.device)
     model.load()
     try:
         processor = DiarizationLMProcessor(model)
-        result = processor.process(clips, settings.diarization_stitching.epsilon)
+        result = processor.process(diarized_clips, settings.diarization_stitching.epsilon)
     finally:
         model.unload()
 

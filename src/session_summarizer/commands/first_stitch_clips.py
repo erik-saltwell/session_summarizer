@@ -1,21 +1,16 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+from pathlib import Path
 
 import session_summarizer.utils.common_paths as common_paths
 
-from ..helpers.audio_cleaner import clean_audio
-from ..helpers.audio_diarizer import diarize_audio
-from ..helpers.audio_segmenter import SegmentSplitResultSet, compute_vad_segments
-from ..helpers.audio_transcriber import transcribe_from_cleaned_audio
-from ..helpers.confidence_scorer import score_confidence
 from ..helpers.first_stitcher import apply_first_stitching
-from ..helpers.transcript_aligner import align_transcript
-from ..helpers.update_turn_end import update_turn_end
-from ..processing_results import AlignmentResult, SpeechClipSet, TranscriptionResult
+from ..processing_results import SpeechClipSet
 from ..settings import SessionSettings
 from .session_processing_command import SessionProcessingCommand
 from .stitch_results import StitchResults
+from .update_turn_end import UpdateTurnEndCommand
 
 
 @dataclass
@@ -23,25 +18,19 @@ class FirstStitchClipsCommand(SessionProcessingCommand):
     def name(self) -> str:
         return "First Stitch Clips"
 
-    def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
-        clean_audio(settings, session_dir, True, self, self.logger)
-        segments: SegmentSplitResultSet = compute_vad_segments(settings, session_dir, True, self, self.logger)
-        result: TranscriptionResult = transcribe_from_cleaned_audio(
-            settings, session_dir, segments, True, self, self.logger
-        )
-        alignment: AlignmentResult = align_transcript(settings, session_dir, result, segments, True, self, self.logger)
-        alignment = score_confidence(settings, session_dir, alignment, segments, True, self, self.logger)
-        diarized_clips: SpeechClipSet = diarize_audio(settings, session_dir, alignment, True, self, self.logger)
+    def add_dependencies(self, settings: SessionSettings, session_dir: Path) -> None:
+        self.inputs.append(session_dir / settings.turn_end_updated_path)
+        self.outputs.append(session_dir / settings.first_stitched_path)
+        self.dependencies.append(UpdateTurnEndCommand(self.session_id))
 
-        turn_clips: SpeechClipSet = update_turn_end(settings, session_dir, diarized_clips, True, self, self.logger)
+    def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
+        turn_clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.turn_end_updated_path)
 
         stitch_results: StitchResults = StitchResults()
         stitch_results.pre_stitching_segments = len(turn_clips)
 
-        stitched_clips: SpeechClipSet = apply_first_stitching(
-            settings, session_dir, turn_clips, False, self, self.logger
-        )
+        stitched_clips: SpeechClipSet = apply_first_stitching(settings, session_dir, turn_clips, self, self.logger)
         stitch_results.post_stitching_segments = len(stitched_clips)
         self.logger.report_table_message(asdict(stitch_results))
 
-        stitched_clips.save_to_json(session_dir / settings.first_stitched_path)
+        self.save_speech_clip(stitched_clips, session_dir, settings.first_stitched_path)

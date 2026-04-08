@@ -1,20 +1,18 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 
 import session_summarizer.utils.common_paths as common_paths
-from session_summarizer.helpers.audio_diarizer import diarize_audio
-from session_summarizer.processing_results.speech_clip_set import SpeechClipSet
-from session_summarizer.settings.session_settings import SessionSettings
-from session_summarizer.transcription.parakeet_ctc_confidence_scorer import AlignmentResult
 
-from ..helpers.audio_cleaner import clean_audio
-from ..helpers.audio_segmenter import SegmentSplitResultSet, compute_vad_segments
-from ..helpers.audio_transcriber import transcribe_from_cleaned_audio
-from ..helpers.confidence_scorer import score_confidence
+from ..helpers.audio_diarizer import diarize_audio
 from ..helpers.ground_truth_adder import enhance_words_with_ground_truth
-from ..helpers.transcript_aligner import align_transcript
-from ..processing_results.transcriber_protocol import TranscriptionResult
+from ..processing_results import SpeechClipSet
+from ..settings.session_settings import SessionSettings
+from ..transcription.parakeet_ctc_confidence_scorer import AlignmentResult
+from .clean_audio import CleanAudioCommand
+from .compute_segments import ComputeSegmentsCommand
+from .score_confidence import ScoreConfidenceCommand
 from .session_processing_command import SessionProcessingCommand
 
 
@@ -23,18 +21,19 @@ class DiarizeAudioCommand(SessionProcessingCommand):
     def name(self) -> str:
         return "Diarize Audio"
 
+    def add_dependencies(self, settings: SessionSettings, session_dir: Path) -> None:
+        self.inputs.append(session_dir / settings.confidence_transcript_path)
+        self.inputs.append(session_dir / settings.segments_path)
+        self.inputs.append(session_dir / settings.cleaned_audio_file)
+        self.outputs.append(session_dir / settings.base_diarized_path)
+        self.dependencies.append(ScoreConfidenceCommand(self.session_id))
+        self.dependencies.append(ComputeSegmentsCommand(self.session_id))
+        self.dependencies.append(CleanAudioCommand(self.session_id))
+
     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
-        self.gpu_logging_enabled = False
-        clean_audio(settings, session_dir, True, self, self.logger)
-        segments: SegmentSplitResultSet = compute_vad_segments(settings, session_dir, True, self, self.logger)
-        result: TranscriptionResult = transcribe_from_cleaned_audio(
-            settings, session_dir, segments, True, self, self.logger
-        )
-        alignment: AlignmentResult = align_transcript(settings, session_dir, result, segments, True, self, self.logger)
-        alignment = score_confidence(settings, session_dir, alignment, segments, True, self, self.logger)
-        clips: SpeechClipSet = diarize_audio(settings, session_dir, alignment, False, self, self.logger)
+        alignment: AlignmentResult = AlignmentResult.load_from_json(session_dir / settings.confidence_transcript_path)
+        clips: SpeechClipSet = diarize_audio(settings, session_dir, alignment, self, self.logger)
 
         if common_paths.is_test_session(self.session_id):
             enhance_words_with_ground_truth(clips)
-
-        clips.save_to_json(session_dir / settings.base_diarized_path)
+        self.save_speech_clip(clips, session_dir, settings.base_diarized_path)

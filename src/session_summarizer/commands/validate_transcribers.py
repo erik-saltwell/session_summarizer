@@ -11,6 +11,8 @@ from ..protocols import SessionSettings
 from ..transcription import CanaryQwenTranscriber, WhisperTranscriber
 from ..transcription.transcription_validator import TranscriptionValidationResult, validate_transcriber
 from ..vad import SegmentSplitResultSet
+from .clean_audio import CleanAudioCommand
+from .compute_segments import ComputeSegmentsCommand
 from .session_processing_command import SessionProcessingCommand
 
 # ---------------------------------------------------------------------------
@@ -53,10 +55,16 @@ class ValidateTranscribersCommand(SessionProcessingCommand):
     def name(self) -> str:
         return "Validate Transcribers"
 
+    def add_dependencies(self, settings: SessionSettings, session_dir: Path) -> None:
+        self.inputs.append(session_dir / settings.cleaned_audio_file)
+        self.inputs.append(session_dir / settings.segments_path)
+        self.dependencies.append(ComputeSegmentsCommand(self.session_id))
+        self.dependencies.append(CleanAudioCommand(self.session_id))
+
     def process_session(self, settings: SessionSettings, session_dir: Path) -> None:
-        clean_audio(settings, session_dir, True, self, self.logger)
+        clean_audio(settings, session_dir, self, self.logger)
         audio_path: Path = session_dir / settings.cleaned_audio_file
-        seg_results: SegmentSplitResultSet = compute_vad_segments(settings, session_dir, True, self, self.logger)
+        seg_results: SegmentSplitResultSet = compute_vad_segments(settings, session_dir, self, self.logger)
 
         results: dict[str, TranscriptionValidationResult] = {}
 

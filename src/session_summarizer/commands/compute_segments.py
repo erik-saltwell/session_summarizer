@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 
 import session_summarizer.utils.common_paths as common_paths
-from session_summarizer.settings.session_settings import SessionSettings
 
-from ..helpers.audio_cleaner import clean_audio
 from ..helpers.audio_segmenter import compute_vad_segments
+from ..settings.session_settings import SessionSettings
 from ..vad import SegmentSplitResultSet
+from .clean_audio import CleanAudioCommand
 from .session_processing_command import SessionProcessingCommand
 
 
@@ -16,8 +17,11 @@ class ComputeSegmentsCommand(SessionProcessingCommand):
     def name(self) -> str:
         return "Compute Segments"
 
+    def add_dependencies(self, settings: SessionSettings, session_dir: Path) -> None:
+        self.inputs.append(session_dir / settings.cleaned_audio_file)
+        self.outputs.append(session_dir / settings.segments_path)
+        self.dependencies.append(CleanAudioCommand(self.session_id))
+
     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
-        self.gpu_logging_enabled = True
-        clean_audio(settings, session_dir, True, self, self.logger)
-        results: SegmentSplitResultSet = compute_vad_segments(settings, session_dir, False, self, self.logger)
+        results: SegmentSplitResultSet = compute_vad_segments(settings, session_dir, self, self.logger)
         results.save(session_dir / settings.segments_path)

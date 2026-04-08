@@ -13,7 +13,6 @@ from ..vad import NemoVadDetector, SegmentSplitResult, SegmentSplitResultSet, co
 def compute_vad_segments(
     settings: SessionSettings,
     session_dir: Path,
-    use_cache_if_present: bool,
     gpu_logger: GpuLogger,
     logger: LoggingProtocol,
 ) -> SegmentSplitResultSet:
@@ -24,10 +23,6 @@ def compute_vad_segments(
               "long" uses min/max_segment_length_long (for OOM-sensitive operations
               such as diarization).
     """
-    final_path: Path = session_dir / settings.segments_path
-    if final_path.exists() and use_cache_if_present:
-        logger.report_message(f"[yellow]{final_path} already exists, returning cached instance.[/yellow]")
-        return SegmentSplitResultSet.load(final_path)
 
     gpu_logger.report_gpu_usage("before VAD")
 

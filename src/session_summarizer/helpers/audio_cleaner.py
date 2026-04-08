@@ -10,16 +10,12 @@ from ..protocols import GpuLogger, LoggingProtocol, SessionSettings
 def clean_audio(
     settings: SessionSettings,
     session_dir: Path,
-    use_cache_if_present: bool,
     gpu_logger: GpuLogger,
     logger: LoggingProtocol,
 ) -> None:
     original_path = session_dir / settings.audio_file
     logger.report_message(f"[blue]Cleaning audio for {original_path}[/blue]")
     final_path = session_dir / settings.cleaned_audio_file
-    if final_path.exists() and use_cache_if_present:
-        logger.report_message(f"[yellow]{final_path} already exists, skipping processing.[/yellow]")
-        return
 
     if not original_path.exists():
         raise FileNotFoundError(original_path)

@@ -20,15 +20,9 @@ def add_embeddings(
     settings: SessionSettings,
     session_dir: Path,
     clips: SpeechClipSet,
-    use_cache_if_present: bool,
     gpu_logger: GpuLogger,
     logger: LoggingProtocol,
 ) -> SpeechClipSet:
-    final_path: Path = session_dir / settings.speech_clips_with_embedding
-    if final_path.exists() and use_cache_if_present:
-        logger.report_message(f"[yellow]{final_path} already exists, returning cached instance.[/yellow]")
-        return SpeechClipSet.load_from_json(final_path)
-
     audio_path: Path = session_dir / settings.cleaned_audio_file
     audio_data, sample_rate = sf.read(str(audio_path), dtype="float32")
     if audio_data.ndim > 1:

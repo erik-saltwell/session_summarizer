@@ -62,15 +62,10 @@ def align_transcript(
     session_dir: Path,
     transcription: TranscriptionResult,
     segments: SegmentSplitResultSet,
-    use_cache_if_present: bool,
     gpu_logger: GpuLogger,
     logger: LoggingProtocol,
 ) -> AlignmentResult:
     logger.report_message("[blue]Word aligning transcription.[/blue]")
-    final_path: Path = session_dir / settings.aligned_transcript_path
-    if final_path.exists() and use_cache_if_present:
-        logger.report_message(f"[yellow]{final_path} already exists, returning cached instance.[/yellow]")
-        return AlignmentResult.load_from_json(final_path)
 
     gpu_logger.report_gpu_usage("before processing")
 

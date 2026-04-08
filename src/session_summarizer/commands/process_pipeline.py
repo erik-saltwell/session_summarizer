@@ -12,16 +12,10 @@ from .clean_session import CleanSessionCommand
 from .compute_segments import ComputeSegmentsCommand
 from .diarizationlm_command import DiarizationLMCommand
 from .diarize_audio import DiarizeAudioCommand
-from .dump_and_compare_texts import DumpAndCompareTextsCommand
-from .dump_human_format import DumpHumanFormatCommand
-from .first_stitch_clips import FirstStitchClipsCommand
 from .identify_speakers import IdentifySpeakersCommand
 from .score_confidence import ScoreConfidenceCommand
 from .session_processing_command import SessionProcessingCommand
-from .stitch_identities import StitichIdentitiesCommand
 from .transcribe_audio import TranscribeAudioCommand
-from .update_turn_end import UpdateTurnEndCommand
-from .validate_diarization import ValidateDiarizationCommand
 
 
 @dataclass
@@ -43,12 +37,14 @@ class ProcessPipelineCommand(SessionProcessingCommand):
         AlignTranscriptCommand(self.session_id).execute(self.logger)
         ScoreConfidenceCommand(self.session_id).execute(self.logger)
         DiarizeAudioCommand(self.session_id).execute(self.logger)
-        UpdateTurnEndCommand(self.session_id).execute(self.logger)
-        FirstStitchClipsCommand(self.session_id).execute(self.logger)
+        DiarizationLMCommand(self.session_id).execute(self.logger)
+
+        #        UpdateTurnEndCommand(self.session_id).execute(self.logger)
+        #        FirstStitchClipsCommand(self.session_id).execute(self.logger)
         AddEmbeddingsCommand(self.session_id).execute(self.logger)
         IdentifySpeakersCommand(self.session_id).execute(self.logger)
-        StitichIdentitiesCommand(self.session_id).execute(self.logger)
-        DiarizationLMCommand(self.session_id).execute(self.logger)
-        DumpAndCompareTextsCommand(self.session_id).execute(self.logger)
-        DumpHumanFormatCommand(self.session_id).execute(self.logger)
-        ValidateDiarizationCommand(self.session_id).execute(self.logger)
+        #        StitichIdentitiesCommand(self.session_id).execute(self.logger)
+        #        DiarizationLMCommand(self.session_id).execute(self.logger)
+        # DumpAndCompareTextsCommand(self.session_id).execute(self.logger)
+        # DumpHumanFormatCommand(self.session_id).execute(self.logger)
+        # ValidateDiarizationCommand(self.session_id).execute(self.logger)

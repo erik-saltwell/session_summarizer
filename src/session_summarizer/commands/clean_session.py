@@ -3,8 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from session_summarizer.settings.session_settings import SessionSettings
-
+from ..settings.session_settings import SessionSettings
 from .session_processing_command import SessionProcessingCommand
 
 _SETTINGS_FILE = "settings.yaml"
@@ -24,6 +23,9 @@ def _remove_tree(path: Path) -> None:
 class CleanSessionCommand(SessionProcessingCommand):
     def name(self) -> str:
         return "Clean Session"
+
+    def add_dependencies(self, settings: SessionSettings, session_dir: Path) -> None:
+        pass
 
     def process_session(self, settings: SessionSettings, session_dir: Path) -> None:
         protected: set[Path] = {

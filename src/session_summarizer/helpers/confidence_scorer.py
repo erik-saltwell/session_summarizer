@@ -62,15 +62,11 @@ def score_confidence(
     session_dir: Path,
     aligned_transcription: AlignmentResult,
     segments: SegmentSplitResultSet,
-    use_cache_if_present: bool,
     gpu_logger: GpuLogger,
     logger: LoggingProtocol,
 ) -> AlignmentResult:
     logger.report_message("[blue]Creating confidence scores.[/blue]")
-    final_path: Path = session_dir / settings.confidence_transcript_path
-    if final_path.exists() and use_cache_if_present:
-        logger.report_message(f"[yellow]{final_path} already exists, returning cached instance.[/yellow]")
-        return AlignmentResult.load_from_json(final_path)
+    audio_path: Path = session_dir / settings.cleaned_audio_file
 
     gpu_logger.report_gpu_usage("before processing")
 
@@ -81,9 +77,7 @@ def score_confidence(
 
     scored_alignment: AlignmentResult
     with logger.status("Scoring confidence."):
-        scored_alignment = scorer.score(
-            session_dir / settings.cleaned_audio_file, aligned_transcription, segments, logger
-        )
+        scored_alignment = scorer.score(audio_path, aligned_transcription, segments, logger)
 
     gpu_logger.report_gpu_usage("after alignment")
 

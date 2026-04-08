@@ -95,17 +95,11 @@ class IdentityMergeSelector(MergeSelector):
 def apply_identity_stitching(
     settings: SessionSettings,
     session_dir: Path,
-    clips: SpeechClipSet,
-    use_cache_if_present: bool,
+    identified_clips: SpeechClipSet,
     gpu_logger: GpuLogger,
     logger: LoggingProtocol,
 ) -> SpeechClipSet:
-    final_path: Path = session_dir / settings.identity_stitched_path
-    if final_path.exists() and use_cache_if_present:
-        logger.report_message(f"[yellow]{final_path} already exists, returning cached instance.[/yellow]")
-        return SpeechClipSet.load_from_json(final_path)
-
     merge_selector: IdentityMergeSelector = IdentityMergeSelector()
-    merged_clips = merge_clips(clips, merge_selector, settings.diarization_stitching, logger)
+    merged_clips = merge_clips(identified_clips, merge_selector, settings.diarization_stitching, logger)
 
     return merged_clips

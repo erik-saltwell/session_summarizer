@@ -16,20 +16,15 @@ def transcribe_from_cleaned_audio(
     settings: SessionSettings,
     session_dir: Path,
     segments: SegmentSplitResultSet,
-    use_cache_if_present: bool,
     gpu_logger: GpuLogger,
     logger: LoggingProtocol,
 ) -> TranscriptionResult:
-    original_path: Path = session_dir / settings.cleaned_audio_file
-    final_path: Path = session_dir / settings.transcript_file
+    audio_path: Path = session_dir / settings.cleaned_audio_file
 
-    logger.report_message(f"[blue]Transcribing from clean audio at {original_path}[/blue]")
-    if final_path.exists():
-        logger.report_message(f"[yellow]{final_path} already exists, returning cached instance.[/yellow]")
-        return TranscriptionResult.load_from_json(final_path)
+    logger.report_message(f"[blue]Transcribing from clean audio at {audio_path}[/blue]")
 
-    if not original_path.exists():
-        raise FileNotFoundError(original_path)
+    if not audio_path.exists():
+        raise FileNotFoundError(audio_path)
 
     gpu_logger.report_gpu_usage("before processing")
 
@@ -38,7 +33,7 @@ def transcribe_from_cleaned_audio(
         transcriber = CanaryQwenTranscriber(device=settings.device)
         gpu_logger.report_gpu_usage("Created transcriber")
 
-    result: TranscriptionResult = transcriber.transcribe(original_path, segments, logger)
+    result: TranscriptionResult = transcriber.transcribe(audio_path, segments, logger)
     gpu_logger.report_gpu_usage("After transcription")
 
     logger.report_message("[blue]Transcription complete.[/blue]")

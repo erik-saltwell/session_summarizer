@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 
 import session_summarizer.utils.common_paths as common_paths
 
@@ -14,5 +15,9 @@ class CleanAudioCommand(SessionProcessingCommand):
     def name(self) -> str:
         return "Clean Audio"
 
+    def add_dependencies(self, settings: SessionSettings, session_dir: Path) -> None:
+        self.inputs.append(session_dir / settings.audio_file)
+        self.outputs.append(session_dir / settings.cleaned_audio_file)
+
     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
-        clean_audio(settings, session_dir, False, self, self.logger)
+        clean_audio(settings, session_dir, self, self.logger)

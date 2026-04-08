@@ -2,21 +2,47 @@ from __future__ import annotations
 
 import time
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Protocol
 
 import torch
 import typer
 
+from ..evaluation import clean_text_for_evaluation
+from ..processing_results import AlignmentResult, SpeechClipSet
 from ..protocols import CommmandProtocol, LoggingProtocol, NullLogger, SessionSettings
 from ..utils import common_paths
+
+
+class PlainTextContainer(Protocol):
+    def plain_text(self) -> str: ...
 
 
 @dataclass
 class SessionProcessingCommand(ABC, CommmandProtocol):
     session_id: str
+    force: bool = False
     logger: LoggingProtocol = NullLogger()
     gpu_logging_enabled: bool = False
+    inputs: list[Path] = field(default_factory=list)
+    outputs: list[Path] = field(default_factory=list)
+    dependencies: list[CommmandProtocol] = field(default_factory=list)
+
+    @property
+    def should_process(self) -> bool:
+        if self.force or len(self.outputs) == 0:
+            return True
+
+        for output in self.outputs:
+            if not output.exists():
+                return True
+        newest_input_mtime = max(path.stat().st_mtime for path in self.inputs)
+        newest_output_mtime = max(path.stat().st_mtime for path in self.outputs)
+        return newest_input_mtime > newest_output_mtime
+
+    @abstractmethod
+    def add_dependencies(self, settings: SessionSettings, session_dir: Path) -> None: ...
 
     @abstractmethod
     def name(self) -> str: ...
@@ -45,7 +71,16 @@ class SessionProcessingCommand(ABC, CommmandProtocol):
         if not session_dir.exists():
             raise FileNotFoundError(f"Could not find directory: {session_dir}")
         settings: SessionSettings = SessionSettings.load_cascading(self.session_id)
-        self.report_message(f"Processing command: {self.name()}")
+        self.add_dependencies(settings, session_dir)
+
+        for dependency in self.dependencies:
+            dependency.execute(logger)
+
+        if not self.should_process:
+            return
+
+        self.report_message(f"{self.name()}: Processing...")
+
         start = time.perf_counter()
         try:
             self.process_session(settings, session_dir)
@@ -54,3 +89,26 @@ class SessionProcessingCommand(ABC, CommmandProtocol):
         except Exception as exc:
             logger.report_exception(f"Error processing {self.name()}", exc)
             raise typer.Exit(code=1) from exc
+
+    def postpend_text(self, input: Path, tag: str, suffix: str) -> Path:
+        return input.with_name(f"{input.stem}{tag}{suffix}")
+
+    def save_cleaned_text(self, text_container: PlainTextContainer, session_dir: Path, json_filename: Path) -> None:
+        text: str = text_container.plain_text()
+        cleaned_text = clean_text_for_evaluation(text)
+        saved_text = cleaned_text.replace(" ", "\n")
+        full_text_path = session_dir / Path(json_filename.stem + "_fulltext.txt")
+        with open(full_text_path, "w") as f:
+            f.write(saved_text)
+
+    def save_speech_clip(self, clips: SpeechClipSet, session_dir: Path, json_filename: Path) -> None:
+        json_path = session_dir / json_filename
+        human_path = session_dir / Path(json_filename.stem + "_human.txt")
+
+        clips.save_to_json(json_path)
+        clips.save_to_human_format(human_path)
+        self.save_cleaned_text(clips, session_dir, json_filename)
+
+    def save_alignment_result(self, alignment_result: AlignmentResult, session_dir: Path, json_filename: Path) -> None:
+        alignment_result.save_to_json(session_dir / json_filename)
+        self.save_cleaned_text(alignment_result, session_dir, json_filename)
