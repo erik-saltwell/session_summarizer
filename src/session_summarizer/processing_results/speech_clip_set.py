@@ -30,7 +30,6 @@ class SpeechClip:
     start_time: float
     end_time: float
     speakers: set[str]
-    confidence_avg: float
     text: str
     identity: str | None = None
     embedding: list[float] | None = None
@@ -51,6 +50,28 @@ class SpeechClip:
     @property
     def duration(self) -> float:
         return self.end_time - self.start_time
+
+    @property
+    def confidence_avg(self) -> float:
+        if not self.words:
+            return 0.0
+        return sum(w.confidence for w in self.words) / len(self.words)
+
+    @property
+    def wder(self) -> float:
+        if self.words is None or self.identity is None:
+            return 1.0
+        total_words: float = 0.0
+        incorrect_words: float = 0.0
+        for word in self.words:
+            if word.ground_truth is None:
+                continue
+            total_words += 1.0
+            if not self.identity.lower() == word.ground_truth.lower():
+                incorrect_words += 1.0
+        if total_words == 0.0:
+            return 1.0
+        return incorrect_words / total_words
 
     @property
     def is_multispeaker(self) -> bool:
@@ -140,7 +161,6 @@ class SpeechClip:
             start_time=word.start_time,
             end_time=word.end_time,
             speakers={_ANONYMOUS_SPEAKER},
-            confidence_avg=0.0,
             text="",
             words=[word],
         )
@@ -201,11 +221,9 @@ class SpeechClip:
     def compute_word_derived_values(self) -> None:
         if not self.words:
             self.text = ""
-            self.confidence_avg = 0.0
         else:
             sorted_words = sorted(self.words, key=lambda w: (w.start_time, w.end_time))
             self.text = " ".join(w.word for w in sorted_words)
-            self.confidence_avg = sum(w.confidence for w in sorted_words) / len(sorted_words)
 
     def overlap(self, other: SegmentProtocol, minimum_overlap: float) -> float:
         return compute_overlap(self, other, minimum_overlap)
@@ -310,7 +328,6 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol, TextPhraseSet):
                 "start_time": clip.start_time,
                 "end_time": clip.end_time,
                 "speakers": sorted(clip.speakers),
-                "confidence_avg": clip.confidence_avg,
                 "text": clip.text,
                 "identity": clip.identity,
                 "embedding": clip.embedding,
@@ -356,7 +373,6 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol, TextPhraseSet):
                     start_time=float(phrase["start"]),
                     end_time=float(phrase["end"]),
                     speakers={speaker},
-                    confidence_avg=1.0,
                     text=phrase["text"],
                     identity=speaker,
                 )
@@ -388,7 +404,6 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol, TextPhraseSet):
                 start_time=item["start_time"],
                 end_time=item["end_time"],
                 speakers=set(item["speakers"]),
-                confidence_avg=item["confidence_avg"],
                 text=item["text"],
                 identity=item.get("identity"),
                 embedding=item.get("embedding"),

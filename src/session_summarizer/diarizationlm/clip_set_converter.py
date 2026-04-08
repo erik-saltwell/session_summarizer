@@ -115,7 +115,6 @@ def _build_clip(
         start_time=start_time,
         end_time=end_time,
         speakers={speaker},
-        confidence_avg=0.0,
         text="",
         identity=identity,
         embedding=embedding,

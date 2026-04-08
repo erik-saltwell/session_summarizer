@@ -41,7 +41,6 @@ def _create_initial_clips(diarization_result: MergedDiarizationResult) -> Speech
             start_time=segment.start_time,
             end_time=segment.end_time,
             speakers=set(segment.speakers),
-            confidence_avg=0.0,
             text="",
         )
         clip_set.add_clip(speech_clip)
