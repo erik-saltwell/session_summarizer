@@ -95,6 +95,23 @@ class SessionSettings(BaseModel, frozen=True):
             )
         ),
     ]
+    dangling_sentence_fix_path: Annotated[
+        Path,
+        Field(
+            description=(
+                "Path to SpeechClipSet JSON file where dangling sentences have been fixed (written during processing)"
+            )
+        ),
+    ]
+    punctuated_text_path: Annotated[
+        Path,
+        Field(
+            description=(
+                "Path to SpeechClipSet JSON file written after punctuation and capitalisation "
+                "have been restored to clip transcripts (written during processing)"
+            )
+        ),
+    ]
     device: Annotated[
         Literal["cpu", "cuda"],
         Field(description="Device for model inference — 'cpu' or 'cuda'"),
@@ -262,6 +279,8 @@ class SessionSettings(BaseModel, frozen=True):
             "identity_stitched_path",
             "diarizationlm_processed_path",
             "indeterminate_speakers_path",
+            "dangling_sentence_fix_path",
+            "punctuated_text_path",
         ):
             raw = data.get(key)
             if raw is None:

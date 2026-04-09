@@ -10,6 +10,7 @@ import typer
 from dotenv import load_dotenv
 from rich.console import Console
 
+from session_summarizer.commands.punctuate_text import PunctuateTextCommand
 from session_summarizer.utils import common_paths
 
 from ..commands.add_embeddings import AddEmbeddingsCommand
@@ -243,6 +244,34 @@ diarizationlm_processed_path: diarizationlm_processed.json
 # Example:
 #   indeterminate_speakers_path: indeterminate_speakers.json
 indeterminate_speakers_path: indeterminate_speakers.json
+
+# ---------------------------------------------------------------------------
+# dangling_sentence_fix_path  (REQUIRED)
+# ---------------------------------------------------------------------------
+# Path to the SpeechClipSet JSON file written after dangling sentences have
+# been fixed. A "dangling sentence" is a speech clip whose transcript ends
+# mid-sentence; this step merges or extends such clips so every clip ends on
+# a sentence boundary.
+# Relative paths are resolved from this file's directory.
+#
+# Default: dangling_sentence_fix.json
+#
+# Example:
+#   dangling_sentence_fix_path: dangling_sentence_fix.json
+dangling_sentence_fix_path: dangling_sentence_fix.json
+
+# ---------------------------------------------------------------------------
+# punctuated_text_path  (REQUIRED)
+# ---------------------------------------------------------------------------
+# Path to the SpeechClipSet JSON file written after punctuation and
+# capitalisation have been restored to clip transcripts by the punctuate-text
+# command. Relative paths are resolved from this file's directory.
+#
+# Default: punctuated_text.json
+#
+# Example:
+#   punctuated_text_path: punctuated_text.json
+punctuated_text_path: punctuated_text.json
 
 # ---------------------------------------------------------------------------
 # device  (REQUIRED)
@@ -838,6 +867,18 @@ def identify_speakers(
     _set_seed(session)
     logger: LoggingProtocol = create_logger()
     command: IdentifySpeakersCommand = IdentifySpeakersCommand(session, force=True)
+    command.execute(logger)
+
+
+@app.command("punctuate-text")
+def punctuate_text(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to process"),
+) -> None:
+    """Identify speakers in each speech clip by comparing embeddings to registered attendees."""
+    confirm_session(session)
+    _set_seed(session)
+    logger: LoggingProtocol = create_logger()
+    command: PunctuateTextCommand = PunctuateTextCommand(session, force=True)
     command.execute(logger)
 
 

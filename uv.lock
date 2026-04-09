@@ -2826,6 +2826,22 @@ wheels = [
 ]
 
 [[package]]
+name = "punctuators"
+version = "0.0.7"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "huggingface-hub", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+    { name = "numpy", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+    { name = "omegaconf", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+    { name = "onnxruntime", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+    { name = "sentencepiece", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+    { name = "torch", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/34/73/d7236406f8377c6586fdccbd54a26f0a933cd2cb9fadf36d251317ac78df/punctuators-0.0.7-py3-none-any.whl", hash = "sha256:053146e5173ef6bddb6f69e20d37339c75274c26d562f96a4752ede23054be1f", size = 10245, upload-time = "2024-06-08T21:07:20.493Z" },
+]
+
+[[package]]
 name = "pure-eval"
 version = "0.2.3"
 source = { registry = "https://pypi.org/simple" }
@@ -3558,6 +3574,7 @@ dependencies = [
     { name = "openai", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "openai-whisper", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "pandas", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+    { name = "punctuators", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "pyannote-audio", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "pyannote-metrics", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "python-dotenv", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
@@ -3602,6 +3619,7 @@ requires-dist = [
     { name = "openai", specifier = ">=1.0.0" },
     { name = "openai-whisper", specifier = ">=20250625" },
     { name = "pandas", specifier = ">=2.3.3" },
+    { name = "punctuators", specifier = ">=0.0.7" },
     { name = "pyannote-audio", git = "https://github.com/BUTSpeechFIT/DiariZen.git?subdirectory=pyannote-audio" },
     { name = "pyannote-metrics", specifier = ">=3.2.1" },
     { name = "python-dotenv", specifier = ">=1.2.1" },

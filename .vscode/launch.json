@@ -148,13 +148,13 @@
             ]
         },
         {
-            "name": "pipeline",
+            "name": "punctuate-text",
             "type": "debugpy",
             "request": "launch",
             "module": "session_summarizer",
             "console": "integratedTerminal",
             "args": [
-                "process-pipeline",
+                "punctuate-text",
                 "--session",
                 "test",
             ]
