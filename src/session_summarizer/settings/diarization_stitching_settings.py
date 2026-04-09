@@ -166,11 +166,13 @@ class DiarizationStitchingSettings(BaseModel, frozen=True):
     # stronger model confidence.
     turn_end_probability_threshold: float
 
-    # ── Numeric tolerance ──────────────────────────────────────────────
+    # ── Tiny clip merging ──────────────────────────────────────────────
 
-    # Small value added/subtracted when comparing floating-point time
-    # boundaries to avoid edge cases from imprecision and quantization.
-    epsilon: float
+    # Clips shorter than this duration (seconds) are merged into the closest
+    # adjacent clip rather than kept as standalone segments.  Eliminates
+    # very short fragments that typically result from diarization jitter or
+    # brief silence mis-attribution.
+    tiny_clip_threshold: float
 
     @field_validator(
         "min_overlap_seconds",
@@ -186,7 +188,7 @@ class DiarizationStitchingSettings(BaseModel, frozen=True):
         "max_identity_backchannel_duration",
         "max_identity_backchannel_prior_gap",
         "max_identity_backchannel_next_gap",
-        "epsilon",
+        "tiny_clip_threshold",
     )
     @classmethod
     def non_negative(cls, v: float) -> float:

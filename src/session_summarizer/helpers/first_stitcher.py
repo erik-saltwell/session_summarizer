@@ -43,7 +43,7 @@ class BackchannelMerger(MergeSelector):
             prior_clip,
             current_clip,
             settings.diarization_stitching.max_backchannel_prior_gap,
-            settings.diarization_stitching.epsilon,
+            settings.epsilon,
             logger,
         ):
             return MergeType.NO_MERGE
@@ -52,7 +52,7 @@ class BackchannelMerger(MergeSelector):
             current_clip,
             next_clip,
             settings.diarization_stitching.max_backchannel_next_gap,
-            settings.diarization_stitching.epsilon,
+            settings.epsilon,
             logger,
         ):
             return MergeType.NO_MERGE
@@ -77,7 +77,7 @@ class MergeUnfinishedSegmentsWithSameSpeakerOrAnonymous(MergeSelector):
             prior_clip,
             current_clip,
             settings.diarization_stitching.unfinished_clip_merge_max_length,
-            settings.diarization_stitching.epsilon,
+            settings.epsilon,
             logger,
         ):
             return MergeType.NO_MERGE

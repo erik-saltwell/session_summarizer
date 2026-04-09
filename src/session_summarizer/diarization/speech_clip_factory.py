@@ -16,17 +16,19 @@ from .clip_merger import MergeSelector, clips_are_close_enough, clips_are_same_s
 from .diarizen_diarizer import MergedDiarizationResult, MergedDiarizationSegment
 
 
-def _is_acceptable_overlap(word: WordAlignment, clip: SpeechClip, settings: DiarizationStitchingSettings) -> bool:
-    overlap = word.overlap(clip, settings.epsilon)
-    if word.duration <= settings.epsilon or clip.duration <= settings.epsilon:
+def _is_acceptable_overlap(
+    word: WordAlignment, clip: SpeechClip, settings: DiarizationStitchingSettings, epsilon: float
+) -> bool:
+    overlap = word.overlap(clip, epsilon)
+    if word.duration <= epsilon or clip.duration <= epsilon:
         return False  # if either is too short, we don't consider it a meaningful overlap
 
-    duration_within_meaningful_boundaries = word.duration_inside_meaningful_boundaries(settings.epsilon)
-    if duration_within_meaningful_boundaries <= settings.epsilon:
+    duration_within_meaningful_boundaries = word.duration_inside_meaningful_boundaries(epsilon)
+    if duration_within_meaningful_boundaries <= epsilon:
         return False
-    if overlap >= settings.min_overlap_seconds - settings.epsilon:
+    if overlap >= settings.min_overlap_seconds - epsilon:
         return True
-    if (overlap / duration_within_meaningful_boundaries) >= settings.min_overlap_fraction_word - settings.epsilon:
+    if (overlap / duration_within_meaningful_boundaries) >= settings.min_overlap_fraction_word - epsilon:
         return True
     return False
 
@@ -63,7 +65,7 @@ class SimpleMergeSelector(MergeSelector):
             prior_clip,
             current_clip,
             settings.diarization_stitching.merge_gap_seconds,
-            settings.diarization_stitching.epsilon,
+            settings.epsilon,
             logger,
         ):
             return MergeType.NO_MERGE
@@ -88,7 +90,7 @@ def _find_best_candidate(
     for candidate in pool.iterate_candidates(speech_clips):
         overlap = word.overlap(candidate, epsilon)
         gap = word.gap_distance(candidate, epsilon)
-        if _is_acceptable_overlap(word, candidate, stitch_settings):
+        if _is_acceptable_overlap(word, candidate, stitch_settings, epsilon):
             score = score_candidate(candidate, word, epsilon, scoring_mode, prefer_shorter_on_tie)
             if best_score is None or score > best_score:
                 best_score = score
@@ -122,7 +124,7 @@ def create_speech_clips(
     anonymous_clips: AnonymousClips = AnonymousClips([])
 
     # caching values for efficiency since they are used in inner loops
-    epsilon: float = settings.diarization_stitching.epsilon
+    epsilon: float = settings.epsilon
     stitch_settings = settings.diarization_stitching
     should_fill_nearest: bool = stitch_settings.fill_nearest
     max_nearest_distance: float = stitch_settings.max_nearest_distance + epsilon
@@ -131,7 +133,7 @@ def create_speech_clips(
 
     alignment_result.sort()
     for word in alignment_result.words:
-        pool.update_pool(word, speech_clips, stitch_settings)
+        pool.update_pool(word, speech_clips, stitch_settings, epsilon)
 
         best_candidate: SpeechClip | None
         best_score: CandidateScore | None
@@ -151,7 +153,7 @@ def create_speech_clips(
             best_candidate.add_word(word)
             anonymous_clips.flush_current_clip()
         else:
-            anonymous_clips.add_anonymous_word(word, stitch_settings)
+            anonymous_clips.add_anonymous_word(word, stitch_settings, epsilon)
 
     speech_clips.extend_clips(anonymous_clips.get_clips())
 

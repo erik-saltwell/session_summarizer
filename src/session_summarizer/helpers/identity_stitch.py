@@ -47,7 +47,7 @@ class IdentityBackchannelMerger(MergeSelector):
             prior_clip,
             current_clip,
             settings.diarization_stitching.max_identity_backchannel_prior_gap,
-            settings.diarization_stitching.epsilon,
+            settings.epsilon,
             logger,
         ):
             return MergeType.NO_MERGE
@@ -56,7 +56,7 @@ class IdentityBackchannelMerger(MergeSelector):
             current_clip,
             next_clip,
             settings.diarization_stitching.max_identity_backchannel_next_gap,
-            settings.diarization_stitching.epsilon,
+            settings.epsilon,
             logger,
         ):
             return MergeType.NO_MERGE
@@ -83,7 +83,7 @@ class IdentityMergeSelector(MergeSelector):
             prior_clip,
             current_clip,
             settings.diarization_stitching.identity_stitching_max_gap,
-            settings.diarization_stitching.epsilon,
+            settings.epsilon,
             logger,
         ):
             return MergeType.NO_MERGE

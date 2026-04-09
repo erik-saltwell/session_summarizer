@@ -50,7 +50,6 @@ _DIARIZATION_STITCHING_FIELDS: dict = {
     "max_identity_backchannel_prior_gap": 0.5,
     "max_identity_backchannel_next_gap": 2.0,
     "turn_end_probability_threshold": 0.5,
-    "epsilon": 1e-6,
 }
 
 
@@ -81,6 +80,8 @@ def _required_fields(audio_file: Path | str) -> dict:
         "max_segment_length_long": 300.0,
         "vad": _VAD_FIELDS,
         "diarization_stitching": _DIARIZATION_STITCHING_FIELDS,
+        "epsilon": 1e-6,
+        "seed": 42,
     }
 
 
@@ -111,6 +112,8 @@ def _required_yaml_fields(audio_file: str) -> dict:
         "max_segment_length_long": 300.0,
         "vad": _VAD_FIELDS,
         "diarization_stitching": _DIARIZATION_STITCHING_FIELDS,
+        "epsilon": 1e-6,
+        "seed": 42,
     }
 
 
@@ -246,6 +249,8 @@ class TestLoad:
                     "max_segment_length_long": 300.0,
                     "vad": _VAD_FIELDS,
                     "diarization_stitching": _DIARIZATION_STITCHING_FIELDS,
+                    "epsilon": 1e-6,
+                    "seed": 42,
                 }
             )
         )

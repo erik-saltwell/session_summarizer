@@ -159,6 +159,25 @@ class SessionSettings(BaseModel, frozen=True):
         ),
     ]
 
+    epsilon: Annotated[
+        float,
+        Field(description="Small floating-point tolerance."),
+    ]
+
+    seed: Annotated[
+        int,
+        Field(
+            description="Random seed for reproducible model inference across all frameworks (Python, NumPy, PyTorch)"
+        ),
+    ]
+
+    @field_validator("epsilon")
+    @classmethod
+    def _epsilon_must_be_non_negative(cls, v: float) -> float:
+        if v < 0.0:
+            raise ValueError(f"epsilon must be >= 0.0, got {v!r}")
+        return v
+
     @field_validator("speaker_clip_lead_in", "speaker_clip_lead_out")
     @classmethod
     def _lead_must_be_non_negative(cls, v: float, info: ValidationInfo) -> float:

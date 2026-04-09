@@ -76,7 +76,6 @@ class CanaryQwenTranscriber:
         import torch
 
         logger.report_message(f"[blue]Loading Canary Qwen model {self.model_name}...[/blue]")
-        torch.backends.cudnn.benchmark = False
         model = SALM.from_pretrained(self.model_name)
         model.to(self.device)
         model.eval()

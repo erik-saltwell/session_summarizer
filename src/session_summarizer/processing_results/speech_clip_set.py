@@ -40,6 +40,23 @@ class SpeechClip:
     words: list[WordAlignment] | None = None
 
     @property
+    def error_formatted_text(self) -> str:
+        if not self.words or not self.identity:
+            return self.text
+        new_words: list[str] = []
+        sorted_words = sorted(self.words, key=lambda w: (w.start_time, w.end_time))
+        for word in sorted_words:
+            if word.ground_truth is None:
+                new_words.append("```" + word.word + "```")
+            elif word.ground_truth.lower() == self.identity.lower():
+                new_words.append("_" + word.word + "_")
+            else:
+                new_words.append("**" + word.word + "**")
+
+        result: str = " ".join(new_words)
+        return result
+
+    @property
     def word_count(self) -> int:
         if self.words is None:
             return 0
@@ -286,6 +303,27 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol, TextPhraseSet):
                     end_str = f"{clip.end_time: 0.5f}".strip()
                     f.write(f"({start_str},{end_str}): {flag_str}\n")
                 f.write(f"{clip.text}\n")
+                f.write("\n")
+
+    def save_to_error_formatted_text(self, path: Path, include_details: bool = False) -> None:
+        with path.open("w", encoding="utf-8") as f:
+            for clip in self:
+                speakers: str
+                if clip.identity is None:
+                    speakers = ", ".join(sorted(clip.speakers))
+                else:
+                    speakers = clip.identity
+
+                f.write(f"{speakers}\n")
+                if include_details:
+                    flags = " ".join(
+                        flag.name for flag in SpeechClipFlags if flag and clip.has_flag(flag) and flag.name is not None
+                    )
+                    flag_str = f"[{flags if flags else 'NO_FLAGS'}]"
+                    start_str = f"{clip.start_time: 0.5f}".strip()
+                    end_str = f"{clip.end_time: 0.5f}".strip()
+                    f.write(f"({start_str},{end_str}): {flag_str}\n")
+                f.write(f"{clip.error_formatted_text}\n")
                 f.write("\n")
 
     def _speaker_label(self, clip: SpeechClip) -> str:

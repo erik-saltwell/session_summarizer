@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import random
 from importlib.metadata import PackageNotFoundError, metadata
 from importlib.metadata import version as dist_version
 
+import numpy as np
+import torch
 import typer
 from dotenv import load_dotenv
 from rich.console import Console
@@ -30,12 +33,28 @@ from ..commands.validate_diarization import ValidateDiarizationCommand
 from ..commands.validate_transcribers import ValidateTranscribersCommand
 from ..logging import CompositeLogger, FileLogger, RichConsoleLogger
 from ..protocols import LoggingProtocol
+from ..settings.session_settings import SessionSettings
 from ..utils import flush_gpu_memory
 from ..utils.logging_config import configure_logging
 from .console_validation import _validate_directory_exists
 
 load_dotenv()
 configure_logging()
+
+# Set random seeds for reproducible model inference
+
+
+def _set_seed(session_id: str) -> None:
+    settings: SessionSettings = SessionSettings.load_cascading(session_id)
+    seed: int = settings.seed
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+    # torch.backends.cudnn.deterministic = True
+    # torch.backends.cudnn.benchmark = False
+
 
 flush_gpu_memory()
 
@@ -566,14 +585,48 @@ diarization_stitching:
   # Reasonable default: 0.5
   turn_end_probability_threshold: 0.8
 
-  # ── Numeric tolerance ────────────────────────────────────────────────
-
-  # Small value used when comparing floating-point time boundaries to
-  # avoid edge cases from imprecision and quantization.
+  # Clips shorter than this duration are merged into the closest adjacent
+  # clip rather than kept as standalone segments. Eliminates very short
+  # fragments that typically result from diarization jitter or brief
+  # silence mis-attribution.
   #
-  # Allowed values: >= 0.0
-  # Reasonable default: 0.000001
-  epsilon: 0.000001
+  # Allowed values: >= 0.0 (seconds)
+  # Reasonable default: 0.5
+  # Reasonable range: 0.0–2.0
+  #
+  # Example:
+  #   tiny_clip_threshold: 0.5
+  tiny_clip_threshold: 0.1
+
+
+
+# ---------------------------------------------------------------------------
+# epsilon  (REQUIRED)
+# ---------------------------------------------------------------------------
+# Small floating-point tolerance used when comparing time boundaries to
+# avoid edge cases from imprecision and quantization.
+#
+# Allowed values: >= 0.0
+# Reasonable default: 0.000001
+#
+# Example:
+#   epsilon: 0.000001
+epsilon: 0.000001
+
+
+# ---------------------------------------------------------------------------
+# seed  (REQUIRED)
+# ---------------------------------------------------------------------------
+# Random seed for reproducible model inference across all frameworks
+# (Python random, NumPy, PyTorch). Set to any integer for deterministic
+# results; change to get a different random sequence.
+#
+# Allowed values: any integer
+# Reasonable default: 42
+#
+# Example:
+#   seed: 42
+seed: 42
 """
 
 
@@ -601,6 +654,7 @@ def add_embeddings(
 ) -> None:
     """Generate speaker embeddings for each speech clip and save to disk."""
     confirm_session(session)
+    _set_seed(session)
     logger: LoggingProtocol = create_logger()
     command: AddEmbeddingsCommand = AddEmbeddingsCommand(session, force=True)
     command.execute(logger)
@@ -611,6 +665,7 @@ def align_transcription(
     session: str = typer.Option(..., "--session", "-s", help="ID of the session to transcribe"),
 ) -> None:
     confirm_session(session)
+    _set_seed(session)
     logger: LoggingProtocol = create_logger()
     command: AlignTranscriptCommand = AlignTranscriptCommand(session, force=True)
     command.execute(logger)
@@ -622,6 +677,7 @@ def apply_first_stitching(
 ) -> None:
     """Score each speech clip with end-of-turn probability and set the END_OF_TURN flag."""
     confirm_session(session)
+    _set_seed(session)
     logger: LoggingProtocol = create_logger()
     command: FirstStitchClipsCommand = FirstStitchClipsCommand(session, force=True)
     command.execute(logger)
@@ -633,6 +689,7 @@ def apply_identity_stitiching(
 ) -> None:
     """Score each speech clip with end-of-turn probability and set the END_OF_TURN flag."""
     confirm_session(session)
+    _set_seed(session)
     logger: LoggingProtocol = create_logger()
     command: StitichIdentitiesCommand = StitichIdentitiesCommand(session, force=True)
     command.execute(logger)
@@ -644,6 +701,7 @@ def diarizationlm(
 ) -> None:
     """Post-process diarization with DiarizationLM to correct speaker attribution errors."""
     confirm_session(session)
+    _set_seed(session)
     logger: LoggingProtocol = create_logger()
     command: DiarizationLMCommand = DiarizationLMCommand(session, force=True)
     command.execute(logger)
@@ -654,6 +712,7 @@ def clean_audio(
     session: str = typer.Option(..., "--session", "-s", help="ID of the session to clean"),
 ) -> None:
     confirm_session(session)
+    _set_seed(session)
     logger: LoggingProtocol = create_logger()
     command: CleanAudioCommand = CleanAudioCommand(session, force=True)
     command.execute(logger)
@@ -665,6 +724,7 @@ def clean_session(
 ) -> None:
     """Delete all generated files in a session folder, keeping settings.yaml and the original audio."""
     confirm_session(session)
+    _set_seed(session)
     logger: LoggingProtocol = create_logger()
     command: CleanSessionCommand = CleanSessionCommand(session, force=True)
     command.execute(logger)
@@ -676,6 +736,7 @@ def compute_vad_segments(
 ) -> None:
     """Run VAD on cleaned audio and compute optimal cut points for chunked processing."""
     confirm_session(session)
+    _set_seed(session)
     logger: LoggingProtocol = create_logger()
     command: ComputeSegmentsCommand = ComputeSegmentsCommand(session, force=True)
     command.execute(logger)
@@ -692,6 +753,7 @@ def create_speaker_clips(
 ) -> None:
     """Save each identified speaker clip as an individual audio file."""
     confirm_session(session)
+    _set_seed(session)
     logger: LoggingProtocol = create_logger()
     command: CreateSpeakerClipsCommand = CreateSpeakerClipsCommand(
         session, use_multi_speaker_clips=use_multi_speaker_clips
@@ -704,6 +766,7 @@ def diarize_audio(
     session: str = typer.Option(..., "--session", "-s", help="ID of the session to transcribe"),
 ) -> None:
     confirm_session(session)
+    _set_seed(session)
     logger: LoggingProtocol = create_logger()
     command: DiarizeAudioCommand = DiarizeAudioCommand(session, force=True)
     command.execute(logger)
@@ -714,6 +777,7 @@ def compare_texts(
     session: str = typer.Option(..., "--session", "-s", help="ID of the session to transcribe"),
 ) -> None:
     confirm_session(session)
+    _set_seed(session)
     logger: LoggingProtocol = create_logger()
     command: CompareFullTextCommand = CompareFullTextCommand(session, force=True)
     command.execute(logger)
@@ -737,6 +801,7 @@ def identify_speakers(
 ) -> None:
     """Identify speakers in each speech clip by comparing embeddings to registered attendees."""
     confirm_session(session)
+    _set_seed(session)
     logger: LoggingProtocol = create_logger()
     command: IdentifySpeakersCommand = IdentifySpeakersCommand(session, force=True)
     command.execute(logger)
@@ -766,6 +831,7 @@ def score_confidence(
     session: str = typer.Option(..., "--session", "-s", help="ID of the session to transcribe"),
 ) -> None:
     confirm_session(session)
+    _set_seed(session)
     logger: LoggingProtocol = create_logger()
     command: ScoreConfidenceCommand = ScoreConfidenceCommand(session, force=True)
     command.execute(logger)
@@ -776,6 +842,7 @@ def test(
     session: str = typer.Option(..., "--session", "-s", help="ID of the session to transcribe"),
 ) -> None:
     confirm_session(session)
+    _set_seed(session)
     logger: LoggingProtocol = create_logger()
     command: TestCommand = TestCommand(session, force=True)
     command.execute(logger)
@@ -786,6 +853,7 @@ def transcribe(
     session: str = typer.Option(..., "--session", "-s", help="ID of the session to transcribe"),
 ) -> None:
     confirm_session(session)
+    _set_seed(session)
     logger: LoggingProtocol = create_logger()
     command: TranscribeAudioCommand = TranscribeAudioCommand(session, force=True)
     command.execute(logger)
@@ -797,6 +865,7 @@ def update_turn_end(
 ) -> None:
     """Score each speech clip with end-of-turn probability and set the END_OF_TURN flag."""
     confirm_session(session)
+    _set_seed(session)
     logger: LoggingProtocol = create_logger()
     command: UpdateTurnEndCommand = UpdateTurnEndCommand(session, force=True)
     command.execute(logger)
@@ -808,6 +877,7 @@ def validate_diarization(
 ) -> None:
     """Evaluate diarization quality across pipeline stages and display a metrics comparison table."""
     confirm_session(session)
+    _set_seed(session)
     logger: LoggingProtocol = create_logger()
     command: ValidateDiarizationCommand = ValidateDiarizationCommand(session, force=True)
     command.execute(logger)
@@ -819,6 +889,7 @@ def validate_transcribers(
 ) -> None:
     """Transcribe test audio with every registered transcriber and compare accuracy metrics."""
     confirm_session(session)
+    _set_seed(session)
     logger: LoggingProtocol = create_logger()
     command: ValidateTranscribersCommand = ValidateTranscribersCommand(session, force=True)
     command.execute(logger)

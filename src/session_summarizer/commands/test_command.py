@@ -37,14 +37,19 @@ class TestCommand(SessionProcessingCommand):
         csv_path = session_dir / "similarity_succes.csv"
 
         with csv_path.open("w") as writer:
-            writer.write("word_count,similarity,similarity_residual,avg_confidence,success_rate\n")
+            writer.write("word_count,duration,similarity,similarity_residual,avg_confidence,success_rate,text\n")
             clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.identity_stitched_path)
             for clip in clips:
                 if clip.cosine_similarity and clip.words:
                     writer.write(
-                        f"{clip.word_count},{clip.cosine_similarity},"
-                        f"{clip.similarity_residual},{clip.confidence_avg},"
-                        f"{1.0 - clip.wder}\n"
+                        f"{clip.word_count},"
+                        f"{clip.duration},"
+                        f"{clip.cosine_similarity},"
+                        f"{clip.similarity_residual},"
+                        f"{clip.confidence_avg},"
+                        f"{1.0 - clip.wder},"
+                        f"{clip.text}"
+                        "\n"
                     )
 
     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:

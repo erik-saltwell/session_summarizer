@@ -20,10 +20,14 @@ class CandidatePool:
     _next_clip_id: int = 0
 
     def update_pool(
-        self, current_word: WordAlignment, all_clips: SpeechClipSet, settings: DiarizationStitchingSettings
+        self,
+        current_word: WordAlignment,
+        all_clips: SpeechClipSet,
+        settings: DiarizationStitchingSettings,
+        epsilon: float,
     ) -> None:
         radius: float = settings.max_nearest_distance if settings.fill_nearest else 0.0
-        radius += settings.epsilon
+        radius += epsilon
         extended_start: float = current_word.start_time - radius
         extended_end: float = current_word.end_time + radius
 
