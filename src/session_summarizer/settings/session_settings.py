@@ -86,6 +86,15 @@ class SessionSettings(BaseModel, frozen=True):
             )
         ),
     ]
+    indeterminate_speakers_path: Annotated[
+        Path,
+        Field(
+            description=(
+                "Path to SpeechClipSet JSON file with speakers that could not be identified assigned "
+                "(read/written during processing)"
+            )
+        ),
+    ]
     device: Annotated[
         Literal["cpu", "cuda"],
         Field(description="Device for model inference — 'cpu' or 'cuda'"),
@@ -138,6 +147,15 @@ class SessionSettings(BaseModel, frozen=True):
             ),
         ),
     ]
+    speaker_identity_assignment_threshold: Annotated[
+        float,
+        Field(
+            description=(
+                "Minimum cosine similarity score (0.0–1.0) required to assign a speaker identity "
+                "to a clip; clips below this threshold are left as indeterminate"
+            ),
+        ),
+    ]
     vad: Annotated[
         VadSettings,
         Field(description="VAD model and post-processing hyperparameters"),
@@ -185,11 +203,11 @@ class SessionSettings(BaseModel, frozen=True):
             raise ValueError(f"{info.field_name} must be >= 0.0, got {v!r}")
         return v
 
-    @field_validator("high_confidence_similarity_threshold")
+    @field_validator("high_confidence_similarity_threshold", "speaker_identity_assignment_threshold")
     @classmethod
-    def _similarity_threshold_must_be_in_range(cls, v: float) -> float:
+    def _similarity_threshold_must_be_in_range(cls, v: float, info: ValidationInfo) -> float:
         if not (0.0 <= v <= 1.0):
-            raise ValueError(f"high_confidence_similarity_threshold must be between 0.0 and 1.0, got {v!r}")
+            raise ValueError(f"{info.field_name} must be between 0.0 and 1.0, got {v!r}")
         return v
 
     @field_validator("attendees")
@@ -243,6 +261,7 @@ class SessionSettings(BaseModel, frozen=True):
             "first_stitched_path",
             "identity_stitched_path",
             "diarizationlm_processed_path",
+            "indeterminate_speakers_path",
         ):
             raw = data.get(key)
             if raw is None:

@@ -231,6 +231,20 @@ identity_stitched_path: identity_stitched.json
 diarizationlm_processed_path: diarizationlm_processed.json
 
 # ---------------------------------------------------------------------------
+# indeterminate_speakers_path  (REQUIRED)
+# ---------------------------------------------------------------------------
+# Path to the SpeechClipSet JSON file where speakers that could not be
+# identified are assigned an indeterminate label. Written after the
+# indeterminate-speaker assignment step. Relative paths are resolved from
+# this file's directory.
+#
+# Default: indeterminate_speakers.json
+#
+# Example:
+#   indeterminate_speakers_path: indeterminate_speakers.json
+indeterminate_speakers_path: indeterminate_speakers.json
+
+# ---------------------------------------------------------------------------
 # device  (REQUIRED)
 # ---------------------------------------------------------------------------
 # Compute device for model inference. Allowed values:
@@ -297,6 +311,26 @@ max_segment_length_long: 300
 # Example:
 #   high_confidence_similarity_threshold: 0.88
 high_confidence_similarity_threshold: 0.88
+
+
+# ---------------------------------------------------------------------------
+# speaker_identity_assignment_threshold  (REQUIRED)
+# ---------------------------------------------------------------------------
+# Minimum cosine similarity score required for a speaker embedding match to
+# result in an actual speaker identity being assigned to a clip. Clips whose
+# best match falls below this threshold are left as indeterminate and written
+# to indeterminate_speakers_path for manual review.
+#
+# Allowed values: 0.0–1.0  (cosine similarity; higher = stricter assignment)
+#
+# Default: 0.70
+# Reasonable range: 0.55–0.85
+#   Lower values assign an identity to more clips (may mislabel ambiguous clips).
+#   Higher values leave more clips indeterminate (safer but reduces coverage).
+#
+# Example:
+#   speaker_identity_assignment_threshold: 0.70
+speaker_identity_assignment_threshold: 0.08
 
 
 # ---------------------------------------------------------------------------

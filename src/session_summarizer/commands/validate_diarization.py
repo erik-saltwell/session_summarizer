@@ -12,6 +12,7 @@ from .add_embeddings import AddEmbeddingsCommand
 from .diarizationlm_command import DiarizationLMCommand
 from .diarize_audio import DiarizeAudioCommand
 from .identify_speakers import IdentifySpeakersCommand
+from .indeterminate_speaker_assignment import IndeterminantSpeakerAssignmentCommand
 from .session_processing_command import SessionProcessingCommand
 from .stitch_identities import StitichIdentitiesCommand
 
@@ -29,6 +30,8 @@ def get_diarization_registry(settings: SessionSettings, session_dir: Path) -> li
     results.append(("Embedded", session_dir / settings.speech_clips_with_embedding))
     results.append(("Identified Speakers", session_dir / settings.identified_speaker_path))
     results.append(("Identity Stitched", settings.identity_stitched_path))
+    results.append(("Unassign Speakers", settings.indeterminate_speakers_path))
+
     return results
 
 
@@ -69,6 +72,7 @@ class ValidateDiarizationCommand(SessionProcessingCommand):
                 AddEmbeddingsCommand(self.session_id),
                 IdentifySpeakersCommand(self.session_id),
                 StitichIdentitiesCommand(self.session_id),
+                IndeterminantSpeakerAssignmentCommand(self.session_id),
             ]
         )
 
