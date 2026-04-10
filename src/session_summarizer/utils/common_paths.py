@@ -62,6 +62,13 @@ def voice_samples_dir() -> Path:
     return _VOICE_SAMPLES
 
 
+def voice_samples_for_speaker(speaker: str, root_folder: Path | None = None) -> Path:
+    if root_folder:
+        return voice_samples_dir() / root_folder / speaker
+    else:
+        return voice_samples_dir() / speaker
+
+
 def speakers_file(session_id: str) -> Path:
     file_path: Path = session_dir(session_id) / _REGISTERED_SPEAKERS_FILE
     if not file_path.exists():

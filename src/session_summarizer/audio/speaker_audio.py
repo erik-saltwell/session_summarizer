@@ -9,9 +9,13 @@ from ..processing_results import SpeechClip
 from ..utils import run_command
 
 
-def get_unique_voice_filepath(speaker_label: str) -> Path:
+def get_unique_voice_filepath(speaker_label: str, temp_folder: Path | None) -> Path:
     filename = f"{datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')}.wav"
-    speaker_directory = common_paths.voice_samples_dir() / speaker_label
+    speaker_directory: Path
+    if temp_folder is None:
+        speaker_directory = common_paths.voice_samples_dir() / speaker_label
+    else:
+        speaker_directory = common_paths.voice_samples_dir() / temp_folder / speaker_label
     common_paths.ensure_directory(speaker_directory)
     return speaker_directory / filename
 
@@ -69,9 +73,9 @@ def create_combined_speaker_audio_file(speaker_label: str, gap_length: float) ->
 
 
 def save_segment_as_speaker_audio_clip(
-    cleaned_audio_path: Path, clip: SpeechClip, speaker_label: str, lead_in: float, lead_out: float
+    cleaned_audio_path: Path, clip: SpeechClip, speaker_label: str, lead_in: float, lead_out: float, temp_folder: Path
 ) -> None:
-    file_path: Path = get_unique_voice_filepath(speaker_label)
+    file_path: Path = get_unique_voice_filepath(speaker_label, temp_folder)
     file_path.parent.mkdir(parents=True, exist_ok=True)
 
     file_duration = _get_audio_duration(cleaned_audio_path)

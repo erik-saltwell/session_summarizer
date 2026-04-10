@@ -15,6 +15,7 @@ from .session_processing_command import SessionProcessingCommand
 
 @dataclass
 class CreateSpeakerClipsCommand(SessionProcessingCommand):
+    temp_folder: Path | None = None
     use_multi_speaker_clips: bool = False
 
     def name(self) -> str:
