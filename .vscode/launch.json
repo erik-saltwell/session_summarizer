@@ -51,6 +51,8 @@
                 "--session",
                 "test",
                 "--use-multi-speaker-clips",
+                "--temp-folder",
+                "temp"
             ]
         },
         {

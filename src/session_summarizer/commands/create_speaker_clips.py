@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from session_summarizer.utils import common_paths
+
 from ..audio.speaker_audio import save_segment_as_speaker_audio_clip
 from ..processing_results import SpeechClipSet
 from ..protocols import (
@@ -15,7 +17,7 @@ from .session_processing_command import SessionProcessingCommand
 
 @dataclass
 class CreateSpeakerClipsCommand(SessionProcessingCommand):
-    temp_folder: Path | None = None
+    temp_folder: Path = common_paths.voice_samples_dir()
     use_multi_speaker_clips: bool = False
 
     def name(self) -> str:
@@ -50,6 +52,7 @@ class CreateSpeakerClipsCommand(SessionProcessingCommand):
                 clip.identity,
                 settings.speaker_clip_lead_in,
                 settings.speaker_clip_lead_out,
+                temp_folder=self.temp_folder,
             )
             saved_count += 1
             speaker_clip_counts[clip.identity] = speaker_clip_counts.get(clip.identity, 0) + 1

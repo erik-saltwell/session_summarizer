@@ -11,13 +11,9 @@ from ..utils import run_command
 
 def get_unique_voice_filepath(speaker_label: str, temp_folder: Path | None) -> Path:
     filename = f"{datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')}.wav"
-    speaker_directory: Path
-    if temp_folder is None:
-        speaker_directory = common_paths.voice_samples_dir() / speaker_label
-    else:
-        speaker_directory = common_paths.voice_samples_dir() / temp_folder / speaker_label
-    common_paths.ensure_directory(speaker_directory)
-    return speaker_directory / filename
+    dir_path = common_paths.voice_samples_for_speaker(speaker_label, root_folder=temp_folder)
+    common_paths.ensure_directory(dir_path)
+    return dir_path / filename
 
 
 def _get_audio_duration(audio_path: Path) -> float:
@@ -35,10 +31,10 @@ def _get_audio_duration(audio_path: Path) -> float:
     return float(result.stdout.strip())
 
 
-def create_combined_speaker_audio_file(speaker_label: str, gap_length: float) -> None:
-    audio_directory: Path = common_paths.voice_samples_dir() / speaker_label
+def create_combined_speaker_audio_file(speaker_label: str, gap_length: float, temp_folder: Path | None) -> None:
+    audio_directory: Path = common_paths.voice_samples_for_speaker(speaker_label, root_folder=temp_folder)
     audio_extension: str = ".wav"
-    output_filepath: Path = common_paths.voice_samples_dir() / (speaker_label + ".wav")
+    output_filepath: Path = common_paths.voice_samples_dir() / (speaker_label + audio_extension)
 
     input_files = sorted(audio_directory.glob(f"*{audio_extension}"))
     if not input_files:

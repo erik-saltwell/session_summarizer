@@ -58,7 +58,7 @@ class RegisterSpeakersCommand:
         # Phase 3 — generate one combined WAV per speaker directory
         for speaker_dir in speaker_dirs:
             logger.report_message(f"[blue]Combining clips for {speaker_dir.name}...[/blue]")
-            create_combined_speaker_audio_file(speaker_dir.name, gap_length=self.gap_length)
+            create_combined_speaker_audio_file(speaker_dir.name, gap_length=self.gap_length, temp_folder=None)
 
         # Phase 4 — register embeddings from the newly generated combined WAVs
         wav_files: list[Path] = sorted(voice_dir.glob("*.wav"))

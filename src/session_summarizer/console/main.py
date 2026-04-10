@@ -3,6 +3,7 @@ from __future__ import annotations
 import random
 from importlib.metadata import PackageNotFoundError, metadata
 from importlib.metadata import version as dist_version
+from pathlib import Path
 
 import numpy as np
 import torch
@@ -793,6 +794,17 @@ def clean_session(
     command.execute(logger)
 
 
+@app.command("compare-texts")
+def compare_texts(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to transcribe"),
+) -> None:
+    confirm_session(session)
+    _set_seed(session)
+    logger: LoggingProtocol = create_logger()
+    command: CompareFullTextCommand = CompareFullTextCommand(session, force=True)
+    command.execute(logger)
+
+
 @app.command("compute-vad-segments")
 def compute_vad_segments(
     session: str = typer.Option(..., "--session", "-s", help="ID of the session to segment"),
@@ -808,6 +820,9 @@ def compute_vad_segments(
 @app.command("create-speaker-clips")
 def create_speaker_clips(
     session: str = typer.Option(..., "--session", "-s", help="ID of the session to process"),
+    temp_folder: str = typer.Option(
+        ..., "--temp-folder", "-t", help="Name of temp folder inside voice samples to hold output"
+    ),
     use_multi_speaker_clips: bool = typer.Option(
         False,
         "--use-multi-speaker-clips",
@@ -819,7 +834,7 @@ def create_speaker_clips(
     _set_seed(session)
     logger: LoggingProtocol = create_logger()
     command: CreateSpeakerClipsCommand = CreateSpeakerClipsCommand(
-        session, use_multi_speaker_clips=use_multi_speaker_clips
+        session, use_multi_speaker_clips=use_multi_speaker_clips, temp_folder=Path(temp_folder)
     )
     command.execute(logger)
 
@@ -832,17 +847,6 @@ def diarize_audio(
     _set_seed(session)
     logger: LoggingProtocol = create_logger()
     command: DiarizeAudioCommand = DiarizeAudioCommand(session, force=True)
-    command.execute(logger)
-
-
-@app.command("compare-texts")
-def compare_texts(
-    session: str = typer.Option(..., "--session", "-s", help="ID of the session to transcribe"),
-) -> None:
-    confirm_session(session)
-    _set_seed(session)
-    logger: LoggingProtocol = create_logger()
-    command: CompareFullTextCommand = CompareFullTextCommand(session, force=True)
     command.execute(logger)
 
 
