@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ..processing_results.speech_clip_set import SpeechClipFlags, SpeechClipSet
+from ..processing_results.speech_clip import SpeechClipFlags
+from ..processing_results.speech_clip_set import SpeechClipSet
 from ..protocols import (
     GpuLogger,
     LoggingProtocol,

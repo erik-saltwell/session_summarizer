@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import shutil
+import tempfile
 from datetime import datetime
 from pathlib import Path
 
 from session_summarizer.utils import common_paths
 
 from ..processing_results import SpeechClip
+from ..protocols import LoggingProtocol
 from ..utils import run_command
 
 
@@ -66,6 +69,86 @@ def create_combined_speaker_audio_file(speaker_label: str, gap_length: float, te
     cmd += ["-map", "[out]", "-c:a", "pcm_s16le", str(output_filepath)]
 
     run_command(cmd)
+
+
+def _concat_audio_files(left: Path, right: Path, output: Path) -> None:
+    """Concatenate two WAV files into one using ffmpeg (no silence gap)."""
+    cmd = [
+        "ffmpeg",
+        "-y",
+        "-i",
+        str(left),
+        "-i",
+        str(right),
+        "-filter_complex",
+        "[0]aresample=16000,aformat=sample_fmts=s16:channel_layouts=mono[a0];"
+        "[1]aresample=16000,aformat=sample_fmts=s16:channel_layouts=mono[a1];"
+        "[a0][a1]concat=n=2:v=0:a=1[out]",
+        "-map",
+        "[out]",
+        "-c:a",
+        "pcm_s16le",
+        str(output),
+    ]
+    run_command(cmd)
+
+
+def merge_speaker_clips_to_min_duration(
+    input_dir: Path,
+    output_dir: Path,
+    min_duration: float,
+    logger: LoggingProtocol,
+) -> None:
+    """Greedy-merge shortest clips until all are >= min_duration, writing results to output_dir."""
+    input_files = sorted(input_dir.glob("*.wav"))
+    if not input_files:
+        raise FileNotFoundError(f"No .wav files found in {input_dir}")
+
+    state: list[tuple[Path, float]] = [(f, _get_audio_duration(f)) for f in input_files]
+    logger.report_message(f"[blue]Found {len(state)} clip(s) in {input_dir}[/blue]")
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp = Path(tmp_dir)
+        counter = 0
+
+        while len(state) > 1:
+            min_dur = min(d for _, d in state)
+            if min_dur >= min_duration:
+                break
+
+            shortest_idx = min(range(len(state)), key=lambda i: state[i][1])
+
+            if shortest_idx == 0:
+                neighbor_idx = 1
+            elif shortest_idx == len(state) - 1:
+                neighbor_idx = shortest_idx - 1
+            else:
+                left_dur = state[shortest_idx - 1][1]
+                right_dur = state[shortest_idx + 1][1]
+                neighbor_idx = shortest_idx - 1 if left_dur <= right_dur else shortest_idx + 1
+
+            left_idx, right_idx = sorted([shortest_idx, neighbor_idx])
+            left_path, left_dur = state[left_idx]
+            right_path, right_dur = state[right_idx]
+
+            merged_path = tmp / f"merged_{counter:04d}.wav"
+            counter += 1
+            _concat_audio_files(left_path, right_path, merged_path)
+            merged_dur = left_dur + right_dur
+
+            logger.report_message(
+                f"Merged {left_path.name} ({left_dur:.2f}s) + {right_path.name} ({right_dur:.2f}s) → {merged_dur:.2f}s"
+            )
+            state = state[:left_idx] + [(merged_path, merged_dur)] + state[right_idx + 1 :]
+
+        for i, (path, dur) in enumerate(state):
+            dest = output_dir / f"{i:04d}.wav"
+            shutil.copy2(str(path), str(dest))
+            logger.report_message(f"Wrote {dest.name} ({dur:.2f}s)")
+
+    logger.report_message(f"[green]Done — {len(state)} clip(s) written to {output_dir}[/green]")
 
 
 def save_segment_as_speaker_audio_clip(

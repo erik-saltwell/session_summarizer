@@ -5,7 +5,8 @@ from pathlib import Path
 import librosa
 import numpy as np
 
-from ..processing_results.speech_clip_set import SpeechClip, SpeechClipSet
+from ..processing_results.speech_clip import SpeechClip
+from ..processing_results.speech_clip_set import SpeechClipSet
 from ..protocols import LoggingProtocol
 from .smart_turn_predictor import SmartTurnPredictor
 

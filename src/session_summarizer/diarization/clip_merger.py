@@ -3,10 +3,9 @@ from __future__ import annotations
 from enum import IntEnum, auto
 from typing import Protocol
 
-from session_summarizer.protocols.logging_protocol import LoggingProtocol
-from session_summarizer.settings.session_settings import SessionSettings
-
 from ..processing_results import SpeechClip, SpeechClipSet
+from ..protocols.logging_protocol import LoggingProtocol
+from ..settings.session_settings import SessionSettings
 
 
 class MergeType(IntEnum):

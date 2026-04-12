@@ -45,6 +45,12 @@ class CreateSpeakerClipsCommand(SessionProcessingCommand):
             if clip.is_multispeaker and not self.use_multi_speaker_clips:
                 skipped_count += 1
                 continue
+            if (
+                clip.similarity_residual is None
+                or clip.similarity_residual < settings.speaker_clip_minimum_similarity_residual
+            ):
+                skipped_count += 1
+                continue
 
             save_segment_as_speaker_audio_clip(
                 cleaned_audio_path,

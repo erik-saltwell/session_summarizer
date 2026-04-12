@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from session_summarizer.processing_results.speech_clip_set import SpeechClip
+from session_summarizer.processing_results.speech_clip import SpeechClip
 
 from ..diarization import MergeSelector, MergeType
 from ..diarization.clip_merger import (

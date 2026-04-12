@@ -4,7 +4,8 @@ import math
 from difflib import SequenceMatcher
 
 from ..helpers import UNASSIGNED_SPEAKER_NAME
-from ..processing_results.speech_clip_set import SpeechClip, SpeechClipSet
+from ..processing_results.speech_clip import SpeechClip
+from ..processing_results.speech_clip_set import SpeechClipSet
 from .text_cleaner import clean_text_for_evaluation
 
 

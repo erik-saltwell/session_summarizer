@@ -11,6 +11,45 @@ from .vad_settings import VadSettings
 
 _SETTINGS_FILE = "settings.yaml"
 
+
+class GlossaryEntry(BaseModel, frozen=True):
+    name: Annotated[str, Field(description="A proper noun that may appear in the session transcript")]
+    description: Annotated[
+        str | None,
+        Field(description="Optional description or context for this term"),
+    ] = None
+
+
+class AdventureSettings(BaseModel, frozen=True):
+    pcs: Annotated[
+        dict[str, str],
+        Field(min_length=1, description="Mapping of player name to character name for all PCs in the adventure"),
+    ]
+    glossary: Annotated[
+        list[GlossaryEntry],
+        Field(
+            description=(
+                "List of proper nouns (places, NPCs, items, factions, etc.) that may appear in the session transcript"
+            )
+        ),
+    ]
+
+    @field_validator("pcs")
+    @classmethod
+    def _pc_names_must_be_non_empty(cls, v: dict[str, str]) -> dict[str, str]:
+        for player, character in v.items():
+            if not player.strip():
+                raise ValueError(
+                    f"PC player name is blank — every player name must be a non-empty string, got {player!r}"
+                )
+            if not character.strip():
+                raise ValueError(
+                    f"PC character name for '{player}' is blank — character names must be non-empty strings, "
+                    f"got {character!r}"
+                )
+        return v
+
+
 SUPPORTED_AUDIO_SUFFIXES: frozenset[str] = frozenset(
     {".m4a", ".mp3", ".wav", ".flac", ".ogg", ".opus", ".wma", ".aac", ".webm"}
 )
@@ -19,7 +58,13 @@ SUPPORTED_AUDIO_SUFFIXES: frozenset[str] = frozenset(
 class SessionSettings(BaseModel, frozen=True):
     attendees: Annotated[
         list[str],
-        Field(min_length=1, description="Names of all speakers present in the session"),
+        Field(
+            min_length=1, description="List of player names present in the session; drives diarization speaker count"
+        ),
+    ]
+    adventure_settings: Annotated[
+        AdventureSettings,
+        Field(description="Adventure-specific metadata: PC roster and glossary of proper nouns"),
     ]
     audio_file: Annotated[
         Path,
@@ -187,6 +232,30 @@ class SessionSettings(BaseModel, frozen=True):
         Field(description="Seconds of audio padding after each speaker clip when creating individual audio files"),
     ]
 
+    speaker_clip_minimum_similarity_residual: Annotated[
+        float,
+        Field(
+            description="Minimum cosine similarity residual a clip must have to be included as a speaker clip sample"
+        ),
+    ]
+    minimum_speaker_clip_duration: Annotated[
+        float,
+        Field(
+            description=(
+                "Target minimum speaker clip duration in seconds; short clips are merged until none fall below "
+                "this threshold"
+            )
+        ),
+    ]
+    stable_centroid_epsilon: Annotated[
+        float,
+        Field(
+            description=(
+                "Maximum centroid-cosine delta between iterations before speaker clip selection is considered stable"
+            )
+        ),
+    ]
+
     diarization_stitching: Annotated[
         DiarizationStitchingSettings,
         Field(
@@ -229,14 +298,25 @@ class SessionSettings(BaseModel, frozen=True):
 
     @field_validator("attendees")
     @classmethod
-    def _attendee_names_must_be_non_empty(cls, names: list[str]) -> list[str]:
-        for i, name in enumerate(names):
-            stripped = name.strip()
-            if not stripped:
-                raise ValueError(
-                    f"attendees[{i}] is blank — every attendee name must be a non-empty string, got {name!r}"
-                )
-        return names
+    def _attendee_names_must_be_non_empty(cls, v: list[str]) -> list[str]:
+        for name in v:
+            if not name.strip():
+                raise ValueError(f"attendee name is blank — every name must be a non-empty string, got {name!r}")
+        return v
+
+    @field_validator("speaker_clip_minimum_similarity_residual")
+    @classmethod
+    def _similarity_residual_must_be_in_range(cls, v: float) -> float:
+        if not (0.0 <= v <= 1.0):
+            raise ValueError(f"speaker_clip_minimum_similarity_residual must be between 0.0 and 1.0, got {v!r}")
+        return v
+
+    @field_validator("minimum_speaker_clip_duration", "stable_centroid_epsilon")
+    @classmethod
+    def _speaker_clip_params_must_be_non_negative(cls, v: float, info: ValidationInfo) -> float:
+        if v < 0.0:
+            raise ValueError(f"{info.field_name} must be >= 0.0, got {v!r}")
+        return v
 
     @model_validator(mode="after")
     def _validate_audio_file(self) -> Self:

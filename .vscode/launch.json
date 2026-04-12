@@ -56,6 +56,34 @@
             ]
         },
         {
+            "name": "merge-speaker-clips",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "merge-speaker-clips",
+                "--speaker",
+                "FEE013",
+                "--output-folder",
+                "voice_samples/merged_temp/FEE013",
+            ]
+        },
+        {
+            "name": "remove-outlier-speaker-clips",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "remove-outlier-speaker-clips",
+                "--speaker",
+                "FEE013",
+                "--output-folder",
+                "voice_samples/merged_temp/FEE013",
+            ]
+        },
+        {
             "name": "diarize-audio",
             "type": "debugpy",
             "request": "launch",

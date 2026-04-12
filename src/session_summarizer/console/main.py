@@ -25,7 +25,9 @@ from ..commands.diarizationlm_command import DiarizationLMCommand
 from ..commands.diarize_audio import DiarizeAudioCommand
 from ..commands.first_stitch_clips import FirstStitchClipsCommand
 from ..commands.identify_speakers import IdentifySpeakersCommand
+from ..commands.merge_speaker_clips import MergeSpeakerClipsCommand
 from ..commands.register_speakers import RegisterSpeakersCommand
+from ..commands.remove_outlier_speaker_clips import RemoveOutlierSpeakerClipsCommand
 from ..commands.score_confidence import ScoreConfidenceCommand
 from ..commands.stitch_identities import StitichIdentitiesCommand
 from ..commands.test_command import TestCommand
@@ -84,9 +86,9 @@ _SAMPLE_SETTINGS = """\
 # ---------------------------------------------------------------------------
 # attendees  (REQUIRED)
 # ---------------------------------------------------------------------------
-# A list of speaker names expected in the session. This drives diarization
-# (the number of speakers the model should look for) and labels in the final
-# transcript. Every entry must be a non-empty string.
+# A list of player names present in the session. This drives diarization
+# (number of speakers). Names must match entries in registered_speakers.yaml
+# and must be non-empty strings.
 #
 # Example:
 #   attendees:
@@ -96,6 +98,40 @@ _SAMPLE_SETTINGS = """\
 attendees:
   - Speaker1
   - Speaker2
+
+
+# ---------------------------------------------------------------------------
+# adventure_settings  (REQUIRED)
+# ---------------------------------------------------------------------------
+# Adventure-specific metadata used for transcript labelling and context.
+#
+# pcs:
+#   A mapping of player name to character name for all PCs in the adventure.
+#   Player names must match entries in registered_speakers.yaml. Both player
+#   names and character names must be non-empty strings.
+#
+# glossary:
+#   A list of proper nouns (places, NPCs, items, factions, spells, etc.)
+#   that may appear in the session transcript. Each entry has a required
+#   name and an optional description for additional context.
+#
+# Example:
+#   adventure_settings:
+#     pcs:
+#       Alice: Aethon the Bold
+#       Bob: Rogdar
+#       Charlie: Sylvara
+#     glossary:
+#       - name: Thornhaven
+#         description: "The ruined city the party is currently exploring"
+#       - name: Dragonbane
+adventure_settings:
+  pcs:
+    Speaker1: Character1
+    Speaker2: Character2
+  glossary:
+    - name: ExampleProperNoun
+      description: "Optional description of this term"
 
 
 # ---------------------------------------------------------------------------
@@ -374,6 +410,58 @@ speaker_identity_assignment_threshold: 0.08
 # Reasonable default: 0.25
 speaker_clip_lead_in: 0.25
 speaker_clip_lead_out: 0.25
+
+
+# ---------------------------------------------------------------------------
+# speaker_clip_minimum_similarity_residual  (REQUIRED)
+# ---------------------------------------------------------------------------
+# Minimum cosine similarity residual a clip must have to be included as a
+# speaker sample during clip selection. The residual is the difference between
+# a clip's best-match similarity and the mean similarity across all speakers.
+# Clips with a low residual are ambiguous between speakers and are excluded.
+#
+# Allowed values: 0.0–1.0
+# Default: 0.2
+# Reasonable range: 0.05–0.5
+#   Lower values include more clips (may admit ambiguous clips).
+#   Higher values admit only clear, unambiguous clips.
+#
+# Example:
+#   speaker_clip_minimum_similarity_residual: 0.2
+speaker_clip_minimum_similarity_residual: 0.2
+
+
+# ---------------------------------------------------------------------------
+# minimum_speaker_clip_duration  (REQUIRED)
+# ---------------------------------------------------------------------------
+# Target minimum duration (seconds) for speaker clip samples. When building
+# a set of clips for a speaker, the system iteratively merges the shortest
+# clips with their neighbours until no clip falls below this threshold.
+#
+# Allowed values: >= 0.0 (seconds)
+# Default: 2.0
+# Reasonable range: 0.5–5.0
+#
+# Example:
+#   minimum_speaker_clip_duration: 2.0
+minimum_speaker_clip_duration: 2.0
+
+
+# ---------------------------------------------------------------------------
+# stable_centroid_epsilon  (REQUIRED)
+# ---------------------------------------------------------------------------
+# Maximum allowed change in centroid cosine similarity between iterations
+# before the speaker clip selection algorithm is considered stable. When the
+# centroid changes by less than this amount after removing a clip, selection
+# stops. Smaller values require tighter convergence.
+#
+# Allowed values: >= 0.0
+# Default: 0.001
+# Reasonable range: 0.0001–0.01
+#
+# Example:
+#   stable_centroid_epsilon: 0.001
+stable_centroid_epsilon: 0.001
 
 
 # ---------------------------------------------------------------------------
@@ -835,6 +923,38 @@ def create_speaker_clips(
     logger: LoggingProtocol = create_logger()
     command: CreateSpeakerClipsCommand = CreateSpeakerClipsCommand(
         session, use_multi_speaker_clips=use_multi_speaker_clips, temp_folder=Path(temp_folder)
+    )
+    command.execute(logger)
+
+
+@app.command("merge-speaker-clips")
+def merge_speaker_clips(
+    speaker: str = typer.Option(
+        ..., "--speaker", "-s", help="Speaker label — must match a subdirectory in voice_samples/"
+    ),
+    output_folder: str = typer.Option(..., "--output-folder", "-o", help="Folder to write the merged clips into"),
+) -> None:
+    """Merge short clips for a speaker until all are >= minimum_speaker_clip_duration."""
+    logger: LoggingProtocol = create_logger()
+    command: MergeSpeakerClipsCommand = MergeSpeakerClipsCommand(
+        speaker_label=speaker,
+        output_folder=Path(output_folder),
+    )
+    command.execute(logger)
+
+
+@app.command("remove-outlier-speaker-clips")
+def remove_outlier_speaker_clips(
+    speaker: str = typer.Option(
+        ..., "--speaker", "-s", help="Speaker label — must match a subdirectory in voice_samples/"
+    ),
+    output_folder: str = typer.Option(..., "--output-folder", "-o", help="Folder to write the merged clips into"),
+) -> None:
+    """Merge short clips for a speaker until all are >= minimum_speaker_clip_duration."""
+    logger: LoggingProtocol = create_logger()
+    command: RemoveOutlierSpeakerClipsCommand = RemoveOutlierSpeakerClipsCommand(
+        speaker_label=speaker,
+        output_folder=Path(output_folder),
     )
     command.execute(logger)
 

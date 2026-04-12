@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from session_summarizer.processing_results.speech_clip_set import SpeechClip, SpeechClipSet
+from session_summarizer.processing_results.speech_clip import SpeechClip
+from session_summarizer.processing_results.speech_clip_set import SpeechClipSet
 
 _MAX_SPEAKERS = 10
 

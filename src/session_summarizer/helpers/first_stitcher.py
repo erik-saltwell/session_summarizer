@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from session_summarizer.processing_results.speech_clip_set import SpeechClip, SpeechClipFlags
-
 from ..diarization import MergeSelector, MergeType
 from ..diarization.clip_merger import (
     clips_are_close_enough,
@@ -11,7 +9,7 @@ from ..diarization.clip_merger import (
     clips_have_subset_superset_relationship,
     merge_clips,
 )
-from ..processing_results.speech_clip_set import SpeechClipSet
+from ..processing_results import SpeechClip, SpeechClipFlags, SpeechClipSet
 from ..protocols import (
     GpuLogger,
     LoggingProtocol,

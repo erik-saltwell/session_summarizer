@@ -4,7 +4,8 @@ from attr import dataclass
 
 from session_summarizer.diarization.clip_merger import MergeType
 
-from ..processing_results.speech_clip_set import SpeechClip, SpeechClipSet
+from ..processing_results.speech_clip import SpeechClip
+from ..processing_results.speech_clip_set import SpeechClipSet
 from ..protocols import LoggingProtocol
 from ..settings.diarization_stitching_settings import ScoringMode
 from ..settings.session_settings import DiarizationStitchingSettings, SessionSettings

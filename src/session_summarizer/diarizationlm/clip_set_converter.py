@@ -4,11 +4,8 @@ import re
 from dataclasses import dataclass
 
 from session_summarizer.processing_results.alignment_result import WordAlignment
-from session_summarizer.processing_results.speech_clip_set import (
-    SpeechClip,
-    SpeechClipFlags,
-    SpeechClipSet,
-)
+from session_summarizer.processing_results.speech_clip import SpeechClip, SpeechClipFlags
+from session_summarizer.processing_results.speech_clip_set import SpeechClipSet
 
 from .speaker_mapping import SpeakerMapping, _effective_speaker
 
