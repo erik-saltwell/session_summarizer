@@ -395,7 +395,7 @@ high_confidence_similarity_threshold: 0.88
 #   Higher values leave more clips indeterminate (safer but reduces coverage).
 #
 # Example:
-#   speaker_identity_assignment_threshold: 0.70
+#   speaker_identity_assignment_threshold: 0.08
 speaker_identity_assignment_threshold: 0.08
 
 
@@ -444,7 +444,7 @@ speaker_clip_minimum_similarity_residual: 0.2
 #
 # Example:
 #   minimum_speaker_clip_duration: 2.0
-minimum_speaker_clip_duration: 2.0
+minimum_speaker_clip_duration: 2.25
 
 
 # ---------------------------------------------------------------------------
@@ -460,8 +460,8 @@ minimum_speaker_clip_duration: 2.0
 # Reasonable range: 0.70–0.85
 #
 # Example:
-#   min_speaker_similarity: 0.75
-min_speaker_similarity: 0.75
+#   min_speaker_similarity: 0.6
+min_speaker_similarity: 0.6
 
 
 # ---------------------------------------------------------------------------
@@ -1031,9 +1031,9 @@ def punctuate_text(
 
 @app.command("register-speakers")
 def register_speakers() -> None:
-    """Combine per-speaker clip directories and register embeddings into registered_speakers.yaml."""
+    """Merge clips, remove outliers, and register centroid embeddings into registered_speakers.yaml."""
     logger: LoggingProtocol = create_logger()
-    RegisterSpeakersCommand(clean_first=False).execute(logger)
+    RegisterSpeakersCommand().execute(logger)
 
 
 @app.command("score-confidence")

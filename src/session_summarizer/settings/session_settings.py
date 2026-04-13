@@ -49,6 +49,28 @@ class AdventureSettings(BaseModel, frozen=True):
                 )
         return v
 
+    def to_prompt_fragment(self) -> str:
+        result: str = """\
+<campaign_information>
+Players of this campaign and their characters:
+"""
+        for key, value in self.pcs.items():
+            result += f"- {key}: {value}\n"
+
+        result += """/
+
+Glossary of terms:
+"""
+
+        for glossary_entry in self.glossary:
+            result += f"- {glossary_entry.name}"
+            f"{': ' + glossary_entry.description if glossary_entry.description is not None else ''}\n"
+
+        result += """/
+</campaign_information>
+"""
+        return result
+
 
 SUPPORTED_AUDIO_SUFFIXES: frozenset[str] = frozenset(
     {".m4a", ".mp3", ".wav", ".flac", ".ogg", ".opus", ".wma", ".aac", ".webm"}

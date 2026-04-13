@@ -12,7 +12,7 @@ from ..speaker_embeddings import get_embeddings_factory
 
 def create_clips_without_outliers(
     settings: SessionSettings, input_dir: Path, output_dir: Path, logger: LoggingProtocol
-) -> None:
+) -> list[float] | None:
     if output_dir.exists():
         shutil.rmtree(output_dir)
     shutil.copytree(input_dir, output_dir)
@@ -21,7 +21,7 @@ def create_clips_without_outliers(
     wav_files = sorted(output_dir.glob("*.wav"))
     if not wav_files:
         logger.report_message("[yellow]No .wav files found — nothing to do.[/yellow]")
-        return
+        return None
 
     logger.report_message(f"[blue]Removing clips with similarity < {settings.min_speaker_similarity}.[/blue]")
 
@@ -56,3 +56,8 @@ def create_clips_without_outliers(
 
     kept = len(embeddings)
     logger.report_message(f"[green]Done — kept {kept} clip(s), deleted {deleted} of {total}.[/green]")
+
+    paths = list(embeddings.keys())
+    stack = torch.stack([embeddings[p] for p in paths])
+    centroid = stack.mean(dim=0)
+    return [float(x) for x in centroid]
