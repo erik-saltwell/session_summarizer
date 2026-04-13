@@ -1,14 +1,44 @@
 from __future__ import annotations
 
+import types
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 import torch
+import torchaudio
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 
 from ..protocols import EmbeddingFactory, LoggingProtocol
+
+
+def _patch_torchaudio_sox_effects() -> None:
+    """Shim torchaudio.sox_effects for torchaudio 2.10+ where it was removed.
+
+    ModelScope's speaker verification pipeline calls
+    torchaudio.sox_effects.apply_effects_tensor() to resample audio.
+    We replace it with torchaudio.functional.resample.
+    """
+    if hasattr(torchaudio, "sox_effects"):
+        return
+
+    def apply_effects_tensor(
+        tensor: torch.Tensor, sample_rate: int, effects: list[list[str]]
+    ) -> tuple[torch.Tensor, int]:
+        for effect in effects:
+            if effect[0] == "rate":
+                new_rate = int(effect[1])
+                tensor = torchaudio.functional.resample(tensor, sample_rate, new_rate)
+                sample_rate = new_rate
+        return tensor, sample_rate
+
+    sox = types.ModuleType("torchaudio.sox_effects")
+    sox.apply_effects_tensor = apply_effects_tensor  # type: ignore[attr-defined]
+    torchaudio.sox_effects = sox  # type: ignore[attr-defined]
+
+
+_patch_torchaudio_sox_effects()
 
 
 @dataclass

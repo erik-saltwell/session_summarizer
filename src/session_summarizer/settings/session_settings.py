@@ -247,14 +247,21 @@ class SessionSettings(BaseModel, frozen=True):
             )
         ),
     ]
-    stable_centroid_epsilon: Annotated[
+    min_speaker_similarity: Annotated[
         float,
         Field(
             description=(
-                "Maximum centroid-cosine delta between iterations before speaker clip selection is considered stable"
+                "Minimum cosine similarity (0.0–1.0) a speaker clip must have to the group centroid "
+                "to be kept; clips below this threshold are removed as outliers"
             )
         ),
     ]
+    speaker_clip_gap_length: Annotated[
+        float,
+        Field(
+            description="Seconds of silence inserted between clips when combining or merging speaker audio",
+        ),
+    ] = 0.5
 
     diarization_stitching: Annotated[
         DiarizationStitchingSettings,
@@ -311,11 +318,18 @@ class SessionSettings(BaseModel, frozen=True):
             raise ValueError(f"speaker_clip_minimum_similarity_residual must be between 0.0 and 1.0, got {v!r}")
         return v
 
-    @field_validator("minimum_speaker_clip_duration", "stable_centroid_epsilon")
+    @field_validator("minimum_speaker_clip_duration", "speaker_clip_gap_length")
     @classmethod
     def _speaker_clip_params_must_be_non_negative(cls, v: float, info: ValidationInfo) -> float:
         if v < 0.0:
             raise ValueError(f"{info.field_name} must be >= 0.0, got {v!r}")
+        return v
+
+    @field_validator("min_speaker_similarity")
+    @classmethod
+    def _min_speaker_similarity_must_be_in_range(cls, v: float) -> float:
+        if not (0.0 <= v <= 1.0):
+            raise ValueError(f"min_speaker_similarity must be between 0.0 and 1.0, got {v!r}")
         return v
 
     @model_validator(mode="after")
@@ -323,8 +337,6 @@ class SessionSettings(BaseModel, frozen=True):
         path = self.audio_file
         if path.suffix.lower() not in SUPPORTED_AUDIO_SUFFIXES:
             raise ValueError(f"Unsupported audio format {path.suffix!r}. Supported: {sorted(SUPPORTED_AUDIO_SUFFIXES)}")
-        if path.is_absolute() and not path.exists():
-            raise ValueError(f"Audio file does not exist: {path}")
         if self.min_segment_length_short >= self.max_segment_length_short:
             raise ValueError(
                 f"min_segment_length_short ({self.min_segment_length_short}) must be less than "

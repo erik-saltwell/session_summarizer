@@ -448,20 +448,43 @@ minimum_speaker_clip_duration: 2.0
 
 
 # ---------------------------------------------------------------------------
-# stable_centroid_epsilon  (REQUIRED)
+# min_speaker_similarity  (REQUIRED)
 # ---------------------------------------------------------------------------
-# Maximum allowed change in centroid cosine similarity between iterations
-# before the speaker clip selection algorithm is considered stable. When the
-# centroid changes by less than this amount after removing a clip, selection
-# stops. Smaller values require tighter convergence.
+# Minimum cosine similarity (0.0–1.0) a speaker clip must have to the group
+# centroid to be kept. Clips below this threshold are iteratively removed as
+# outliers, starting with the worst. The centroid is recomputed after each
+# removal.
 #
-# Allowed values: >= 0.0
-# Default: 0.001
-# Reasonable range: 0.0001–0.01
+# Allowed values: 0.0–1.0
+# Default: 0.75
+# Reasonable range: 0.70–0.85
 #
 # Example:
-#   stable_centroid_epsilon: 0.001
-stable_centroid_epsilon: 0.001
+#   min_speaker_similarity: 0.75
+min_speaker_similarity: 0.75
+
+
+# ---------------------------------------------------------------------------
+# speaker_clip_gap_length  (OPTIONAL — default: 0.5)
+# ---------------------------------------------------------------------------
+# Seconds of silence inserted between adjacent clips when combining or
+# merging speaker audio files. This gap appears in two places:
+#
+#   1. When individual speaker clips are concatenated into a single combined
+#      WAV during speaker registration (register-speakers command).
+#   2. When short clips are merged together to meet the
+#      minimum_speaker_clip_duration threshold (merge-speaker-clips and
+#      remove-outlier-speaker-clips commands).
+#
+# A small gap prevents the tail of one utterance from bleeding into the head
+# of the next, which improves speaker-embedding quality.
+#
+# Allowed values: >= 0.0 (seconds). Set to 0.0 for no gap.
+# Reasonable range: 0.25–1.0
+#
+# Example:
+#   speaker_clip_gap_length: 0.5
+speaker_clip_gap_length: 0.5
 
 
 # ---------------------------------------------------------------------------
@@ -1007,22 +1030,10 @@ def punctuate_text(
 
 
 @app.command("register-speakers")
-def register_speakers(
-    gap_length: float = typer.Option(
-        0.5,
-        "--gap-length",
-        "-g",
-        help="Seconds of silence inserted between clips when combining per-speaker audio files.",
-    ),
-    clean_first: bool = typer.Option(
-        False,
-        "--clean-first/--no-clean-first",
-        help="Convert and clean audio before extracting embeddings. Pass --no-clean-first if already cleaned.",
-    ),
-) -> None:
+def register_speakers() -> None:
     """Combine per-speaker clip directories and register embeddings into registered_speakers.yaml."""
     logger: LoggingProtocol = create_logger()
-    RegisterSpeakersCommand(clean_first=clean_first, gap_length=gap_length).execute(logger)
+    RegisterSpeakersCommand(clean_first=False).execute(logger)
 
 
 @app.command("score-confidence")

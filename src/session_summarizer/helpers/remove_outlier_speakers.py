@@ -13,6 +13,8 @@ from ..speaker_embeddings import get_embeddings_factory
 def create_clips_without_outliers(
     settings: SessionSettings, input_dir: Path, output_dir: Path, logger: LoggingProtocol
 ) -> None:
+    if output_dir.exists():
+        shutil.rmtree(output_dir)
     shutil.copytree(input_dir, output_dir)
 
     factory = get_embeddings_factory(settings.device)
@@ -20,6 +22,8 @@ def create_clips_without_outliers(
     if not wav_files:
         logger.report_message("[yellow]No .wav files found — nothing to do.[/yellow]")
         return
+
+    logger.report_message(f"[blue]Removing clips with similarity < {settings.min_speaker_similarity}.[/blue]")
 
     embeddings: dict[Path, torch.Tensor] = {}
     for wav in wav_files:
@@ -36,14 +40,14 @@ def create_clips_without_outliers(
 
         similarities = torch.nn.functional.cosine_similarity(stack, centroid.unsqueeze(0))
         worst_idx = int(similarities.argmin())
+        worst_sim = float(similarities[worst_idx])
         worst_path = paths[worst_idx]
 
-        # Recompute centroid without the least-similar clip
-        remaining = torch.stack([embeddings[p] for p in paths if p != worst_path])
-        new_centroid = remaining.mean(dim=0)
-
-        delta = 1.0 - float(torch.nn.functional.cosine_similarity(centroid.unsqueeze(0), new_centroid.unsqueeze(0)))
-        if delta <= settings.stable_centroid_epsilon:
+        logger.report_message(
+            f"[dim]n={len(embeddings)} | min similarity: {worst_sim:.6f} |"
+            f"threshold: {settings.min_speaker_similarity}[/dim]"
+        )
+        if worst_sim >= settings.min_speaker_similarity:
             break
 
         worst_path.unlink()

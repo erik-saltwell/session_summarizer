@@ -64,9 +64,9 @@
             "args": [
                 "merge-speaker-clips",
                 "--speaker",
-                "FEE013",
+                "rich",
                 "--output-folder",
-                "voice_samples/merged_temp/FEE013",
+                "rich_merged",
             ]
         },
         {
@@ -78,9 +78,9 @@
             "args": [
                 "remove-outlier-speaker-clips",
                 "--speaker",
-                "FEE013",
+                "rich",
                 "--output-folder",
-                "voice_samples/merged_temp/FEE013",
+                "rich_merged",
             ]
         },
         {
@@ -196,10 +196,7 @@
             "module": "session_summarizer",
             "console": "integratedTerminal",
             "args": [
-                "register-speakers",
-                "--gap-length",
-                "0.5",
-                "--no-clean-first",
+                "register-speakers"
             ]
         },
         {

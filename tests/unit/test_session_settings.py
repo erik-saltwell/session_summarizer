@@ -52,7 +52,7 @@ def _required_fields() -> dict:
         "speaker_clip_lead_out": 0.25,
         "speaker_clip_minimum_similarity_residual": 0.2,
         "minimum_speaker_clip_duration": 2.0,
-        "stable_centroid_epsilon": 0.001,
+        "min_speaker_similarity": 0.75,
         "diarization_stitching": {
             "min_overlap_fraction_word": 0.20,
             "min_overlap_seconds": 0.02,
@@ -125,7 +125,7 @@ def _required_yaml_fields() -> dict:
         "speaker_clip_lead_out": 0.25,
         "speaker_clip_minimum_similarity_residual": 0.2,
         "minimum_speaker_clip_duration": 2.0,
-        "stable_centroid_epsilon": 0.001,
+        "min_speaker_similarity": 0.75,
         "diarization_stitching": {
             "min_overlap_fraction_word": 0.20,
             "min_overlap_seconds": 0.02,
@@ -165,7 +165,7 @@ def test_valid_settings_loads() -> None:
     assert s.number_of_speakers == 1
     assert s.speaker_clip_minimum_similarity_residual == pytest.approx(0.2)
     assert s.minimum_speaker_clip_duration == pytest.approx(2.0)
-    assert s.stable_centroid_epsilon == pytest.approx(0.001)
+    assert s.min_speaker_similarity == pytest.approx(0.75)
 
 
 def test_attendees_accepts_valid_list() -> None:
@@ -268,18 +268,25 @@ def test_minimum_speaker_clip_duration_rejects_negative() -> None:
         SessionSettings(**fields)
 
 
-def test_stable_centroid_epsilon_rejects_negative() -> None:
+def test_min_speaker_similarity_rejects_negative() -> None:
     fields = _required_fields()
-    fields["stable_centroid_epsilon"] = -0.001
-    with pytest.raises(Exception, match="stable_centroid_epsilon"):
+    fields["min_speaker_similarity"] = -0.1
+    with pytest.raises(Exception, match="min_speaker_similarity"):
         SessionSettings(**fields)
 
 
-def test_stable_centroid_epsilon_accepts_zero() -> None:
+def test_min_speaker_similarity_rejects_above_one() -> None:
     fields = _required_fields()
-    fields["stable_centroid_epsilon"] = 0.0
+    fields["min_speaker_similarity"] = 1.1
+    with pytest.raises(Exception, match="min_speaker_similarity"):
+        SessionSettings(**fields)
+
+
+def test_min_speaker_similarity_accepts_zero() -> None:
+    fields = _required_fields()
+    fields["min_speaker_similarity"] = 0.0
     s = SessionSettings(**fields)
-    assert s.stable_centroid_epsilon == 0.0
+    assert s.min_speaker_similarity == 0.0
 
 
 # ---------------------------------------------------------------------------

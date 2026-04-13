@@ -33,4 +33,6 @@ class MergeSpeakerClipsCommand:
         logger.report_message(
             f"[blue]Merging clips for '{self.speaker_label}' (min duration: {min_duration:.2f}s)[/blue]"
         )
-        merge_speaker_clips_to_min_duration(input_dir, self.output_folder, min_duration, logger)
+        merge_speaker_clips_to_min_duration(
+            input_dir, self.output_folder, min_duration, settings.speaker_clip_gap_length, logger
+        )

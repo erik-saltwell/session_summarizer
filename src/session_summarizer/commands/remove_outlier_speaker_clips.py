@@ -5,7 +5,7 @@ from pathlib import Path
 
 import session_summarizer.utils.common_paths as common_paths
 
-from ..audio.speaker_tools import merge_speaker_clips_to_min_duration
+from ..helpers.remove_outlier_speakers import create_clips_without_outliers
 from ..protocols import LoggingProtocol, NullLogger
 from ..settings.session_settings import SessionSettings
 
@@ -24,13 +24,19 @@ class RemoveOutlierSpeakerClipsCommand:
     def execute(self, logger: LoggingProtocol) -> None:
         self.logger = logger
         settings = SessionSettings.load(common_paths.data_dir() / _SETTINGS_FILE)
-        min_duration = settings.minimum_speaker_clip_duration
 
         input_dir = common_paths.voice_samples_for_speaker(self.speaker_label)
         if not input_dir.exists():
             raise FileNotFoundError(f"Speaker folder not found: {input_dir}")
 
+        original_count = len(list(input_dir.glob("*.wav")))
+
         logger.report_message(
-            f"[blue]Merging clips for '{self.speaker_label}' (min duration: {min_duration:.2f}s)[/blue]"
+            f"[blue]Removing outlier clips for '{self.speaker_label}' "
+            f"(min similarity: {settings.min_speaker_similarity})[/blue]"
         )
-        merge_speaker_clips_to_min_duration(input_dir, self.output_folder, min_duration, logger)
+        create_clips_without_outliers(settings, input_dir, self.output_folder, logger)
+        final_count = len(list(self.output_folder.glob("*.wav")))
+        logger.report_message(
+            f"[green]{original_count} original clip(s) → {final_count} clip(s) written to {self.output_folder}[/green]"
+        )

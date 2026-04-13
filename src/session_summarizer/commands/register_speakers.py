@@ -17,8 +17,11 @@ from ..audio import (
 )
 from ..audio.speaker_tools import create_combined_speaker_audio_file
 from ..protocols import EmbeddingFactory, LoggingProtocol, NullLogger
+from ..settings.session_settings import SessionSettings
 from ..speaker_embeddings import get_embeddings_factory
 from ..speaker_embeddings.registered_speakers import RegisteredSpeakers
+
+_SETTINGS_FILE = "settings.yaml"
 
 
 def _log_gpu_usage(logger: LoggingProtocol, label: str) -> None:
@@ -37,12 +40,12 @@ class RegisterSpeakersCommand:
     clean_first: bool
     logger: LoggingProtocol = NullLogger()
     device: str = "cuda"
-    gap_length: float = 0.5
 
     """Register all speakers found in per-speaker subdirectories of voice_samples/ into registered_speakers.yaml."""
 
     def execute(self, logger: LoggingProtocol) -> None:
         self.logger = logger
+        settings = SessionSettings.load(common_paths.data_dir() / _SETTINGS_FILE)
         voice_dir: Path = common_paths.voice_samples_dir()
 
         # Phase 1 — delete existing root WAVs so stale combined files don't persist
@@ -58,7 +61,9 @@ class RegisterSpeakersCommand:
         # Phase 3 — generate one combined WAV per speaker directory
         for speaker_dir in speaker_dirs:
             logger.report_message(f"[blue]Combining clips for {speaker_dir.name}...[/blue]")
-            create_combined_speaker_audio_file(speaker_dir.name, gap_length=self.gap_length, temp_folder=None)
+            create_combined_speaker_audio_file(
+                speaker_dir.name, gap_length=settings.speaker_clip_gap_length, temp_folder=None
+            )
 
         # Phase 4 — register embeddings from the newly generated combined WAVs
         wav_files: list[Path] = sorted(voice_dir.glob("*.wav"))

@@ -71,8 +71,21 @@ def create_combined_speaker_audio_file(speaker_label: str, gap_length: float, te
     run_command(cmd)
 
 
-def _concat_audio_files(left: Path, right: Path, output: Path) -> None:
-    """Concatenate two WAV files into one using ffmpeg (no silence gap)."""
+def _concat_audio_files(left: Path, right: Path, output: Path, gap_length: float = 0.0) -> None:
+    """Concatenate two WAV files into one using ffmpeg with an optional silence gap."""
+    if gap_length > 0:
+        filter_complex = (
+            "[0]aresample=16000,aformat=sample_fmts=s16:channel_layouts=mono[a0];"
+            f"aevalsrc=0:d={gap_length}:s=16000:c=mono[g];"
+            "[1]aresample=16000,aformat=sample_fmts=s16:channel_layouts=mono[a1];"
+            "[a0][g][a1]concat=n=3:v=0:a=1[out]"
+        )
+    else:
+        filter_complex = (
+            "[0]aresample=16000,aformat=sample_fmts=s16:channel_layouts=mono[a0];"
+            "[1]aresample=16000,aformat=sample_fmts=s16:channel_layouts=mono[a1];"
+            "[a0][a1]concat=n=2:v=0:a=1[out]"
+        )
     cmd = [
         "ffmpeg",
         "-y",
@@ -81,9 +94,7 @@ def _concat_audio_files(left: Path, right: Path, output: Path) -> None:
         "-i",
         str(right),
         "-filter_complex",
-        "[0]aresample=16000,aformat=sample_fmts=s16:channel_layouts=mono[a0];"
-        "[1]aresample=16000,aformat=sample_fmts=s16:channel_layouts=mono[a1];"
-        "[a0][a1]concat=n=2:v=0:a=1[out]",
+        filter_complex,
         "-map",
         "[out]",
         "-c:a",
@@ -97,6 +108,7 @@ def merge_speaker_clips_to_min_duration(
     input_dir: Path,
     output_dir: Path,
     min_duration: float,
+    gap_length: float,
     logger: LoggingProtocol,
 ) -> None:
     """Greedy-merge shortest clips until all are >= min_duration, writing results to output_dir."""
@@ -140,11 +152,12 @@ def merge_speaker_clips_to_min_duration(
 
             merged_path = tmp / f"merged_{counter:04d}.wav"
             counter += 1
-            _concat_audio_files(left_path, right_path, merged_path)
+            _concat_audio_files(left_path, right_path, merged_path, gap_length)
             merged_dur = left_dur + right_dur
 
             logger.report_message(
-                f"Merged {left_path.name} ({left_dur:.2f}s) + {right_path.name} ({right_dur:.2f}s) → {merged_dur:.2f}s"
+                f"Merged {left_path.name} ({left_dur:.2f}s) + {right_path.name} "
+                f"({right_dur:.2f}s) → {merged_path.name} ({merged_dur:.2f})s"
             )
             state = state[:left_idx] + [(merged_path, merged_dur)] + state[right_idx + 1 :]
 
@@ -153,7 +166,10 @@ def merge_speaker_clips_to_min_duration(
             shutil.copy2(str(path), str(dest))
             logger.report_message(f"Wrote {dest.name} ({dur:.2f}s)")
 
-    logger.report_message(f"[green]Done — {len(state)} clip(s) written to {output_dir}[/green]")
+    logger.report_message(
+        f"[green]Done — {len(input_files)} original clip(s) merged into {len(state)} clip(s) "
+        f"and written to {output_dir}[/green]"
+    )
 
 
 def save_segment_as_speaker_audio_clip(
@@ -176,6 +192,9 @@ def save_segment_as_speaker_audio_clip(
         fade_out_start = clip.end_time - actual_start
         filters.append(f"afade=t=out:st={fade_out_start}:d={actual_lead_out}")
 
+    filters.append("aresample=16000")
+    filters.append("aformat=sample_fmts=s16:channel_layouts=mono")
+
     cmd = [
         "ffmpeg",
         "-y",
@@ -185,9 +204,11 @@ def save_segment_as_speaker_audio_clip(
         str(actual_end),
         "-i",
         str(cleaned_audio_path),
+        "-af",
+        ",".join(filters),
+        "-c:a",
+        "pcm_s16le",
+        str(file_path),
     ]
-    if filters:
-        cmd += ["-af", ",".join(filters)]
-    cmd += ["-c:a", "pcm_s16le", str(file_path)]
 
     run_command(cmd)
