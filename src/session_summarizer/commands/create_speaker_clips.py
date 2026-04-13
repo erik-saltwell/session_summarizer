@@ -5,7 +5,7 @@ from pathlib import Path
 
 from session_summarizer.utils import common_paths
 
-from ..audio.speaker_audio import save_segment_as_speaker_audio_clip
+from ..audio.speaker_tools import save_segment_as_speaker_audio_clip
 from ..processing_results import SpeechClipSet
 from ..protocols import (
     SessionSettings,

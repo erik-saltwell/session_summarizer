@@ -104,6 +104,11 @@ def merge_speaker_clips_to_min_duration(
     if not input_files:
         raise FileNotFoundError(f"No .wav files found in {input_dir}")
 
+    if output_dir.exists() and (not output_dir.is_dir()):
+        raise ValueError(f"{output_dir} is not a directory")
+    if output_dir.exists() and any(output_dir.iterdir()):
+        raise ValueError(f"{output_dir} exists and is not empty.")
+
     state: list[tuple[Path, float]] = [(f, _get_audio_duration(f)) for f in input_files]
     logger.report_message(f"[blue]Found {len(state)} clip(s) in {input_dir}[/blue]")
 
@@ -144,7 +149,7 @@ def merge_speaker_clips_to_min_duration(
             state = state[:left_idx] + [(merged_path, merged_dur)] + state[right_idx + 1 :]
 
         for i, (path, dur) in enumerate(state):
-            dest = output_dir / f"{i:04d}.wav"
+            dest = output_dir / f"{i:06d}.wav"
             shutil.copy2(str(path), str(dest))
             logger.report_message(f"Wrote {dest.name} ({dur:.2f}s)")
 

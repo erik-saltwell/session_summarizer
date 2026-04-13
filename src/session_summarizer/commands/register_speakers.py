@@ -15,7 +15,7 @@ from ..audio import (
     measure_loudness,
     normalize_and_export_16k_mono,
 )
-from ..audio.speaker_audio import create_combined_speaker_audio_file
+from ..audio.speaker_tools import create_combined_speaker_audio_file
 from ..protocols import EmbeddingFactory, LoggingProtocol, NullLogger
 from ..speaker_embeddings import get_embeddings_factory
 from ..speaker_embeddings.registered_speakers import RegisteredSpeakers

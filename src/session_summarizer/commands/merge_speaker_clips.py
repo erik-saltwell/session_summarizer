@@ -5,7 +5,7 @@ from pathlib import Path
 
 import session_summarizer.utils.common_paths as common_paths
 
-from ..audio.speaker_audio import merge_speaker_clips_to_min_duration
+from ..audio.speaker_tools import merge_speaker_clips_to_min_duration
 from ..protocols import LoggingProtocol, NullLogger
 from ..settings.session_settings import SessionSettings
 
