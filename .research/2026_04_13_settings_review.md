@@ -1,1129 +1,642 @@
-# Settings Review — 2026-04-13
-
-Comprehensive audit of every field in `SessionSettings` and its nested objects
-(`VadSettings`, `DiarizationStitchingSettings`), including which commands use
-each setting and what the code actually does with the value.
-
----
-
-## Table of Contents
-
-- [SessionSettings — Top-Level Fields](#sessionsettings--top-level-fields)
-  - [attendees](#attendees)
-  - [adventure_settings](#adventure_settings)
-  - [audio_file](#audio_file)
-  - [cleaned_audio_file](#cleaned_audio_file)
-  - [transcript_file](#transcript_file)
-  - [aligned_transcript_path](#aligned_transcript_path)
-  - [confidence_transcript_path](#confidence_transcript_path)
-  - [base_diarized_path](#base_diarized_path)
-  - [speech_clips_with_embedding](#speech_clips_with_embedding)
-  - [identified_speaker_path](#identified_speaker_path)
-  - [turn_end_updated_path](#turn_end_updated_path)
-  - [first_stitched_path](#first_stitched_path)
-  - [identity_stitched_path](#identity_stitched_path)
-  - [diarizationlm_processed_path](#diarizationlm_processed_path)
-  - [indeterminate_speakers_path](#indeterminate_speakers_path)
-  - [dangling_sentence_fix_path](#dangling_sentence_fix_path)
-  - [punctuated_text_path](#punctuated_text_path)
-  - [device](#device)
-  - [segments_path](#segments_path)
-  - [min_segment_length_short](#min_segment_length_short)
-  - [max_segment_length_short](#max_segment_length_short)
-  - [min_segment_length_long](#min_segment_length_long)
-  - [max_segment_length_long](#max_segment_length_long)
-  - [high_confidence_similarity_threshold](#high_confidence_similarity_threshold)
-  - [speaker_identity_assignment_threshold](#speaker_identity_assignment_threshold)
-  - [vad](#vad)
-  - [speaker_clip_lead_in](#speaker_clip_lead_in)
-  - [speaker_clip_lead_out](#speaker_clip_lead_out)
-  - [speaker_clip_minimum_similarity_residual](#speaker_clip_minimum_similarity_residual)
-  - [minimum_speaker_clip_duration](#minimum_speaker_clip_duration)
-  - [min_speaker_similarity](#min_speaker_similarity)
-  - [speaker_clip_gap_length](#speaker_clip_gap_length)
-  - [diarization_stitching](#diarization_stitching)
-  - [epsilon](#epsilon)
-  - [seed](#seed)
-  - [number_of_speakers (property)](#number_of_speakers-property)
-- [DiarizationStitchingSettings Fields](#diarizationstitchingsettings-fields)
-- [VadSettings Fields](#vadsettings-fields)
-- [Summary](#summary)
-
----
-
-## SessionSettings — Top-Level Fields
-
-### attendees
-
-| Attribute | Value |
-|---|---|
-| **Type** | `list[str]` (min_length=1) |
-| **Description** | List of player names present in the session |
-| **Default** | None (required) |
-
-**Used by commands:**
-- `IdentifySpeakersCommand` (`commands/identify_speakers.py:36,44`) — validates list is non-empty, checks all names exist in registered speakers file
-
-**Used by helpers:**
-- `helpers/speaker_identifier.py:32` — creates a set of attendee names to filter registered speaker embeddings; only embeddings for attendees are used during cosine-similarity matching
-
-**What code does:** Determines which registered speakers participate in the session. The identify-speakers step filters the global registered-speakers file to only match against attendees. Also drives a validation check that all attendee names exist in the registered speakers file.
-
----
-
-### adventure_settings
-
-| Attribute | Value |
-|---|---|
-| **Type** | `AdventureSettings` (contains `pcs: dict[str,str]`, `glossary: list[GlossaryEntry]`) |
-| **Description** | Adventure-specific metadata: PC roster and glossary of proper nouns |
-| **Default** | None (required) |
-
-**Used by commands:** NONE
-
-**Used by helpers:** NONE
-
-**What code does:** The `AdventureSettings` class has a `to_prompt_fragment()` method (session_settings.py:52) that formats PCs and glossary into an XML-tagged prompt fragment. However, `to_prompt_fragment()` is **never called** anywhere in the codebase. The entire `adventure_settings` field, including `pcs` and `glossary`, is **defined but unused**.
-
-**Note:** There is a bug in `to_prompt_fragment()` — line 67 constructs a string with the glossary description but does not concatenate it to `result` (the f-string is a bare expression, not `result +=`).
-
----
-
-### audio_file
-
-| Attribute | Value |
-|---|---|
-| **Type** | `Path` |
-| **Description** | Path to the audio file for the session |
-| **Default** | None (required) |
-
-**Used by commands:**
-- `CleanAudioCommand` (`commands/clean_audio.py:19`) — input file, reads raw audio for noise cleaning
-- `CleanSessionCommand` (`commands/clean_session.py:33`) — used to resolve absolute path during session cleanup
-
-**Used by helpers:**
-- `helpers/audio_cleaner.py:16` — reads the original audio file for cleaning
-
-**What code does:** The starting-point audio file for all processing. Only directly consumed by the clean-audio step, which reads it and produces `cleaned_audio_file`.
-
----
-
-### cleaned_audio_file
-
-| Attribute | Value |
-|---|---|
-| **Type** | `Path` |
-| **Description** | Path to the cleaned audio file |
-| **Default** | None (required) |
-
-**Used by commands:**
-- `CleanAudioCommand` (`commands/clean_audio.py:20`) — output path
-- `ComputeSegmentsCommand` (`commands/compute_segments.py:21`) — input
-- `TranscribeAudioCommand` (`commands/transcribe_audio.py:24`) — input
-- `DiarizeAudioCommand` (`commands/diarize_audio.py:27`) — input
-- `AddEmbeddingsCommand` (`commands/add_embeddings.py:24`) — input
-- `ValidateTranscribersCommand` (`commands/validate_transcribers.py:59`) — input
-- `CreateSpeakerClipsCommand` (`commands/create_speaker_clips.py:28,33`) — input
-
-**Used by helpers:**
-- `helpers/audio_cleaner.py:18` — output path
-- `helpers/confidence_scorer.py:69` — loads audio for confidence scoring
-- `helpers/update_turn_end.py:24` — loads audio for turn-end prediction
-- `helpers/audio_transcriber.py:22` — loads audio for transcription
-- `helpers/audio_diarizer.py:24` — loads audio for diarization
-- `helpers/audio_segmenter.py:42` — loads audio for VAD
-- `helpers/transcript_aligner.py:78` — loads audio for alignment
-- `helpers/add_embeddings.py:27` — loads audio for embedding extraction
-
-**What code does:** The central audio file consumed by virtually all processing steps. Produced by `clean_audio` and used by transcription, alignment, confidence scoring, diarization, embedding extraction, turn-end detection, and speaker clip creation.
-
----
-
-### transcript_file
-
-| Attribute | Value |
-|---|---|
-| **Type** | `Path` |
-| **Description** | Path to the transcript JSON file |
-| **Default** | None (required) |
-
-**Used by commands:**
-- `TranscribeAudioCommand` (`commands/transcribe_audio.py:25,32,33`) — output path, writes transcription JSON
-- `AlignTranscriptCommand` (`commands/align_transcript.py:25`) — input
-- `CompareFulltextCommand` (`commands/compare_fulltext.py:49`) — lists available transcript files
-
-**What code does:** Stores initial ASR transcription output from CanaryQwen. Read by align-transcript for word-level alignment. Intermediate file in the transcription -> alignment -> confidence pipeline.
-
----
-
-### aligned_transcript_path
-
-| Attribute | Value |
-|---|---|
-| **Type** | `Path` |
-| **Description** | Path to the word-aligned transcript JSON |
-| **Default** | None (required) |
-
-**Used by commands:**
-- `AlignTranscriptCommand` (`commands/align_transcript.py:28`) — output path
-- `ScoreConfidenceCommand` (`commands/score_confidence.py:24`) — input
-- `CompareFulltextCommand` (`commands/compare_fulltext.py:50`) — lists available files
-
-**What code does:** Stores word-aligned transcription with per-word start/end timestamps from CTC forced alignment. Created by align-transcript, consumed by score-confidence.
-
----
-
-### confidence_transcript_path
-
-| Attribute | Value |
-|---|---|
-| **Type** | `Path` |
-| **Description** | Path to transcript JSON with per-word confidence scores |
-| **Default** | None (required) |
-
-**Used by commands:**
-- `ScoreConfidenceCommand` (`commands/score_confidence.py:26`) — output path
-- `DiarizeAudioCommand` (`commands/diarize_audio.py:25`) — input
-- `CompareFulltextCommand` (`commands/compare_fulltext.py:51`) — lists available files
-
-**What code does:** Stores transcription with per-word confidence scores (0.0-1.0). Created by score-confidence, consumed by diarize-audio which uses the aligned words with confidence annotations for word-to-segment assignment.
-
----
-
-### base_diarized_path
-
-| Attribute | Value |
-|---|---|
-| **Type** | `Path` |
-| **Description** | Path to diarized segments JSON |
-| **Default** | None (required) |
-
-**Used by commands:**
-- `DiarizeAudioCommand` (`commands/diarize_audio.py:28`) — output path
-- `DiarizationLMCommand` (`commands/diarizationlm_command.py:21`) — input
-- `CompareFulltextCommand` (`commands/compare_fulltext.py:52`) — lists files
-- `ValidateDiarizationCommand` (`commands/validate_diarization.py:28`) — used in validation
-
-**What code does:** Stores initial SpeechClipSet output from the diarization pipeline (DiariZen diarizer + word assignment via speech_clip_factory). Consumed by DiarizationLM for refinement.
-
----
-
-### speech_clips_with_embedding
-
-| Attribute | Value |
-|---|---|
-| **Type** | `Path` |
-| **Description** | Path to SpeechClipSet JSON with speaker embeddings |
-| **Default** | None (required) |
-
-**Used by commands:**
-- `AddEmbeddingsCommand` (`commands/add_embeddings.py:26`) — output path
-- `IdentifySpeakersCommand` (`commands/identify_speakers.py:31`) — input
-- `CompareFulltextCommand` (`commands/compare_fulltext.py:54`) — lists files
-- `ValidateDiarizationCommand` (`commands/validate_diarization.py:30`) — validation
-
-**What code does:** Stores SpeechClipSet with speaker embedding vectors attached to each clip. Created by add-embeddings, consumed by identify-speakers for cosine-similarity matching against registered speakers.
-
----
-
-### identified_speaker_path
-
-| Attribute | Value |
-|---|---|
-| **Type** | `Path` |
-| **Description** | Path to SpeechClipSet JSON with identified speakers |
-| **Default** | None (required) |
-
-**Used by commands:**
-- `IdentifySpeakersCommand` (`commands/identify_speakers.py:32`) — output path
-- `StitichIdentitiesCommand` (`commands/stitch_identities.py:22`) — input
-- `CreateSpeakerClipsCommand` (`commands/create_speaker_clips.py:27`) — input
-- `CompareFulltextCommand` (`commands/compare_fulltext.py:55`) — lists files
-- `ValidateDiarizationCommand` (`commands/validate_diarization.py:31`) — validation
-
-**What code does:** Stores SpeechClipSet with speaker identity (name), cosine_similarity, and similarity_residual assigned to each clip. Created by identify-speakers. Consumed by stitch-identities and create-speaker-clips.
-
----
-
-### turn_end_updated_path
-
-| Attribute | Value |
-|---|---|
-| **Type** | `Path` |
-| **Description** | Path to SpeechClipSet JSON with END_OF_TURN flags |
-| **Default** | None (required) |
-
-**Used by commands:**
-- `UpdateTurnEndCommand` (`commands/update_turn_end.py:22`) — output path
-- `FirstStitchClipsCommand` (`commands/first_stitch_clips.py:22`) — input
-
-**What code does:** Stores SpeechClipSet with END_OF_TURN flags set based on the Smart Turn model's turn-end probability vs `turn_end_probability_threshold`. Created by update-turn-end, consumed by first-stitch-clips.
-
----
-
-### first_stitched_path
-
-| Attribute | Value |
-|---|---|
-| **Type** | `Path` |
-| **Description** | Path to SpeechClipSet JSON after initial stitching |
-| **Default** | None (required) |
-
-**Used by commands:**
-- `FirstStitchClipsCommand` (`commands/first_stitch_clips.py:23`) — output path
-
-**What code does:** Stores SpeechClipSet after backchannel merging and unfinished-segment merging. Created by first-stitch-clips. **Note:** This path is written but never read as input by any other command in the current pipeline — it appears to be an intermediate artifact that was part of an older pipeline ordering.
-
----
-
-### identity_stitched_path
-
-| Attribute | Value |
-|---|---|
-| **Type** | `Path` |
-| **Description** | Path to SpeechClipSet JSON with speakers identified |
-| **Default** | None (required) |
-
-**Used by commands:**
-- `StitichIdentitiesCommand` (`commands/stitch_identities.py:23`) — output path
-- `PunctuateTextCommand` (`commands/punctuate_text.py:21`) — input
-- `IndeterminantSpeakerAssignmentCommand` (`commands/indeterminate_speaker_assignment.py:21`) — input
-- `TestCommand` (`commands/test_command.py:27,44,60`) — validation
-- `ValidateDiarizationCommand` (`commands/validate_diarization.py:32`) — validation
-
-**What code does:** Stores SpeechClipSet after identity-based stitching (merging adjacent clips with same identified speaker within `identity_stitching_max_gap`). Created by stitch-identities, consumed by punctuate-text and indeterminate-speaker-assignment.
-
----
-
-### diarizationlm_processed_path
-
-| Attribute | Value |
-|---|---|
-| **Type** | `Path` |
-| **Description** | Path to SpeechClipSet JSON after DiarizationLM processing |
-| **Default** | None (required) |
-
-**Used by commands:**
-- `DiarizationLMCommand` (`commands/diarizationlm_command.py:22`) — output path
-- `UpdateTurnEndCommand` (`commands/update_turn_end.py:21`) — input
-- `DanglingSentenceFixCommand` (`commands/dangling_sentece_fix.py:21`) — input
-- `CompareFulltextCommand` (`commands/compare_fulltext.py:53`) — lists files
-- `ValidateDiarizationCommand` (`commands/validate_diarization.py:29`) — validation
-
-**What code does:** Stores SpeechClipSet after DiarizationLM (LLM-based speaker attribution correction). Created by diarizationlm, consumed by update-turn-end and dangling-sentence-fix.
-
----
-
-### indeterminate_speakers_path
-
-| Attribute | Value |
-|---|---|
-| **Type** | `Path` |
-| **Description** | Path to SpeechClipSet with unidentified speakers assigned |
-| **Default** | None (required) |
-
-**Used by commands:**
-- `IndeterminantSpeakerAssignmentCommand` (`commands/indeterminate_speaker_assignment.py:22`) — output path
-- `ValidateDiarizationCommand` (`commands/validate_diarization.py:33`) — validation
-
-**What code does:** Stores SpeechClipSet where clips with `similarity_residual < speaker_identity_assignment_threshold` have been reassigned to `UNASSIGNED_SPEAKER_NAME`. Created by indeterminate-speaker-assignment. **Note:** This path is written but never read as input by any downstream command — it is a terminal output file.
-
----
-
-### dangling_sentence_fix_path
-
-| Attribute | Value |
-|---|---|
-| **Type** | `Path` |
-| **Description** | Path to SpeechClipSet with dangling sentences fixed |
-| **Default** | None (required) |
-
-**Used by commands:**
-- `DanglingSentenceFixCommand` (`commands/dangling_sentece_fix.py:22`) — output path
-- `AddEmbeddingsCommand` (`commands/add_embeddings.py:23`) — input
-
-**What code does:** Stores SpeechClipSet with corrected dangling sentences (clips ending mid-sentence are merged/extended). Created by dangling-sentence-fix, consumed by add-embeddings.
-
----
-
-### punctuated_text_path
-
-| Attribute | Value |
-|---|---|
-| **Type** | `Path` |
-| **Description** | Path to SpeechClipSet with punctuation/capitalisation restored |
-| **Default** | None (required) |
-
-**Used by commands:**
-- `PunctuateTextCommand` (`commands/punctuate_text.py:22`) — output path
-
-**What code does:** Final SpeechClipSet with punctuation and capitalisation applied to clip transcripts. Created by punctuate-text. Terminal output file — not read as input by any downstream command.
-
----
-
-### device
-
-| Attribute | Value |
-|---|---|
-| **Type** | `Literal["cpu", "cuda"]` |
-| **Description** | Device for model inference |
-| **Default** | None (required) |
-
-**Used by commands:**
-- `ValidateTranscribersCommand` (`commands/validate_transcribers.py:76`) — creates transcriber on device
-
-**Used by helpers:**
-- `helpers/confidence_scorer.py:75` — creates ParakeetCTC scorer
-- `helpers/remove_outlier_speakers.py:20` — creates embeddings factory
-- `helpers/audio_transcriber.py:33` — creates CanaryQwen transcriber
-- `helpers/add_embeddings.py:34` — creates embeddings factory
-- `helpers/audio_segmenter.py:33` — creates NemoVadDetector
-- `helpers/diarizationlm_refiner.py:21` — creates DiarizationLM model
-- `helpers/update_turn_end.py:27` — creates LocalSmartTurnPredictor
-- `helpers/transcript_aligner.py:74` — creates ParakeetCTC aligner
-
-**What code does:** Passed to every neural model constructor to control where tensors are allocated (GPU vs CPU). Affects all model inference steps: VAD, transcription, alignment, confidence scoring, diarization LM, turn detection, speaker embeddings, and outlier removal.
-
----
-
-### segments_path
-
-| Attribute | Value |
-|---|---|
-| **Type** | `Path` |
-| **Description** | Path to the VAD segments JSON output |
-| **Default** | None (required) |
-
-**Used by commands:**
-- `ComputeSegmentsCommand` (`commands/compute_segments.py:22`) — output path
-- `TranscribeAudioCommand` (`commands/transcribe_audio.py:23`) — input
-- `DiarizeAudioCommand` (`commands/diarize_audio.py:26`) — input
-- `AddEmbeddingsCommand` (`commands/add_embeddings.py:25`) — input
-- `AlignTranscriptCommand` (`commands/align_transcript.py:26`) — input
-- `ScoreConfidenceCommand` (`commands/score_confidence.py:25`) — input
-- `ValidateTranscribersCommand` (`commands/validate_transcribers.py:60`) — input
-
-**What code does:** Stores VAD-based segment boundaries (silence-aware cut points). Created by compute-segments. The `short` segment set is consumed by transcription and confidence scoring; the `long` segment set is consumed by forced alignment. Diarization and add-embeddings declare `segments_path` as an input dependency, but their current helper code does not read segment chunks directly.
-
----
-
-### min_segment_length_short
-
-| Attribute | Value |
-|---|---|
-| **Type** | `float` (seconds) |
-| **Description** | Minimum segment length for short VAD-based chunking |
-| **Default** | None (required); typical value: 10 |
-
-**Used by commands:** None directly
-
-**Used by helpers:**
-- `helpers/audio_segmenter.py:50` — passed to `compute_segments()` as `min_length` when `mode="short"`
-
-**What code does:** In short-chunking mode (used for Canary transcription and confidence scoring), this is the earliest eligible distance from the current segment start where the splitter will consider a silence cut. The splitter does not run a separate "merge short segments" post-pass; a trailing final segment can still be shorter than this. Works as a pair with `max_segment_length_short`. Validated that `min < max` in model validator.
-
----
-
-### max_segment_length_short
-
-| Attribute | Value |
-|---|---|
-| **Type** | `float` (seconds) |
-| **Description** | Maximum segment length for short VAD-based chunking |
-| **Default** | None (required); typical value: 38 |
-
-**Used by commands:** None directly
-
-**Used by helpers:**
-- `helpers/audio_segmenter.py:51` — passed to `compute_segments()` as `max_length` when `mode="short"`
-
-**What code does:** In short-chunking mode, no segment exceeds this duration. A hard cut is made if continuous speech runs longer with no silence gap. Set to 38s because Canary processes audio in ~40s internal windows.
-
----
-
-### min_segment_length_long
-
-| Attribute | Value |
-|---|---|
-| **Type** | `float` (seconds) |
-| **Description** | Minimum segment length for long VAD-based chunking |
-| **Default** | None (required); typical value: 120 |
-
-**Used by commands:** None directly
-
-**Used by helpers:**
-- `helpers/audio_segmenter.py:54` — passed to `compute_segments()` as `min_length` when `mode="long"`
-
-**What code does:** In long-chunking mode (currently used by forced alignment), this is the earliest eligible distance from the current segment start where the splitter will consider a silence cut. The splitter does not run a separate "merge short segments" post-pass; a trailing final segment can still be shorter than this.
-
----
-
-### max_segment_length_long
-
-| Attribute | Value |
-|---|---|
-| **Type** | `float` (seconds) |
-| **Description** | Maximum segment length for long VAD-based chunking |
-| **Default** | None (required); typical value: 300 |
-
-**Used by commands:** None directly
-
-**Used by helpers:**
-- `helpers/audio_segmenter.py:54` — passed to `compute_segments()` as `max_length` when `mode="long"`
-
-**What code does:** In long-chunking mode, no non-final segment exceeds this duration; if no silence gap exists within the allowed window, the splitter force-cuts at `max_segment_length_long`. Tune down if you see CUDA OOM errors in forced alignment, or up if GPU has headroom.
-
----
-
-### high_confidence_similarity_threshold
-
-| Attribute | Value |
-|---|---|
-| **Type** | `float` (0.0-1.0) |
-| **Description** | Minimum cosine similarity for high-confidence speaker match |
-| **Default** | None (required); typical value: 0.88 |
-
-**Used by commands:** NONE
-
-**Used by helpers:** NONE
-
-**What code does:** **DEFINED BUT NEVER USED.** The field is validated in the settings model (0.0-1.0 range check at session_settings.py:321) but is never referenced by any processing code. Appears to be a legacy or planned field.
-
----
-
-### speaker_identity_assignment_threshold
-
-| Attribute | Value |
-|---|---|
-| **Type** | `float` (0.0-1.0) |
-| **Description** | Minimum cosine similarity to assign a speaker identity |
-| **Default** | None (required); typical value: 0.08 |
-
-**Used by commands:** None directly
-
-**Used by helpers:**
-- `helpers/indeterminate_speakers.py:16` — in `_should_unassign_speaker()`, clips with `similarity_residual < threshold` are reassigned to `UNASSIGNED_SPEAKER_NAME`
-
-**What code does:** Despite the description saying "cosine similarity score", the code actually compares it against `clip.similarity_residual` (the difference between best-match similarity and mean similarity across all speakers). Clips with residual below this threshold are considered ambiguous and unassigned. **Note:** The description says "similarity score" but the code uses it as a residual threshold — this is misleading.
-
----
-
-### vad
-
-| Attribute | Value |
-|---|---|
-| **Type** | `VadSettings` (nested object) |
-| **Description** | VAD model and post-processing hyperparameters |
-| **Default** | None (required) |
-
-**Used by commands:** None directly (settings are consumed via the nested object)
-
-**Used by helpers:**
-- `helpers/audio_segmenter.py:32-39` — all 7 VadSettings fields are unpacked and passed to `NemoVadDetector` constructor
-
-**What code does:** Container for Voice Activity Detection configuration. All fields are passed through to the NeMo VAD model during segment computation. See [VadSettings Fields](#vadsettings-fields) below for per-field details.
-
----
-
-### speaker_clip_lead_in
-
-| Attribute | Value |
-|---|---|
-| **Type** | `float` (seconds, >= 0.0) |
-| **Description** | Audio padding before each speaker clip |
-| **Default** | None (required); typical value: 0.25 |
-
-**Used by commands:**
-- `CreateSpeakerClipsCommand` (`commands/create_speaker_clips.py:59`) — passed to `save_segment_as_speaker_audio_clip()`
-
-**What code does:** Seconds of audio included before each clip's start time when extracting individual speaker audio WAV files. Padding is faded in to avoid hard audio edges.
-
----
-
-### speaker_clip_lead_out
-
-| Attribute | Value |
-|---|---|
-| **Type** | `float` (seconds, >= 0.0) |
-| **Description** | Audio padding after each speaker clip |
-| **Default** | None (required); typical value: 0.25 |
-
-**Used by commands:**
-- `CreateSpeakerClipsCommand` (`commands/create_speaker_clips.py:60`) — passed to `save_segment_as_speaker_audio_clip()`
-
-**What code does:** Seconds of audio included after each clip's end time when extracting individual speaker audio WAV files. Padding is faded out to avoid hard audio edges.
-
----
-
-### speaker_clip_minimum_similarity_residual
-
-| Attribute | Value |
-|---|---|
-| **Type** | `float` (0.0-1.0) |
-| **Description** | Minimum similarity residual to include a clip as a speaker sample |
-| **Default** | None (required); typical value: 0.2 |
-
-**Used by commands:**
-- `CreateSpeakerClipsCommand` (`commands/create_speaker_clips.py:50`) — clips with `similarity_residual < threshold` are skipped (not saved as speaker audio samples)
-
-**What code does:** Filters which identified clips are saved as speaker audio samples during the create-speaker-clips step. Clips with low residuals (ambiguous between speakers) are excluded.
-
----
-
-### minimum_speaker_clip_duration
-
-| Attribute | Value |
-|---|---|
-| **Type** | `float` (seconds, >= 0.0) |
-| **Description** | Target minimum speaker clip duration |
-| **Default** | None (required); typical value: 2.25 |
-
-**Used by commands:**
-- `MergeSpeakerClipsCommand` (`commands/merge_speaker_clips.py:27`) — passed to `merge_speaker_clips_to_min_duration()`
-- `RegisterSpeakersCommand` (`commands/register_speakers.py:52`) — passed to `merge_speaker_clips_to_min_duration()`
-
-**What code does:** During speaker registration, short audio clips are iteratively merged with neighbours until no clip falls below this duration threshold.
-
----
-
-### min_speaker_similarity
-
-| Attribute | Value |
-|---|---|
-| **Type** | `float` (0.0-1.0) |
-| **Description** | Minimum cosine similarity to group centroid to keep a clip |
-| **Default** | None (required); typical value: 0.6 |
-
-**Used by commands:**
-- `RemoveOutlierSpeakerClipsCommand` (`commands/remove_outlier_speaker_clips.py:36`) — logged in info message
-
-**Used by helpers:**
-- `helpers/remove_outlier_speakers.py:26,48,50` — iteratively removes the worst clip (lowest similarity to centroid) until all remaining clips meet or exceed this threshold
-
-**What code does:** During speaker registration, clips whose cosine similarity to the group centroid falls below this threshold are removed as outliers. The centroid is recomputed after each removal.
-
----
-
-### speaker_clip_gap_length
-
-| Attribute | Value |
-|---|---|
-| **Type** | `float` (seconds, >= 0.0) |
-| **Description** | Silence between clips when merging speaker audio |
-| **Default** | 0.5 |
-
-**Used by commands:**
-- `MergeSpeakerClipsCommand` (`commands/merge_speaker_clips.py:37`) — passed to `merge_speaker_clips_to_min_duration()`
-- `RegisterSpeakersCommand` (`commands/register_speakers.py:53`) — passed to `merge_speaker_clips_to_min_duration()`
-
-**What code does:** Seconds of silence inserted between adjacent clips when merging short clips together during speaker registration. Prevents audio bleeding between utterances, improving embedding quality.
-
----
-
-### diarization_stitching
-
-| Attribute | Value |
-|---|---|
-| **Type** | `DiarizationStitchingSettings` (nested object) |
-| **Description** | Policy knobs for assigning ASR words to diarized speaker segments |
-| **Default** | None (required) |
-
-**Used by commands/helpers:** Container — individual fields accessed via `settings.diarization_stitching.<field>`. See [DiarizationStitchingSettings Fields](#diarizationstitchingsettings-fields) below.
-
----
-
-### epsilon
-
-| Attribute | Value |
-|---|---|
-| **Type** | `float` (>= 0.0) |
-| **Description** | Small floating-point tolerance |
-| **Default** | None (required); typical value: 0.000001 |
-
-**Used by commands:**
-- `ValidateDiarizationCommand` (`commands/validate_diarization.py:94`) — passed to `evaluate_diarization_result()`
-
-**Used by helpers/core:**
-- `diarization/speech_clip_factory.py` (throughout) — used in overlap calculations, boundary comparisons, candidate pool radius, acceptable overlap checks
-- `diarization/clip_merger.py:36` — gap distance comparison tolerance
-- `diarization/candidate_pool.py:30` — added to search radius
-- `diarization/candidate_score.py:35` — minimum meaningful length
-- `diarization/anonymous_clips.py:17` — anonymous join gap tolerance
-- `helpers/tiny_clip_merger.py:23-24` — gap distance calculations
-- `helpers/identity_stitch.py:50,59,86` — gap distance comparisons
-- `helpers/first_stitcher.py:44,53,78` — gap distance comparisons
-- `helpers/diarizationlm_refiner.py:25` — passed to DiarizationLM processor
-- `diarizationlm/clip_set_converter.py:46` — speaker computation
-- `diarizationlm/speaker_mapping.py:26` — speaker computation
-- `diarizationlm/diarizationlm_processor.py:29` — passed through to all conversion steps
-- `processing_results/speech_clip.py:98-123` — gap distance and speaker computation
-- `processing_results/speech_clip.py:242-253` — expand bounds comparison
-- `processing_results/segment_protocol.py:30-31` — meaningful duration calculation
-- `evaluation/evaluate_word_diarization.py:66,83` — WDER evaluation
-- `evaluation/evaluate_diatization.py:26,63` — diarization evaluation
-
-**What code does:** Pervasive floating-point tolerance used throughout the system for time boundary comparisons, overlap calculations, gap distance computations, and boundary expansion. Prevents false negatives from floating-point imprecision and quantization.
-
----
-
-### seed
-
-| Attribute | Value |
-|---|---|
-| **Type** | `int` |
-| **Description** | Random seed for reproducible inference |
-| **Default** | None (required); typical value: 43 |
-
-**Used by commands:** None directly
-
-**Used by:**
-- `console/main.py:52-59` — `_set_seed()` function sets seeds for Python `random`, NumPy, PyTorch (CPU + CUDA) before most session-scoped CLI command invocations
-
-**What code does:** Sets deterministic random seeds across all frameworks for most session-scoped commands. Commands that do not take a session ID or operate on global speaker clips/settings (for example `clear-logs`, `merge-speaker-clips`, `remove-outlier-speaker-clips`, `register-speakers`, and `generate-sample-settings`) do not call `_set_seed()`.
-
----
-
-### number_of_speakers (property)
-
-| Attribute | Value |
-|---|---|
-| **Type** | `int` (derived, `= len(self.attendees)`) |
-| **Description** | Number of speakers, derived from attendees list |
-
-**Used by commands:** NONE
-
-**Used by helpers:** NONE
-
-**What code does:** **DEFINED BUT NEVER USED.** This is a `@property` on `SessionSettings` (session_settings.py:375) that returns `len(self.attendees)`. It is never called anywhere in the codebase. The diarizer (DiariZen) infers speaker count automatically rather than using this property.
-
----
+# Settings Review - 2026-04-13
+
+Audit of the current `SessionSettings` model and nested settings objects:
+`AdventureSettings`, `VadSettings`, and `DiarizationStitchingSettings`.
+
+This document describes runtime use in the current codebase. References from
+tests, sample YAML, and fully commented-out code are not counted as active use;
+commented references are called out when they explain stale settings.
+
+## Loading And Validation
+
+- `SessionSettings.load(path)` reads one YAML file and resolves path settings relative to `path.parent`.
+- `SessionSettings.load_cascading(session_id)` merges `data/settings.yaml` with `data/<session-id>/settings.yaml`, then resolves path settings relative to `data/<session-id>`.
+- Resolved path settings are:
+  `audio_file`, `cleaned_audio_file`, `transcript_file`, `aligned_transcript_path`,
+  `confidence_transcript_path`, `segments_path`, `base_diarized_path`,
+  `speech_clips_with_embedding`, `identified_speaker_path`,
+  `turn_end_updated_path`, `first_stitched_path`, `identity_stitched_path`,
+  `backchannel_marked_path`, `diarizationlm_processed_path`,
+  `indeterminate_speakers_path`, `dangling_sentence_fix_path`, and
+  `punctuated_text_path`.
+- `audio_file` suffix is validated against:
+  `.m4a`, `.mp3`, `.wav`, `.flac`, `.ogg`, `.opus`, `.wma`, `.aac`, `.webm`.
+- `attendees` must contain at least one non-blank name.
+- `adventure_settings.pcs` must contain at least one player -> character pair, and both sides must be non-blank.
+- `device` is limited to `"cpu"` or `"cuda"`.
+- `epsilon`, `speaker_clip_lead_in`, `speaker_clip_lead_out`,
+  `minimum_speaker_clip_duration`, and `speaker_clip_gap_length` must be non-negative.
+- `high_confidence_similarity_threshold`, `speaker_identity_assignment_threshold`,
+  `speaker_clip_minimum_similarity_residual`, and `min_speaker_similarity` must be in `0.0..1.0`.
+- `min_segment_length_short < max_segment_length_short`.
+- `min_segment_length_long < max_segment_length_long`.
+- `VadSettings` currently has no field validators; its values are passed through to the VAD detector.
+- `DiarizationStitchingSettings` validates selected duration/gap fields as non-negative and selected threshold fields as `0.0..1.0`.
+
+## Current Pipeline Paths
+
+The active JSON/audio artifact flow is:
+
+```text
+audio_file
+  -> cleaned_audio_file
+      -> segments_path
+      -> transcript_file
+          -> aligned_transcript_path
+              -> confidence_transcript_path
+                  -> base_diarized_path
+                      -> diarizationlm_processed_path
+                          -> dangling_sentence_fix_path
+                              -> speech_clips_with_embedding
+                                  -> identified_speaker_path
+                                      -> identity_stitched_path
+                                          -> backchannel_marked_path
+                                              -> punctuated_text_path
+                                          -> indeterminate_speakers_path
+```
+
+Side consumers:
+
+- `CreateSpeakerClipsCommand` reads `identified_speaker_path` and `cleaned_audio_file` to create per-speaker audio clips.
+- `CompareFullTextCommand` compares fulltext sidecars for the transcript, alignment, confidence, diarization, DiarizationLM, embeddings, and identified-speaker artifacts.
+- `ValidateDiarizationCommand` evaluates several `SpeechClipSet` artifacts. Note: its registry currently joins `session_dir` for some paths but not for `identity_stitched_path` and `indeterminate_speakers_path`.
+- `turn_end_updated_path` and `first_stitched_path` are still settings, but no active command writes or reads them.
+
+## SessionSettings Top-Level Fields
+
+### `attendees`
+
+- Type: `list[str]`, required, min length 1.
+- Active use:
+  - `IdentifySpeakersCommand` validates that each attendee exists in the registered speaker file.
+  - `helpers/speaker_identifier.py` filters registered speaker embeddings down to the attendee set before cosine-similarity matching.
+- Meaning: the set of speaker identities eligible for assignment in this session.
+
+### `adventure_settings`
+
+- Type: `AdventureSettings`, required.
+- Active use: none in runtime processing.
+- Validation use: `pcs` must be non-empty and contain non-blank player/character names.
+- Notes:
+  - `AdventureSettings.to_prompt_fragment()` exists but is not called anywhere.
+  - `to_prompt_fragment()` still appears to have a bug: the glossary description f-string is a bare expression and is not appended to `result`.
+
+### `audio_file`
+
+- Type: `Path`, required.
+- Active use:
+  - `CleanAudioCommand` declares it as input.
+  - `helpers/audio_cleaner.py` reads it and writes `cleaned_audio_file`.
+  - `CleanSessionCommand` preserves the resolved original audio path during cleanup.
+- Validation: suffix must be one of the supported audio suffixes.
+
+### `cleaned_audio_file`
+
+- Type: `Path`, required.
+- Active use:
+  - `CleanAudioCommand` writes it.
+  - `ComputeSegmentsCommand`, `TranscribeAudioCommand`, `AlignTranscriptCommand`,
+    `DiarizeAudioCommand`, `AddEmbeddingsCommand`, `ValidateTranscribersCommand`,
+    and `CreateSpeakerClipsCommand` declare or read it.
+  - Helpers that read it include `audio_segmenter`, `audio_transcriber`,
+    `transcript_aligner`, `confidence_scorer`, `audio_diarizer`, and `add_embeddings`.
+- Meaning: the central cleaned audio artifact used by most downstream model steps.
+
+### `transcript_file`
+
+- Type: `Path`, required.
+- Active use:
+  - `TranscribeAudioCommand` writes the initial ASR transcript JSON and fulltext sidecar.
+  - `AlignTranscriptCommand` reads it.
+  - `CompareFullTextCommand` includes it in the comparison set.
+
+### `aligned_transcript_path`
+
+- Type: `Path`, required.
+- Active use:
+  - `AlignTranscriptCommand` writes it.
+  - `ScoreConfidenceCommand` reads it.
+  - `CompareFullTextCommand` includes it in the comparison set.
+- Meaning: word-aligned transcript with per-word start/end timestamps.
+
+### `confidence_transcript_path`
+
+- Type: `Path`, required.
+- Active use:
+  - `ScoreConfidenceCommand` writes it.
+  - `DiarizeAudioCommand` reads it.
+  - `CompareFullTextCommand` includes it in the comparison set.
+- Meaning: aligned transcript with per-word confidence values.
+
+### `base_diarized_path`
+
+- Type: `Path`, required.
+- Active use:
+  - `DiarizeAudioCommand` writes it.
+  - `DiarizationLMCommand` reads it.
+  - `CompareFullTextCommand` includes it in the comparison set.
+  - `ValidateDiarizationCommand` includes it in the hypothesis registry.
+- Meaning: initial `SpeechClipSet` created from diarization plus word assignment.
+
+### `speech_clips_with_embedding`
+
+- Type: `Path`, required.
+- Active use:
+  - `AddEmbeddingsCommand` writes it.
+  - `IdentifySpeakersCommand` reads it.
+  - `CompareFullTextCommand` includes it in the comparison set.
+  - `ValidateDiarizationCommand` includes it in the hypothesis registry.
+- Meaning: `SpeechClipSet` with speaker embedding vectors attached.
+
+### `identified_speaker_path`
+
+- Type: `Path`, required.
+- Active use:
+  - `IdentifySpeakersCommand` writes it.
+  - `StitichIdentitiesCommand` reads it.
+  - `CreateSpeakerClipsCommand` reads it.
+  - `CompareFullTextCommand` includes it in the comparison set.
+  - `ValidateDiarizationCommand` includes it in the hypothesis registry.
+- Meaning: `SpeechClipSet` with `identity`, `cosine_similarity`, and `similarity_residual` assigned where embeddings are available.
+
+### `turn_end_updated_path`
+
+- Type: `Path`, required.
+- Active use: none.
+- Commented references:
+  - `commands/update_turn_end.py`
+  - `commands/first_stitch_clips.py`
+- Meaning in old pipeline: intended output of turn-end scoring before first stitching. The command is currently commented out, so this is a stale path setting.
+
+### `first_stitched_path`
+
+- Type: `Path`, required.
+- Active use: none.
+- Commented references:
+  - `commands/first_stitch_clips.py`
+- Meaning in old pipeline: intended output of first-stitching after turn-end scoring. The command is currently commented out, so this is a stale path setting.
+
+### `identity_stitched_path`
+
+- Type: `Path`, required.
+- Active use:
+  - `StitichIdentitiesCommand` writes it.
+  - `MarkBackchannelsCommand` reads it.
+  - `IndeterminantSpeakerAssignmentCommand` reads it.
+  - `TestCommand` reads it for diagnostic outputs.
+  - `ValidateDiarizationCommand` includes it in the hypothesis registry, but currently without prefixing `session_dir`.
+- Meaning: `SpeechClipSet` after adjacent same-identity clips have been merged by identity stitching.
+
+### `backchannel_marked_path`
+
+- Type: `Path`, required.
+- Active use:
+  - `MarkBackchannelsCommand` writes it after applying `SpeechClipFlags.IS_BACKCHANNEL`.
+  - `PunctuateTextCommand` reads it.
+- Meaning: `SpeechClipSet` after text-based one-word backchannel marking. The current marker does not use the diarization-stitching backchannel gap/duration settings; it checks whether a clip has exactly one word and that cleaned word appears in `helpers/backchannel_marker.py`.
+
+### `diarizationlm_processed_path`
+
+- Type: `Path`, required.
+- Active use:
+  - `DiarizationLMCommand` writes it.
+  - `DanglingSentenceFixCommand` reads it.
+  - `CompareFullTextCommand` includes it in the comparison set.
+  - `ValidateDiarizationCommand` includes it in the hypothesis registry.
+- Commented references:
+  - `UpdateTurnEndCommand` used to read it, but that command is currently commented out.
+
+### `indeterminate_speakers_path`
+
+- Type: `Path`, required.
+- Active use:
+  - `IndeterminantSpeakerAssignmentCommand` writes it.
+  - `ValidateDiarizationCommand` includes it in the hypothesis registry, but currently without prefixing `session_dir`.
+- Meaning: terminal `SpeechClipSet` where ambiguous identities are reassigned to the unassigned speaker label.
+
+### `dangling_sentence_fix_path`
+
+- Type: `Path`, required.
+- Active use:
+  - `DanglingSentenceFixCommand` writes it.
+  - `AddEmbeddingsCommand` reads it.
+- Meaning: `SpeechClipSet` after dangling sentence repair.
+
+### `punctuated_text_path`
+
+- Type: `Path`, required.
+- Active use:
+  - `PunctuateTextCommand` writes it.
+- Meaning: terminal `SpeechClipSet` after punctuation and capitalization restoration.
+
+### `device`
+
+- Type: `Literal["cpu", "cuda"]`, required.
+- Active use:
+  - `ValidateTranscribersCommand` passes it to transcriber factories.
+  - `helpers/audio_segmenter.py` passes it to `NemoVadDetector`.
+  - `helpers/audio_transcriber.py` passes it to `CanaryQwenTranscriber`.
+  - `helpers/transcript_aligner.py` passes it to `ParakeetCTCWordAligner`.
+  - `helpers/confidence_scorer.py` passes it to `ParakeetCTCConfidenceScorer`.
+  - `helpers/diarizationlm_refiner.py` passes it to `DiarizationLMModel`.
+  - `helpers/add_embeddings.py` and `helpers/remove_outlier_speakers.py` pass it to the embedding factory.
+- Commented references:
+  - `helpers/update_turn_end.py` used it for Smart Turn inference, but that helper is currently commented out.
+
+### `segments_path`
+
+- Type: `Path`, required.
+- Active use:
+  - `ComputeSegmentsCommand` writes it.
+  - `TranscribeAudioCommand`, `AlignTranscriptCommand`, `ScoreConfidenceCommand`,
+    `DiarizeAudioCommand`, `AddEmbeddingsCommand`, and `ValidateTranscribersCommand`
+    declare it as an input/dependency.
+  - `TranscribeAudioCommand`, `AlignTranscriptCommand`, and `ScoreConfidenceCommand` load and use the segment data directly.
+- Notes:
+  - `DiarizeAudioCommand` and `AddEmbeddingsCommand` declare `segments_path` as an input so segment computation runs first, but their current helper code does not load the segment data directly.
+
+### `min_segment_length_short`
+
+- Type: `float`, required.
+- Active use:
+  - `helpers/audio_segmenter.py` passes it as `min_length` when computing short VAD cut points.
+- Validation: must be less than `max_segment_length_short`.
+- Meaning: earliest eligible duration for a short-mode segment cut. Short segments are used by transcription and confidence scoring.
+
+### `max_segment_length_short`
+
+- Type: `float`, required.
+- Active use:
+  - `helpers/audio_segmenter.py` passes it as `max_length` when computing short VAD cut points.
+- Validation: must be greater than `min_segment_length_short`.
+- Meaning: maximum short-mode segment duration before a cut is forced.
+
+### `min_segment_length_long`
+
+- Type: `float`, required.
+- Active use:
+  - `helpers/audio_segmenter.py` passes it as `min_length` when computing long VAD cut points.
+- Validation: must be less than `max_segment_length_long`.
+
+### `max_segment_length_long`
+
+- Type: `float`, required.
+- Active use:
+  - `helpers/audio_segmenter.py` passes it as `max_length` when computing long VAD cut points.
+- Validation: must be greater than `min_segment_length_long`.
+
+### `high_confidence_similarity_threshold`
+
+- Type: `float`, required, `0.0..1.0`.
+- Active use: none.
+- Meaning: legacy or planned setting. It is validated and present in sample settings, but no runtime code reads it.
+
+### `speaker_identity_assignment_threshold`
+
+- Type: `float`, required, `0.0..1.0`.
+- Active use:
+  - `helpers/indeterminate_speakers.py` compares it to `clip.similarity_residual`.
+- Important accuracy note:
+  - The settings description says "cosine similarity score", but the active code uses it as a similarity residual threshold. Clips with `similarity_residual` that is `NaN` or below this value are assigned to `UNASSIGNED_SPEAKER_NAME`.
+
+### `vad`
+
+- Type: `VadSettings`, required.
+- Active use:
+  - `helpers/audio_segmenter.py` passes every field to `NemoVadDetector`.
+- See [VadSettings Fields](#vadsettings-fields).
+
+### `speaker_clip_lead_in`
+
+- Type: `float`, required, non-negative.
+- Active use:
+  - `CreateSpeakerClipsCommand` passes it to `save_segment_as_speaker_audio_clip()`.
+- Meaning: audio padding before extracted speaker clips.
+
+### `speaker_clip_lead_out`
+
+- Type: `float`, required, non-negative.
+- Active use:
+  - `CreateSpeakerClipsCommand` passes it to `save_segment_as_speaker_audio_clip()`.
+- Meaning: audio padding after extracted speaker clips.
+
+### `speaker_clip_minimum_similarity_residual`
+
+- Type: `float`, required, `0.0..1.0`.
+- Active use:
+  - `CreateSpeakerClipsCommand` uses it to decide whether a clip is clean enough to save as a speaker sample.
+- Meaning: clips are saved only when `similarity_residual > speaker_clip_minimum_similarity_residual`, and only if they also have an identity, are not anonymous, are not flagged as backchannels, and either multispeaker clips are allowed or the clip is single-speaker.
+
+### `minimum_speaker_clip_duration`
+
+- Type: `float`, required, non-negative.
+- Active use:
+  - `MergeSpeakerClipsCommand` passes it to `merge_speaker_clips_to_min_duration()`.
+  - `RegisterSpeakersCommand` passes it to `merge_speaker_clips_to_min_duration()`.
+- Meaning: target minimum duration when merging short speaker sample clips.
+
+### `min_speaker_similarity`
+
+- Type: `float`, required, `0.0..1.0`.
+- Active use:
+  - `RemoveOutlierSpeakerClipsCommand` logs it.
+  - `helpers/remove_outlier_speakers.py` removes the lowest-centroid-similarity clip until all remaining clips meet this threshold.
+- Meaning: speaker sample outlier-removal threshold.
+
+### `speaker_clip_gap_length`
+
+- Type: `float`, optional default `0.5`, non-negative.
+- Active use:
+  - `MergeSpeakerClipsCommand` and `RegisterSpeakersCommand` pass it to `merge_speaker_clips_to_min_duration()`.
+- Meaning: silence inserted between adjacent clips when merging speaker sample audio.
+
+### `diarization_stitching`
+
+- Type: `DiarizationStitchingSettings`, required.
+- Active use: container for nested stitching/word-assignment settings.
+- See [DiarizationStitchingSettings Fields](#diarizationstitchingsettings-fields).
+
+### `epsilon`
+
+- Type: `float`, required, non-negative.
+- Active use:
+  - `diarization/speech_clip_factory.py` uses it in word/segment overlap and expansion decisions.
+  - `diarization/candidate_pool.py`, `diarization/anonymous_clips.py`, and `diarization/clip_merger.py` use it for candidate radius or gap comparisons.
+  - `helpers/identity_stitch.py` uses it in same-identity gap checks.
+  - `helpers/diarizationlm_refiner.py` passes it into the DiarizationLM processor.
+  - `diarizationlm` conversion/mapping code uses it during speaker computation and segment conversion.
+  - `ValidateDiarizationCommand` passes it into diarization evaluation.
+  - Evaluation and `processing_results` utilities use it for time-boundary comparisons.
+- Meaning: tolerance for floating-point and timestamp boundary comparisons.
+
+### `seed`
+
+- Type: `int`, required.
+- Active use:
+  - `console/main.py` uses it in `_set_seed()` to seed Python `random`, NumPy, PyTorch CPU, and PyTorch CUDA.
+- Notes:
+  - `_set_seed()` is called by session-scoped CLI commands.
+  - Global/non-session commands such as `clear-logs`, `generate-sample-settings`, `merge-speaker-clips`, `remove-outlier-speaker-clips`, and `register-speakers` do not call `_set_seed()`.
+
+### `number_of_speakers` property
+
+- Type: derived `int` property returning `len(attendees)`.
+- Active runtime use: none.
+- Test use: settings unit tests assert it.
+- Meaning: convenience property only; the current diarizer does not use it.
 
 ## DiarizationStitchingSettings Fields
 
-All fields below live in `settings/diarization_stitching_settings.py` and are accessed via `settings.diarization_stitching.<field>`.
+All fields below live under `settings.diarization_stitching`.
 
-### min_overlap_fraction_word
+### `min_overlap_fraction_word`
 
-| Attribute | Value |
-|---|---|
-| **Type** | `float` (0.0-1.0) |
-| **Typical value** | 0.20 |
+- Type: `float`, `0.0..1.0`.
+- Active use:
+  - `diarization/speech_clip_factory.py` uses it in `_is_acceptable_overlap()`.
+- Meaning: a word/segment candidate is acceptable if overlap divided by word duration meets this threshold. This is an OR condition with `min_overlap_seconds`.
 
-**Used in:**
-- `diarization/speech_clip_factory.py:32` — in `_is_acceptable_overlap()`: word passes if `(overlap / word_duration) >= min_overlap_fraction_word - epsilon`
+### `min_overlap_seconds`
 
-**What code does:** One of two acceptance thresholds for word-segment overlap. A word is acceptably overlapped if the overlap fraction of the word's duration meets this threshold. Prevents "barely touching" overlaps from boundary jitter.
+- Type: `float`, non-negative.
+- Active use:
+  - `diarization/speech_clip_factory.py` uses it in `_is_acceptable_overlap()`.
+- Meaning: a word/segment candidate is acceptable if raw overlap seconds meet this threshold. This is an OR condition with `min_overlap_fraction_word`.
 
----
+### `fill_nearest`
 
-### min_overlap_seconds
+- Type: `bool`.
+- Active use:
+  - `diarization/speech_clip_factory.py` enables/disables nearest-segment fallback.
+  - `diarization/candidate_pool.py` includes nearest-distance search radius only when enabled.
+- Meaning: when no overlap candidate passes, allow fallback to the nearest segment within `max_nearest_distance`.
 
-| Attribute | Value |
-|---|---|
-| **Type** | `float` (seconds, >= 0.0) |
-| **Typical value** | 0.02 |
+### `max_nearest_distance`
 
-**Used in:**
-- `diarization/speech_clip_factory.py:30` — in `_is_acceptable_overlap()`: word passes if `overlap >= min_overlap_seconds - epsilon`
+- Type: `float`, non-negative.
+- Active use:
+  - `diarization/speech_clip_factory.py` caps nearest-segment fallback distance.
+  - `diarization/candidate_pool.py` uses it in candidate search radius when `fill_nearest` is true.
+- Meaning: maximum allowed gap for assigning an otherwise unassigned word to a nearby segment.
 
-**What code does:** Absolute floor on overlap duration. A word is acceptably overlapped if the raw overlap in seconds meets this threshold. Either this OR `min_overlap_fraction_word` passing is sufficient.
+### `anonymous_join_gap`
 
----
+- Type: `float`, non-negative.
+- Active use:
+  - `diarization/anonymous_clips.py` uses it, plus `epsilon`, to merge consecutive anonymous word spans.
+- Meaning: maximum gap for joining anonymous words into one anonymous clip.
 
-### fill_nearest
+### `merge_gap_seconds`
 
-| Attribute | Value |
-|---|---|
-| **Type** | `bool` |
-| **Typical value** | true |
+- Type: `float`, non-negative.
+- Active use:
+  - `diarization/speech_clip_factory.py` uses it in `SimpleMergeSelector` to merge adjacent same-speaker clips.
+- Meaning: initial post-processing merge gap for adjacent clips with the same speaker label.
 
-**Used in:**
-- `diarization/speech_clip_factory.py:130` — cached as `should_fill_nearest`; controls whether nearest-segment fallback is enabled in `_find_best_candidate()`
-- `diarization/candidate_pool.py:29` — if True, affects candidate pool search radius
+### `unfinished_clip_merge_max_length`
 
-**What code does:** When True and no segment passes overlap thresholds, the algorithm falls back to assigning the word to the nearest segment (by midpoint distance) within `max_nearest_distance`.
+- Type: `float`, non-negative.
+- Active use: none.
+- Commented references:
+  - `helpers/first_stitcher.py` references it inside commented-out first-stitching logic.
+- Meaning: stale first-stitching setting in the current runtime.
 
----
+### `identity_stitching_max_gap`
 
-### max_nearest_distance
+- Type: `float`, non-negative.
+- Active use:
+  - `helpers/identity_stitch.py` uses it in `IdentityMergeSelector` to merge adjacent clips with the same `identity`.
+- Meaning: maximum gap allowed when identity stitching same-speaker clips.
 
-| Attribute | Value |
-|---|---|
-| **Type** | `float` (seconds, >= 0.0) |
-| **Typical value** | 0.25 |
+### `identity_similarity_threshold`
 
-**Used in:**
-- `diarization/speech_clip_factory.py:131` — cached as `max_nearest_distance + epsilon`; used in `_find_best_candidate()` to cap the gap for nearest-segment fallback
-- `diarization/candidate_pool.py:29` — adjusts candidate pool search radius
+- Type: `float`, `0.0..1.0`.
+- Active use: none.
+- Meaning: legacy or planned threshold. The current identity stitching implementation only checks identity equality and `identity_stitching_max_gap`.
 
-**What code does:** Maximum gap between a word and a non-overlapping segment for nearest-assignment to apply. Keeps fallback conservative to avoid jumping speakers across long silences.
+### `expand_segments_to_fit_words`
 
----
+- Type: `bool`.
+- Active use:
+  - `diarization/speech_clip_factory.py` gates whether each clip expands bounds to include assigned words.
+- Meaning: optional post-processing that expands segment boundaries to contain all assigned word timings.
 
-### anonymous_join_gap
+### `expansion_limit_seconds`
 
-| Attribute | Value |
-|---|---|
-| **Type** | `float` (seconds, >= 0.0) |
-| **Typical value** | 0.15 |
+- Type: `float`, non-negative.
+- Active use:
+  - `diarization/speech_clip_factory.py` passes it into `SpeechClip.expand_bounds_to_include_words()`.
+  - `processing_results/speech_clip.py` uses it to cap boundary expansion.
+- Meaning: maximum amount each boundary may expand when `expand_segments_to_fit_words` is true.
 
-**Used in:**
-- `diarization/anonymous_clips.py:17` — radius for merging consecutive anonymous words: `radius = anonymous_join_gap + epsilon`
+### `scoring_mode`
 
-**What code does:** When a word has no segment assignment (neither overlap nor nearest), it becomes anonymous. Consecutive anonymous words within this gap are merged into a single anonymous segment.
+- Type: `ScoringMode` enum.
+- Active use:
+  - `diarization/speech_clip_factory.py` passes it into candidate scoring.
+  - `diarization/candidate_score.py` selects between overlap seconds, overlap fraction, and intersection-over-union scoring.
+- Allowed values:
+  - `overlap_seconds_then_midpoint`
+  - `overlap_fraction_word_then_midpoint`
+  - `iou_then_midpoint`
 
----
+### `prefer_shorter_on_tie`
 
-### merge_gap_seconds
+- Type: `bool`.
+- Active use:
+  - `diarization/speech_clip_factory.py` passes it into candidate scoring.
+  - `diarization/candidate_score.py` uses it as an additional tie breaker.
+- Meaning: when candidate scores are otherwise tied, prefer the shorter segment.
 
-| Attribute | Value |
-|---|---|
-| **Type** | `float` (seconds, >= 0.0) |
-| **Typical value** | 0.20 |
+### `max_backchannel_duration`
 
-**Used in:**
-- `diarization/speech_clip_factory.py:68` — in `SimpleMergeSelector.ShouldMerge()`: merges adjacent same-speaker segments separated by ≤ this gap
+- Type: `float`, non-negative.
+- Active use: none.
+- Commented references:
+  - `helpers/first_stitcher.py` references it inside commented-out backchannel merging logic.
+- Important note:
+  - Current `MarkBackchannelsCommand` does not use this setting. It uses text-only detection in `helpers/backchannel_marker.py`.
 
-**What code does:** Post-processing merge during initial speech clip creation: adjacent clips with the same speaker label separated by ≤ this gap are merged. Reduces over-segmentation from diarization.
+### `max_backchannel_prior_gap`
 
----
+- Type: `float`, non-negative.
+- Active use: none.
+- Commented references:
+  - `helpers/first_stitcher.py` references it inside commented-out backchannel merging logic.
+- Important note:
+  - Current `MarkBackchannelsCommand` does not use this setting.
 
-### unfinished_clip_merge_max_length
+### `max_backchannel_next_gap`
 
-| Attribute | Value |
-|---|---|
-| **Type** | `float` (seconds, >= 0.0) |
-| **Typical value** | 2.0 |
+- Type: `float`, non-negative.
+- Active use: none.
+- Commented references:
+  - `helpers/first_stitcher.py` references it inside commented-out backchannel merging logic.
+- Important note:
+  - Current `MarkBackchannelsCommand` does not use this setting.
 
-**Used in:**
-- `helpers/first_stitcher.py:77-78` — in `MergeUnfinishedSegmentsWithSameSpeakerOrAnonymous.ShouldMerge()`: merges an unfinished clip (no END_OF_TURN flag) with the following same-speaker clip if gap ≤ this value
+### `max_identity_backchannel_duration`
 
-**What code does:** During first-stitching, clips that are not flagged as turn-ends are merged with the next clip from the same speaker if the gap is small enough. Preserves conversational flow while respecting turn boundaries.
+- Type: `float`, non-negative.
+- Active use: none.
+- Commented references:
+  - `helpers/identity_stitch.py` references it inside commented-out `IdentityBackchannelMerger` logic.
 
----
+### `max_identity_backchannel_prior_gap`
 
-### identity_stitching_max_gap
+- Type: `float`, non-negative.
+- Active use: none.
+- Commented references:
+  - `helpers/identity_stitch.py` references it inside commented-out `IdentityBackchannelMerger` logic.
 
-| Attribute | Value |
-|---|---|
-| **Type** | `float` (seconds, >= 0.0) |
-| **Typical value** | 10.0 |
+### `max_identity_backchannel_next_gap`
 
-**Used in:**
-- `helpers/identity_stitch.py:85` — in `IdentityMergeSelector.ShouldMerge()`: merges clips with the same identified speaker if gap ≤ this value
+- Type: `float`, non-negative.
+- Active use: none.
+- Commented references:
+  - `helpers/identity_stitch.py` references it inside commented-out `IdentityBackchannelMerger` logic.
 
-**What code does:** During identity stitching, adjacent clips assigned to the same speaker (by name/identity) are merged if separated by at most this gap. Larger values allow merging across longer pauses.
+### `turn_end_probability_threshold`
 
----
+- Type: `float`, `0.0..1.0`.
+- Active use: none.
+- Commented references:
+  - `helpers/update_turn_end.py` references it inside commented-out Smart Turn logic.
+- Meaning in old pipeline: probability threshold for setting an end-of-turn flag.
 
-### identity_similarity_threshold
+### `tiny_clip_threshold`
 
-| Attribute | Value |
-|---|---|
-| **Type** | `float` (0.0-1.0) |
-| **Typical value** | 0.65 |
-
-**Used by commands:** NONE
-
-**Used by helpers:** NONE
-
-**What code does:** **DEFINED BUT NEVER USED.** Validated in settings (0.0-1.0 range at diarization_stitching_settings.py:199) but never referenced by any processing code. Intended as a cosine similarity threshold for identity stitching merging but not implemented.
-
----
-
-### expand_segments_to_fit_words
-
-| Attribute | Value |
-|---|---|
-| **Type** | `bool` |
-| **Typical value** | false |
-
-**Used in:**
-- `diarization/speech_clip_factory.py:161` — conditional: if True, iterates all clips and calls `clip.expand_bounds_to_include_words()`
-
-**What code does:** When True, after all word assignment, each segment's time boundaries are widened to fully contain all assigned words. Useful for UI rendering but reduces diarization boundary fidelity. Gated — code path is skipped when False (the default).
-
----
-
-### expansion_limit_seconds
-
-| Attribute | Value |
-|---|---|
-| **Type** | `float` (seconds, >= 0.0) |
-| **Typical value** | 300 |
-
-**Used in:**
-- `diarization/speech_clip_factory.py:163` — passed to `clip.expand_bounds_to_include_words()`
-- `processing_results/speech_clip.py:252,254` — caps how far start/end time can shift during expansion
-
-**What code does:** Maximum distance (seconds) a segment boundary can be expanded. Only relevant when `expand_segments_to_fit_words` is True. Prevents runaway expansion.
-
----
-
-### scoring_mode
-
-| Attribute | Value |
-|---|---|
-| **Type** | `ScoringMode` enum |
-| **Typical value** | `overlap_seconds_then_midpoint` |
-
-**Used in:**
-- `diarization/speech_clip_factory.py:132` — cached; passed to `score_candidate()` in `_find_best_candidate()`
-- `diarization/candidate_score.py:46-51` — determines primary scoring metric: overlap_seconds, overlap_fraction_word, or IOU
-
-**What code does:** Controls how candidate diarization segments are ranked for each word:
-- `overlap_seconds_then_midpoint` — raw overlap in seconds (ties broken by midpoint distance)
-- `overlap_fraction_word_then_midpoint` — overlap as fraction of word duration
-- `iou_then_midpoint` — intersection-over-union of intervals
-
----
-
-### prefer_shorter_on_tie
-
-| Attribute | Value |
-|---|---|
-| **Type** | `bool` |
-| **Typical value** | true |
-
-**Used in:**
-- `diarization/speech_clip_factory.py:133` — cached; passed to `score_candidate()`
-- `diarization/candidate_score.py:53` — when True, adds `-segment_duration` as an additional tiebreaker component
-
-**What code does:** When candidates score identically on primary metric + midpoint distance, prefers the shorter segment. Avoids bias toward long segments that happen to contain the word.
-
----
-
-### max_backchannel_duration
-
-| Attribute | Value |
-|---|---|
-| **Type** | `float` (seconds, >= 0.0) |
-| **Typical value** | 0.75 |
-
-**Used in:**
-- `helpers/first_stitcher.py:37` — in `BackchannelMerger.ShouldMerge()`: clips longer than this are never treated as backchannels
-
-**What code does:** Maximum duration for a clip to qualify as a backchannel utterance (e.g., "mm-hmm", "right"). All three backchannel thresholds (duration, prior gap, next gap) must be met simultaneously.
-
----
-
-### max_backchannel_prior_gap
-
-| Attribute | Value |
-|---|---|
-| **Type** | `float` (seconds, >= 0.0) |
-| **Typical value** | 0.25 |
-
-**Used in:**
-- `helpers/first_stitcher.py:43` — in `BackchannelMerger.ShouldMerge()`: maximum gap between clip and predecessor
-
-**What code does:** Backchannels must occur close to the preceding clip. If the prior gap is too large, the utterance is an independent contribution rather than a reactive backchannel.
-
----
-
-### max_backchannel_next_gap
-
-| Attribute | Value |
-|---|---|
-| **Type** | `float` (seconds, >= 0.0) |
-| **Typical value** | 1.0 |
-
-**Used in:**
-- `helpers/first_stitcher.py:52` — in `BackchannelMerger.ShouldMerge()`: maximum gap between clip and successor
-
-**What code does:** Backchannels must be followed by nearby speech. If the next clip is far away, the short utterance is standalone rather than mid-stream backchannel.
-
----
-
-### max_identity_backchannel_duration
-
-| Attribute | Value |
-|---|---|
-| **Type** | `float` (seconds, >= 0.0) |
-| **Typical value** | 3.0 |
-
-**Used in:**
-- `helpers/identity_stitch.py:43` — in `IdentityBackchannelMerger.ShouldMerge()`: clips longer than this are not merged as backchannels
-
-**What code does:** **DEFINED BUT EFFECTIVELY UNUSED.** Same concept as `max_backchannel_duration`, but intended for identity-based stitching. It is referenced only by `IdentityBackchannelMerger`; `apply_identity_stitching()` currently instantiates only `IdentityMergeSelector`, so this setting is not used by any reachable command path.
-
----
-
-### max_identity_backchannel_prior_gap
-
-| Attribute | Value |
-|---|---|
-| **Type** | `float` (seconds, >= 0.0) |
-| **Typical value** | 0.75 |
-
-**Used in:**
-- `helpers/identity_stitch.py:49` — in `IdentityBackchannelMerger.ShouldMerge()`: maximum gap to predecessor
-
-**What code does:** **DEFINED BUT EFFECTIVELY UNUSED.** Identity-stitching version of `max_backchannel_prior_gap`. It is referenced only by `IdentityBackchannelMerger`; `apply_identity_stitching()` currently instantiates only `IdentityMergeSelector`, so this setting is not used by any reachable command path.
-
----
-
-### max_identity_backchannel_next_gap
-
-| Attribute | Value |
-|---|---|
-| **Type** | `float` (seconds, >= 0.0) |
-| **Typical value** | 3.0 |
-
-**Used in:**
-- `helpers/identity_stitch.py:58` — in `IdentityBackchannelMerger.ShouldMerge()`: maximum gap to successor
-
-**What code does:** **DEFINED BUT EFFECTIVELY UNUSED.** Identity-stitching version of `max_backchannel_next_gap`. It is referenced only by `IdentityBackchannelMerger`; `apply_identity_stitching()` currently instantiates only `IdentityMergeSelector`, so this setting is not used by any reachable command path.
-
----
-
-### turn_end_probability_threshold
-
-| Attribute | Value |
-|---|---|
-| **Type** | `float` (0.0-1.0) |
-| **Typical value** | 0.8 |
-
-**Used in:**
-- `helpers/update_turn_end.py:40` — clips with `end_of_turn_probability >= threshold` get the `END_OF_TURN` flag set
-
-**What code does:** Threshold for the Smart Turn model's turn-end probability. Clips meeting or exceeding this probability are flagged as turn boundaries. These flags drive `unfinished_clip_merge_max_length` behavior in first-stitching.
-
----
-
-### tiny_clip_threshold
-
-| Attribute | Value |
-|---|---|
-| **Type** | `float` (seconds, >= 0.0) |
-| **Typical value** | 0.1 |
-
-**Used in:**
-- `helpers/tiny_clip_merger.py:20` — in `TinyClipMergeSelector.ShouldMerge()`: clips shorter than this are merged with the closest adjacent clip
-
-**What code does:** **DEFINED BUT EFFECTIVELY UNUSED.** The `TinyClipMergeSelector` class and `apply_tiny_stitching()` function exist in `helpers/tiny_clip_merger.py`, but `apply_tiny_stitching` is **never imported or called** from any command. The code is dead/unreachable.
-
----
+- Type: `float`, non-negative.
+- Active use: none.
+- Meaning: stale setting. No active helper or command currently reads it.
 
 ## VadSettings Fields
 
-All fields below live in `settings/vad_settings.py` and are accessed via `settings.vad.<field>`. They are all consumed in a single place: `helpers/audio_segmenter.py:32-39`, where they are unpacked and passed to the `NemoVadDetector` constructor, which passes them to the NeMo VAD model for inference and post-processing.
+All `VadSettings` fields are passed from `helpers/audio_segmenter.py` to
+`NemoVadDetector`. The settings model itself does not validate their ranges.
 
-### model_name
+### `model_name`
 
-| Attribute | Value |
-|---|---|
-| **Type** | `str` |
-| **Typical value** | `vad_multilingual_frame_marblenet` |
+- Type: `str`.
+- Active use:
+  - `helpers/audio_segmenter.py` passes it to `NemoVadDetector`.
+- Meaning: pretrained NeMo VAD model name.
 
-**Used in:**
-- `helpers/audio_segmenter.py:32` → `vad/nemo_vad_detector.py:53` — loads pretrained NeMo VAD model by name
+### `onset`
 
-### onset
+- Type: `float`.
+- Active use:
+  - `helpers/audio_segmenter.py` passes it to `NemoVadDetector`.
+- Meaning: probability threshold to enter speech.
 
-| Attribute | Value |
-|---|---|
-| **Type** | `float` (0.0-1.0) |
-| **Typical value** | 0.7 |
+### `offset`
 
-**Used in:**
-- `helpers/audio_segmenter.py:34` → `vad/nemo_vad_detector.py:78` — probability threshold to transition from silence to speech (hysteresis: must be >= offset)
+- Type: `float`.
+- Active use:
+  - `helpers/audio_segmenter.py` passes it to `NemoVadDetector`.
+- Meaning: probability threshold to leave speech.
 
-### offset
+### `min_duration_on`
 
-| Attribute | Value |
-|---|---|
-| **Type** | `float` (0.0-1.0) |
-| **Typical value** | 0.4 |
+- Type: `float`.
+- Active use:
+  - `helpers/audio_segmenter.py` passes it to `NemoVadDetector`.
+- Meaning: minimum speech region duration used by VAD post-processing.
 
-**Used in:**
-- `helpers/audio_segmenter.py:35` → `vad/nemo_vad_detector.py:80` — probability threshold to transition from speech to silence
+### `min_duration_off`
 
-### min_duration_on
+- Type: `float`.
+- Active use:
+  - `helpers/audio_segmenter.py` passes it to `NemoVadDetector`.
+- Meaning: minimum silence duration used by VAD post-processing.
 
-| Attribute | Value |
-|---|---|
-| **Type** | `float` (seconds) |
-| **Typical value** | 0.3 |
+### `pad_onset`
 
-**Used in:**
-- `helpers/audio_segmenter.py:36` → NeMo VAD post-processing — speech regions shorter than this are discarded (filters clicks, coughs, transient noise)
+- Type: `float`.
+- Active use:
+  - `helpers/audio_segmenter.py` passes it to `NemoVadDetector`.
+- Meaning: padding added before speech onset.
 
-### min_duration_off
+### `pad_offset`
 
-| Attribute | Value |
-|---|---|
-| **Type** | `float` (seconds) |
-| **Typical value** | 0.3 |
+- Type: `float`.
+- Active use:
+  - `helpers/audio_segmenter.py` passes it to `NemoVadDetector`.
+- Meaning: padding added after speech offset.
 
-**Used in:**
-- `helpers/audio_segmenter.py:37` → NeMo VAD post-processing — silence regions shorter than this are bridged (treated as speech, prevents choppy segmentation)
+## Runtime-Unused Settings
 
-### pad_onset
+Top-level `SessionSettings` fields with no active runtime use:
 
-| Attribute | Value |
-|---|---|
-| **Type** | `float` (seconds) |
-| **Typical value** | 0.1 |
+- `adventure_settings`
+- `turn_end_updated_path`
+- `first_stitched_path`
+- `high_confidence_similarity_threshold`
 
-**Used in:**
-- `helpers/audio_segmenter.py:38` → `vad/nemo_vad_detector.py:81` — padding added before speech onset to capture plosive consonants and breath
+Runtime-unused derived property:
 
-### pad_offset
+- `number_of_speakers`
 
-| Attribute | Value |
-|---|---|
-| **Type** | `float` (seconds) |
-| **Typical value** | 0.1 |
+`DiarizationStitchingSettings` fields with no active runtime use:
 
-**Used in:**
-- `helpers/audio_segmenter.py:39` → `vad/nemo_vad_detector.py:82` — padding added after speech offset to capture word-final sounds
+- `unfinished_clip_merge_max_length`
+- `identity_similarity_threshold`
+- `max_backchannel_duration`
+- `max_backchannel_prior_gap`
+- `max_backchannel_next_gap`
+- `max_identity_backchannel_duration`
+- `max_identity_backchannel_prior_gap`
+- `max_identity_backchannel_next_gap`
+- `turn_end_probability_threshold`
+- `tiny_clip_threshold`
 
----
+## Counts
 
-## Summary
+| Category | Total settings | Active runtime use | Runtime-unused |
+|---|---:|---:|---:|
+| `SessionSettings` fields | 36 | 32 | 4 |
+| `DiarizationStitchingSettings` fields | 21 | 11 | 10 |
+| `VadSettings` fields | 7 | 7 | 0 |
+| **Total settings fields** | **64** | **50** | **14** |
 
-### Statistics
-
-| Category | Total | Actively Used | Unused |
-|---|---|---|---|
-| SessionSettings top-level | 36 (incl. property) | 33 | 3 |
-| DiarizationStitchingSettings | 20 | 15 | 5 |
-| VadSettings | 7 | 7 | 0 |
-| **Total** | **63** | **55** | **8** |
-
-### Unused Settings
-
-| Setting | Location | Notes |
-|---|---|---|
-| `high_confidence_similarity_threshold` | SessionSettings | Validated but never referenced. Legacy/planned. |
-| `adventure_settings` (pcs, glossary) | SessionSettings | `to_prompt_fragment()` exists but is never called. Required in YAML but serves no purpose. Also has a bug (line 67 does not concatenate). |
-| `number_of_speakers` | SessionSettings (property) | Property exists but never called. DiariZen infers speaker count automatically. |
-| `identity_similarity_threshold` | DiarizationStitchingSettings | Validated but never referenced. Intended for identity stitching but not implemented. |
-| `max_identity_backchannel_duration` | DiarizationStitchingSettings | Referenced only by `IdentityBackchannelMerger`, which is not wired into `apply_identity_stitching()`. |
-| `max_identity_backchannel_prior_gap` | DiarizationStitchingSettings | Referenced only by `IdentityBackchannelMerger`, which is not wired into `apply_identity_stitching()`. |
-| `max_identity_backchannel_next_gap` | DiarizationStitchingSettings | Referenced only by `IdentityBackchannelMerger`, which is not wired into `apply_identity_stitching()`. |
-| `tiny_clip_threshold` | DiarizationStitchingSettings | Code exists in `tiny_clip_merger.py` but `apply_tiny_stitching()` is never imported or called — dead code. |
-
-### Path Settings (16 total)
-
-These 16 settings are all `Path` fields that define input/output file locations for pipeline steps. They form the wiring of the pipeline DAG:
-
-```
-audio_file
-  → cleaned_audio_file
-      → segments_path
-      → transcript_file → aligned_transcript_path → confidence_transcript_path
-      → base_diarized_path → diarizationlm_processed_path
-          → turn_end_updated_path → first_stitched_path
-          → dangling_sentence_fix_path → speech_clips_with_embedding
-              → identified_speaker_path → identity_stitched_path
-                  → punctuated_text_path
-                  → indeterminate_speakers_path
-```
-
-### Terminal Output Files (not consumed by any downstream command)
-
-- `first_stitched_path` — written by first-stitch-clips but not read by any downstream command
-- `punctuated_text_path` — final output
-- `indeterminate_speakers_path` — final output
+`number_of_speakers` is a derived property, not a settings field; it is also runtime-unused.

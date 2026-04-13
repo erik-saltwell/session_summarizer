@@ -8,6 +8,7 @@ from session_summarizer.utils import common_paths
 
 from ..audio.speaker_tools import save_segment_as_speaker_audio_clip
 from ..processing_results import SpeechClipSet
+from ..processing_results.speech_clip import SpeechClipFlags
 from ..protocols import (
     SessionSettings,
 )
@@ -71,6 +72,7 @@ class CreateSpeakerClipsCommand(SessionProcessingCommand):
             is_anonymous: bool = clip.is_anonymous
             is_identity_none: bool = clip.identity is None
             is_multispeaker: bool = clip.is_multispeaker
+            is_backchannel: bool = clip.has_flag(SpeechClipFlags.IS_BACKCHANNEL)
 
             use_multi_speaker_clips: bool = self.use_multi_speaker_clips
             similarity_residual: float = clip.similarity_residual if clip.similarity_residual is not None else 0.0
@@ -82,6 +84,7 @@ class CreateSpeakerClipsCommand(SessionProcessingCommand):
 
             should_save: bool = (
                 (not is_anonymous)
+                and (not is_backchannel)
                 and (not is_identity_none)
                 and (use_multi_speaker_clips or (not is_multispeaker))
                 and similarity_residual > target_residual
@@ -92,6 +95,7 @@ class CreateSpeakerClipsCommand(SessionProcessingCommand):
                 f"anonymous: {is_anonymous}, "
                 f"has_identity: {not is_identity_none}, "
                 f"multispeaker: {is_multispeaker}, "
+                f"backchannel: {is_backchannel}, "
                 f"use_multispeaker: {use_multi_speaker_clips}, "
                 f"residual: {similarity_residual}, "
                 f"target_residual: {target_residual},"

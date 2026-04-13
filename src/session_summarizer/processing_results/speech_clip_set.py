@@ -34,6 +34,9 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol, TextPhraseSet):
     def save_to_human_format(self, path: Path, include_details: bool = False) -> None:
         with path.open("w", encoding="utf-8") as f:
             for clip in self:
+                if clip.has_flag(SpeechClipFlags.IS_BACKCHANNEL):
+                    continue
+
                 speakers: str
                 if clip.identity is None:
                     speakers = ", ".join(sorted(clip.speakers))
@@ -82,6 +85,8 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol, TextPhraseSet):
         self.sort_clips()
         with path.open("w", encoding="utf-8") as f:
             for clip in self:
+                if clip.has_flag(SpeechClipFlags.IS_BACKCHANNEL):
+                    continue
                 speaker = clip.identity if clip.identity else "+".join(sorted(clip.speakers))
 
                 if include_timestamps:
