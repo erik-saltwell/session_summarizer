@@ -120,18 +120,6 @@
             ]
         },
         {
-            "name": "first-stitching",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "session_summarizer",
-            "console": "integratedTerminal",
-            "args": [
-                "apply-first-stitching",
-                "--session",
-                "test",
-            ]
-        },
-        {
             "name": "gen-settings",
             "type": "debugpy",
             "request": "launch",
@@ -175,6 +163,18 @@
                 "apply-identity-stitching",
                 "--session",
                 "test",
+            ]
+        },
+        {
+            "name": "mark-backchannels",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "mark-backchannels",
+                "--session",
+                "20260225",
             ]
         },
         {
@@ -253,18 +253,6 @@
             "console": "integratedTerminal",
             "args": [
                 "transcribe",
-                "--session",
-                "test",
-            ]
-        },
-        {
-            "name": "turn-end",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "session_summarizer",
-            "console": "integratedTerminal",
-            "args": [
-                "update-turn-end",
                 "--session",
                 "test",
             ]

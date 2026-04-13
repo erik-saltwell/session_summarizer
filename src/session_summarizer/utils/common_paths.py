@@ -10,7 +10,6 @@ _FRAGMENTS_DIR: Path = _PROJECT_ROOT / "fragments"
 _VOICE_SAMPLES: Path = _PROJECT_ROOT / "voice_samples"
 _REGISTERED_SPEAKERS_FILE = "registered_speakers.yaml"
 _LOGS_DIR = _PROJECT_ROOT / "logs"
-_REPORTS_DIR = _PROJECT_ROOT / "test_reports"
 _TEST_DATA = _PROJECT_ROOT / "test_meeting"
 _TEST_TRANSCRIPT_FILENAME = "SimpleTranscript.json"
 _TEST_ORIGINAL_FILEPATH = "original.m4a"
@@ -45,15 +44,6 @@ def fragments_dir() -> Path:
     return _FRAGMENTS_DIR
 
 
-def reports_dir() -> Path:
-    return _REPORTS_DIR
-
-
-def generate_reportfile_path() -> Path:
-    timestamp: str = timestamp_filename(".txt")
-    return logs_dir() / timestamp
-
-
 def session_dir(session_id: str) -> Path:
     return data_dir() / session_id
 
@@ -80,8 +70,8 @@ def build_speakers_file_path() -> Path:
     return voice_samples_dir() / _REGISTERED_SPEAKERS_FILE
 
 
-def voice_sample_wav_file(speaker_name: str) -> Path:
-    return voice_samples_dir() / (speaker_name + ".wav")
+# def voice_sample_wav_file(speaker_name: str) -> Path:
+#     return voice_samples_dir() / (speaker_name + ".wav")
 
 
 def ensure_session(session_id: str) -> None:
@@ -102,8 +92,8 @@ def test_transcript_path() -> Path:
     return test_data_dir() / _TEST_TRANSCRIPT_FILENAME
 
 
-def test_recording_path() -> Path:
-    return test_data_dir() / _TEST_ORIGINAL_FILEPATH
+# def test_recording_path() -> Path:
+#     return test_data_dir() / _TEST_ORIGINAL_FILEPATH
 
 
 def is_test_session(session_id: str) -> bool:

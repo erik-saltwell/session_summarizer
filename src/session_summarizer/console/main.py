@@ -24,8 +24,8 @@ from ..commands.compute_segments import ComputeSegmentsCommand
 from ..commands.create_speaker_clips import CreateSpeakerClipsCommand
 from ..commands.diarizationlm_command import DiarizationLMCommand
 from ..commands.diarize_audio import DiarizeAudioCommand
-from ..commands.first_stitch_clips import FirstStitchClipsCommand
 from ..commands.identify_speakers import IdentifySpeakersCommand
+from ..commands.mark_backchannels import MarkBackchannelsCommand
 from ..commands.merge_speaker_clips import MergeSpeakerClipsCommand
 from ..commands.register_speakers import RegisterSpeakersCommand
 from ..commands.remove_outlier_speaker_clips import RemoveOutlierSpeakerClipsCommand
@@ -33,7 +33,6 @@ from ..commands.score_confidence import ScoreConfidenceCommand
 from ..commands.stitch_identities import StitichIdentitiesCommand
 from ..commands.test_command import TestCommand
 from ..commands.transcribe_audio import TranscribeAudioCommand
-from ..commands.update_turn_end import UpdateTurnEndCommand
 from ..commands.validate_diarization import ValidateDiarizationCommand
 from ..commands.validate_transcribers import ValidateTranscribersCommand
 from ..logging import CompositeLogger, FileLogger, RichConsoleLogger
@@ -254,6 +253,19 @@ first_stitched_path: first_stitched.json
 # Example:
 #   identity_stitched_path: identity_stitched.json
 identity_stitched_path: identity_stitched.json
+
+# ---------------------------------------------------------------------------
+# backchannel_marked_path  (REQUIRED)
+# ---------------------------------------------------------------------------
+# Path to the SpeechClipSet JSON file with IS_BACKCHANNEL flags applied.
+# Written by the mark-backchannels command and read by the punctuate-text
+# command. Relative paths are resolved from this file's directory.
+#
+# Default: backchannel_marked.json
+#
+# Example:
+#   backchannel_marked_path: backchannel_marked.json
+backchannel_marked_path: backchannel_marked.json
 
 # ---------------------------------------------------------------------------
 # diarizationlm_processed_path  (REQUIRED)
@@ -847,16 +859,16 @@ def align_transcription(
     command.execute(logger)
 
 
-@app.command("apply-first-stitching")
-def apply_first_stitching(
-    session: str = typer.Option(..., "--session", "-s", help="ID of the session to process"),
-) -> None:
-    """Score each speech clip with end-of-turn probability and set the END_OF_TURN flag."""
-    confirm_session(session)
-    _set_seed(session)
-    logger: LoggingProtocol = create_logger()
-    command: FirstStitchClipsCommand = FirstStitchClipsCommand(session, force=True)
-    command.execute(logger)
+# @app.command("apply-first-stitching")
+# def apply_first_stitching(
+#     session: str = typer.Option(..., "--session", "-s", help="ID of the session to process"),
+# ) -> None:
+#     """Score each speech clip with end-of-turn probability and set the END_OF_TURN flag."""
+#     confirm_session(session)
+#     _set_seed(session)
+#     logger: LoggingProtocol = create_logger()
+#     command: FirstStitchClipsCommand = FirstStitchClipsCommand(session, force=True)
+#     command.execute(logger)
 
 
 @app.command("apply-identity-stitching")
@@ -1020,6 +1032,18 @@ def identify_speakers(
     command.execute(logger)
 
 
+@app.command("mark-backchannels")
+def mark_backchannels(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to process"),
+) -> None:
+    """Mark short acknowledgement clips as backchannels."""
+    confirm_session(session)
+    _set_seed(session)
+    logger: LoggingProtocol = create_logger()
+    command: MarkBackchannelsCommand = MarkBackchannelsCommand(session, force=True)
+    command.execute(logger)
+
+
 @app.command("punctuate-text")
 def punctuate_text(
     session: str = typer.Option(..., "--session", "-s", help="ID of the session to process"),
@@ -1072,16 +1096,16 @@ def transcribe(
     command.execute(logger)
 
 
-@app.command("update-turn-end")
-def update_turn_end(
-    session: str = typer.Option(..., "--session", "-s", help="ID of the session to process"),
-) -> None:
-    """Score each speech clip with end-of-turn probability and set the END_OF_TURN flag."""
-    confirm_session(session)
-    _set_seed(session)
-    logger: LoggingProtocol = create_logger()
-    command: UpdateTurnEndCommand = UpdateTurnEndCommand(session, force=True)
-    command.execute(logger)
+# @app.command("update-turn-end")
+# def update_turn_end(
+#     session: str = typer.Option(..., "--session", "-s", help="ID of the session to process"),
+# ) -> None:
+#     """Score each speech clip with end-of-turn probability and set the END_OF_TURN flag."""
+#     confirm_session(session)
+#     _set_seed(session)
+#     logger: LoggingProtocol = create_logger()
+#     command: UpdateTurnEndCommand = UpdateTurnEndCommand(session, force=True)
+#     command.execute(logger)
 
 
 @app.command("validate-diarization")

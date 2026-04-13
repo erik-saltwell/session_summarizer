@@ -16,52 +16,51 @@ from ..protocols import (
     SessionSettings,
 )
 
+# class IdentityBackchannelMerger(MergeSelector):
+#     def ShouldMerge(
+#         self,
+#         prior_clip: SpeechClip,
+#         current_clip: SpeechClip,
+#         next_clip: SpeechClip | None,
+#         settings: SessionSettings,
+#         logger: LoggingProtocol,
+#     ) -> MergeType:
+#         if (
+#             prior_clip.identity is None
+#             or current_clip.identity is None
+#             or next_clip is None
+#             or next_clip.identity is None
+#         ):
+#             return MergeType.NO_MERGE
 
-class IdentityBackchannelMerger(MergeSelector):
-    def ShouldMerge(
-        self,
-        prior_clip: SpeechClip,
-        current_clip: SpeechClip,
-        next_clip: SpeechClip | None,
-        settings: SessionSettings,
-        logger: LoggingProtocol,
-    ) -> MergeType:
-        if (
-            prior_clip.identity is None
-            or current_clip.identity is None
-            or next_clip is None
-            or next_clip.identity is None
-        ):
-            return MergeType.NO_MERGE
+#         if prior_clip.identity == current_clip.identity:
+#             return MergeType.NO_MERGE
 
-        if prior_clip.identity == current_clip.identity:
-            return MergeType.NO_MERGE
+#         if not prior_clip.identity == next_clip.identity:
+#             return MergeType.NO_MERGE
 
-        if not prior_clip.identity == next_clip.identity:
-            return MergeType.NO_MERGE
+#         if current_clip.duration > settings.diarization_stitching.max_identity_backchannel_duration:
+#             return MergeType.NO_MERGE
 
-        if current_clip.duration > settings.diarization_stitching.max_identity_backchannel_duration:
-            return MergeType.NO_MERGE
+#         if not clips_are_close_enough(
+#             prior_clip,
+#             current_clip,
+#             settings.diarization_stitching.max_identity_backchannel_prior_gap,
+#             settings.epsilon,
+#             logger,
+#         ):
+#             return MergeType.NO_MERGE
 
-        if not clips_are_close_enough(
-            prior_clip,
-            current_clip,
-            settings.diarization_stitching.max_identity_backchannel_prior_gap,
-            settings.epsilon,
-            logger,
-        ):
-            return MergeType.NO_MERGE
+#         if not clips_are_close_enough(
+#             current_clip,
+#             next_clip,
+#             settings.diarization_stitching.max_identity_backchannel_next_gap,
+#             settings.epsilon,
+#             logger,
+#         ):
+#             return MergeType.NO_MERGE
 
-        if not clips_are_close_enough(
-            current_clip,
-            next_clip,
-            settings.diarization_stitching.max_identity_backchannel_next_gap,
-            settings.epsilon,
-            logger,
-        ):
-            return MergeType.NO_MERGE
-
-        return MergeType.MERGE_ALL_THREE
+#         return MergeType.MERGE_ALL_THREE
 
 
 class IdentityMergeSelector(MergeSelector):

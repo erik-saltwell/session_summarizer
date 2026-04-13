@@ -233,6 +233,7 @@ __marimo__/
 #   - all files in subdirectories (speaker clip folders) are tracked by default
 voice_samples/*.wav
 voice_samples/.*/
+voice_samples/temp/
 
 # Keep data directory scaffolding, ignore generated data files
 /data/*

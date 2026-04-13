@@ -271,7 +271,6 @@ each setting and what the code actually does with the value.
 
 **Used by commands:**
 - `FirstStitchClipsCommand` (`commands/first_stitch_clips.py:23`) — output path
-- `CompareFulltextCommand` (`commands/compare_fulltext.py:53`) — lists files
 
 **What code does:** Stores SpeechClipSet after backchannel merging and unfinished-segment merging. Created by first-stitch-clips. **Note:** This path is written but never read as input by any other command in the current pipeline — it appears to be an intermediate artifact that was part of an older pipeline ordering.
 
@@ -290,7 +289,6 @@ each setting and what the code actually does with the value.
 - `PunctuateTextCommand` (`commands/punctuate_text.py:21`) — input
 - `IndeterminantSpeakerAssignmentCommand` (`commands/indeterminate_speaker_assignment.py:21`) — input
 - `TestCommand` (`commands/test_command.py:27,44,60`) — validation
-- `CompareFulltextCommand` (`commands/compare_fulltext.py:53`) — lists files
 - `ValidateDiarizationCommand` (`commands/validate_diarization.py:32`) — validation
 
 **What code does:** Stores SpeechClipSet after identity-based stitching (merging adjacent clips with same identified speaker within `identity_stitching_max_gap`). Created by stitch-identities, consumed by punctuate-text and indeterminate-speaker-assignment.
@@ -326,7 +324,6 @@ each setting and what the code actually does with the value.
 
 **Used by commands:**
 - `IndeterminantSpeakerAssignmentCommand` (`commands/indeterminate_speaker_assignment.py:22`) — output path
-- `CompareFulltextCommand` (`commands/compare_fulltext.py:54`) — lists files
 - `ValidateDiarizationCommand` (`commands/validate_diarization.py:33`) — validation
 
 **What code does:** Stores SpeechClipSet where clips with `similarity_residual < speaker_identity_assignment_threshold` have been reassigned to `UNASSIGNED_SPEAKER_NAME`. Created by indeterminate-speaker-assignment. **Note:** This path is written but never read as input by any downstream command — it is a terminal output file.
@@ -359,7 +356,6 @@ each setting and what the code actually does with the value.
 
 **Used by commands:**
 - `PunctuateTextCommand` (`commands/punctuate_text.py:22`) — output path
-- `CompareFulltextCommand` (`commands/compare_fulltext.py:54`) — lists files
 
 **What code does:** Final SpeechClipSet with punctuation and capitalisation applied to clip transcripts. Created by punctuate-text. Terminal output file — not read as input by any downstream command.
 
@@ -407,7 +403,7 @@ each setting and what the code actually does with the value.
 - `ScoreConfidenceCommand` (`commands/score_confidence.py:25`) — input
 - `ValidateTranscribersCommand` (`commands/validate_transcribers.py:60`) — input
 
-**What code does:** Stores VAD-based segment boundaries (silence-aware cut points). Created by compute-segments and consumed by all downstream commands that need to process audio in chunks (transcription, alignment, confidence scoring, diarization, embeddings).
+**What code does:** Stores VAD-based segment boundaries (silence-aware cut points). Created by compute-segments. The `short` segment set is consumed by transcription and confidence scoring; the `long` segment set is consumed by forced alignment. Diarization and add-embeddings declare `segments_path` as an input dependency, but their current helper code does not read segment chunks directly.
 
 ---
 
@@ -424,7 +420,7 @@ each setting and what the code actually does with the value.
 **Used by helpers:**
 - `helpers/audio_segmenter.py:50` — passed to `compute_segments()` as `min_length` when `mode="short"`
 
-**What code does:** In short-chunking mode (used for Canary transcription), segments shorter than this are merged with neighbours. Works as a pair with `max_segment_length_short`. Validated that `min < max` in model validator.
+**What code does:** In short-chunking mode (used for Canary transcription and confidence scoring), this is the earliest eligible distance from the current segment start where the splitter will consider a silence cut. The splitter does not run a separate "merge short segments" post-pass; a trailing final segment can still be shorter than this. Works as a pair with `max_segment_length_short`. Validated that `min < max` in model validator.
 
 ---
 
@@ -458,7 +454,7 @@ each setting and what the code actually does with the value.
 **Used by helpers:**
 - `helpers/audio_segmenter.py:54` — passed to `compute_segments()` as `min_length` when `mode="long"`
 
-**What code does:** In long-chunking mode (used for OOM-sensitive operations like diarization and embedding extraction), segments shorter than this are merged with neighbours.
+**What code does:** In long-chunking mode (currently used by forced alignment), this is the earliest eligible distance from the current segment start where the splitter will consider a silence cut. The splitter does not run a separate "merge short segments" post-pass; a trailing final segment can still be shorter than this.
 
 ---
 
@@ -475,7 +471,7 @@ each setting and what the code actually does with the value.
 **Used by helpers:**
 - `helpers/audio_segmenter.py:54` — passed to `compute_segments()` as `max_length` when `mode="long"`
 
-**What code does:** In long-chunking mode, no segment exceeds this duration. Tune down if you see CUDA OOM errors, or up if GPU has headroom.
+**What code does:** In long-chunking mode, no non-final segment exceeds this duration; if no silence gap exists within the allowed window, the splitter force-cuts at `max_segment_length_long`. Tune down if you see CUDA OOM errors in forced alignment, or up if GPU has headroom.
 
 ---
 
@@ -681,9 +677,9 @@ each setting and what the code actually does with the value.
 **Used by commands:** None directly
 
 **Used by:**
-- `console/main.py:52-59` — `_set_seed()` function sets seeds for Python `random`, NumPy, PyTorch (CPU + CUDA) before every CLI command invocation
+- `console/main.py:52-59` — `_set_seed()` function sets seeds for Python `random`, NumPy, PyTorch (CPU + CUDA) before most session-scoped CLI command invocations
 
-**What code does:** Sets deterministic random seeds across all frameworks before each command runs. Called via `_set_seed(session_id)` at the start of every Typer command handler.
+**What code does:** Sets deterministic random seeds across all frameworks for most session-scoped commands. Commands that do not take a session ID or operate on global speaker clips/settings (for example `clear-logs`, `merge-speaker-clips`, `remove-outlier-speaker-clips`, `register-speakers`, and `generate-sample-settings`) do not call `_set_seed()`.
 
 ---
 
@@ -949,7 +945,7 @@ All fields below live in `settings/diarization_stitching_settings.py` and are ac
 **Used in:**
 - `helpers/identity_stitch.py:43` — in `IdentityBackchannelMerger.ShouldMerge()`: clips longer than this are not merged as backchannels
 
-**What code does:** Same concept as `max_backchannel_duration` but applied during identity-based stitching. Allows longer clips (up to 3s vs 0.75s) to be treated as backchannels because identity stitching operates at a coarser level.
+**What code does:** **DEFINED BUT EFFECTIVELY UNUSED.** Same concept as `max_backchannel_duration`, but intended for identity-based stitching. It is referenced only by `IdentityBackchannelMerger`; `apply_identity_stitching()` currently instantiates only `IdentityMergeSelector`, so this setting is not used by any reachable command path.
 
 ---
 
@@ -963,7 +959,7 @@ All fields below live in `settings/diarization_stitching_settings.py` and are ac
 **Used in:**
 - `helpers/identity_stitch.py:49` — in `IdentityBackchannelMerger.ShouldMerge()`: maximum gap to predecessor
 
-**What code does:** Identity-stitching version of `max_backchannel_prior_gap`. Allows wider prior gaps (0.75s vs 0.25s) for the same reason.
+**What code does:** **DEFINED BUT EFFECTIVELY UNUSED.** Identity-stitching version of `max_backchannel_prior_gap`. It is referenced only by `IdentityBackchannelMerger`; `apply_identity_stitching()` currently instantiates only `IdentityMergeSelector`, so this setting is not used by any reachable command path.
 
 ---
 
@@ -977,7 +973,7 @@ All fields below live in `settings/diarization_stitching_settings.py` and are ac
 **Used in:**
 - `helpers/identity_stitch.py:58` — in `IdentityBackchannelMerger.ShouldMerge()`: maximum gap to successor
 
-**What code does:** Identity-stitching version of `max_backchannel_next_gap`. Allows wider next gaps (3.0s vs 1.0s).
+**What code does:** **DEFINED BUT EFFECTIVELY UNUSED.** Identity-stitching version of `max_backchannel_next_gap`. It is referenced only by `IdentityBackchannelMerger`; `apply_identity_stitching()` currently instantiates only `IdentityMergeSelector`, so this setting is not used by any reachable command path.
 
 ---
 
@@ -1091,10 +1087,10 @@ All fields below live in `settings/vad_settings.py` and are accessed via `settin
 
 | Category | Total | Actively Used | Unused |
 |---|---|---|---|
-| SessionSettings top-level | 35 (incl. property) | 31 | 4 |
-| DiarizationStitchingSettings | 20 | 19 | 1 |
+| SessionSettings top-level | 36 (incl. property) | 33 | 3 |
+| DiarizationStitchingSettings | 20 | 15 | 5 |
 | VadSettings | 7 | 7 | 0 |
-| **Total** | **62** | **57** | **5** |
+| **Total** | **63** | **55** | **8** |
 
 ### Unused Settings
 
@@ -1104,11 +1100,14 @@ All fields below live in `settings/vad_settings.py` and are accessed via `settin
 | `adventure_settings` (pcs, glossary) | SessionSettings | `to_prompt_fragment()` exists but is never called. Required in YAML but serves no purpose. Also has a bug (line 67 does not concatenate). |
 | `number_of_speakers` | SessionSettings (property) | Property exists but never called. DiariZen infers speaker count automatically. |
 | `identity_similarity_threshold` | DiarizationStitchingSettings | Validated but never referenced. Intended for identity stitching but not implemented. |
+| `max_identity_backchannel_duration` | DiarizationStitchingSettings | Referenced only by `IdentityBackchannelMerger`, which is not wired into `apply_identity_stitching()`. |
+| `max_identity_backchannel_prior_gap` | DiarizationStitchingSettings | Referenced only by `IdentityBackchannelMerger`, which is not wired into `apply_identity_stitching()`. |
+| `max_identity_backchannel_next_gap` | DiarizationStitchingSettings | Referenced only by `IdentityBackchannelMerger`, which is not wired into `apply_identity_stitching()`. |
 | `tiny_clip_threshold` | DiarizationStitchingSettings | Code exists in `tiny_clip_merger.py` but `apply_tiny_stitching()` is never imported or called — dead code. |
 
-### Path Settings (15 total)
+### Path Settings (16 total)
 
-These 15 settings are all `Path` fields that define input/output file locations for pipeline steps. They form the wiring of the pipeline DAG:
+These 16 settings are all `Path` fields that define input/output file locations for pipeline steps. They form the wiring of the pipeline DAG:
 
 ```
 audio_file

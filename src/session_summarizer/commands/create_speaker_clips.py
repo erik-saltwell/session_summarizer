@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -13,6 +14,30 @@ from ..protocols import (
 from .clean_audio import CleanAudioCommand
 from .identify_speakers import IdentifySpeakersCommand
 from .session_processing_command import SessionProcessingCommand
+
+
+def _resolve_temp_folder(temp_folder: Path) -> Path:
+    voice_samples_root = common_paths.voice_samples_dir().resolve()
+    resolved = (voice_samples_root / temp_folder).resolve()
+    if resolved == voice_samples_root:
+        raise ValueError("Refusing to empty the voice_samples root; pass a temp subdirectory instead.")
+    if not resolved.is_relative_to(voice_samples_root):
+        raise ValueError(f"Temp folder must resolve inside {voice_samples_root}, got {resolved}")
+    return resolved
+
+
+def _empty_temp_folder(temp_folder: Path) -> bool:
+    if not temp_folder.exists():
+        return False
+    if not temp_folder.is_dir():
+        raise ValueError(f"Temp folder exists and is not a directory: {temp_folder}")
+
+    for item in temp_folder.iterdir():
+        if item.is_dir():
+            shutil.rmtree(item)
+        else:
+            item.unlink()
+    return True
 
 
 @dataclass
@@ -30,6 +55,10 @@ class CreateSpeakerClipsCommand(SessionProcessingCommand):
         self.dependencies.append(CleanAudioCommand(self.session_id))
 
     def process_session(self, settings: SessionSettings, session_dir: Path) -> None:
+        temp_folder = _resolve_temp_folder(self.temp_folder)
+        if _empty_temp_folder(temp_folder):
+            self.report_message(f"Emptied speaker clip temp folder: {temp_folder}")
+
         cleaned_audio_path = session_dir / settings.cleaned_audio_file
         identified_clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.identified_speaker_path)
 
@@ -39,18 +68,40 @@ class CreateSpeakerClipsCommand(SessionProcessingCommand):
         speaker_durations: dict[str, float] = {}
 
         for clip in identified_clips:
-            if clip.is_anonymous or clip.identity is None:
+            is_anonymous: bool = clip.is_anonymous
+            is_identity_none: bool = clip.identity is None
+            is_multispeaker: bool = clip.is_multispeaker
+
+            use_multi_speaker_clips: bool = self.use_multi_speaker_clips
+            similarity_residual: float = clip.similarity_residual if clip.similarity_residual is not None else 0.0
+            target_residual: float = (
+                settings.speaker_clip_minimum_similarity_residual
+                if settings.speaker_clip_minimum_similarity_residual is not None
+                else 1.00
+            )
+
+            should_save: bool = (
+                (not is_anonymous)
+                and (not is_identity_none)
+                and (use_multi_speaker_clips or (not is_multispeaker))
+                and similarity_residual > target_residual
+            )
+
+            self.report_message(
+                f"Clip analysis: "
+                f"anonymous: {is_anonymous}, "
+                f"has_identity: {not is_identity_none}, "
+                f"multispeaker: {is_multispeaker}, "
+                f"use_multispeaker: {use_multi_speaker_clips}, "
+                f"residual: {similarity_residual}, "
+                f"target_residual: {target_residual},"
+                f"should_save: {should_save}"
+            )
+            if not should_save:
                 skipped_count += 1
                 continue
-            if clip.is_multispeaker and not self.use_multi_speaker_clips:
-                skipped_count += 1
-                continue
-            if (
-                clip.similarity_residual is None
-                or clip.similarity_residual < settings.speaker_clip_minimum_similarity_residual
-            ):
-                skipped_count += 1
-                continue
+
+            assert clip.identity is not None
 
             save_segment_as_speaker_audio_clip(
                 cleaned_audio_path,

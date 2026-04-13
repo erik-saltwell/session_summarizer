@@ -27,6 +27,7 @@ def _required_fields() -> dict:
         "turn_end_updated_path": Path("turn_end_updated.json"),
         "first_stitched_path": Path("first_stitched.json"),
         "identity_stitched_path": Path("identity_stitched.json"),
+        "backchannel_marked_path": Path("backchannel_marked.json"),
         "diarizationlm_processed_path": Path("diarizationlm_processed.json"),
         "indeterminate_speakers_path": Path("indeterminate_speakers.json"),
         "dangling_sentence_fix_path": Path("dangling_sentence_fix.json"),
@@ -100,6 +101,7 @@ def _required_yaml_fields() -> dict:
         "turn_end_updated_path": "turn_end_updated.json",
         "first_stitched_path": "first_stitched.json",
         "identity_stitched_path": "identity_stitched.json",
+        "backchannel_marked_path": "backchannel_marked.json",
         "diarizationlm_processed_path": "diarizationlm_processed.json",
         "indeterminate_speakers_path": "indeterminate_speakers.json",
         "dangling_sentence_fix_path": "dangling_sentence_fix.json",
@@ -193,6 +195,7 @@ def test_load_resolves_all_paths(tmp_path: Path) -> None:
     assert s.transcript_file.is_absolute()
     assert s.aligned_transcript_path.is_absolute()
     assert s.confidence_transcript_path.is_absolute()
+    assert s.backchannel_marked_path.is_absolute()
     assert s.segments_path.is_absolute()
 
 

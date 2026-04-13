@@ -17,13 +17,13 @@ class TextPhrase:
     def contains_start(self, start_to_test: int) -> bool:
         return start_to_test >= self.start_offset and start_to_test < self.end_offset
 
-    def contains(self, start_to_test: int, end_to_validate: int) -> bool:
-        if self.contains_start(start_to_test):
-            if not (end_to_validate >= self.start_offset and end_to_validate < self.end_offset):
-                raise RuntimeError("Start is contained but end is not.")
-            else:
-                return True
-        return False
+    # def contains(self, start_to_test: int, end_to_validate: int) -> bool:
+    #     if self.contains_start(start_to_test):
+    #         if not (end_to_validate >= self.start_offset and end_to_validate < self.end_offset):
+    #             raise RuntimeError("Start is contained but end is not.")
+    #         else:
+    #             return True
+    #     return False
 
 
 class TextPhraseBuilder(Protocol):

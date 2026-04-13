@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import IntFlag, auto
+from enum import IntFlag
 
 from .alignment_result import WordAlignment
 from .segment_protocol import (
@@ -17,7 +17,7 @@ _ANONYMOUS_SPEAKER_SET: set[str] = set(_ANONYMOUS_SPEAKER)
 
 class SpeechClipFlags(IntFlag):
     NONE = 0
-    END_OF_TURN = auto()
+    IS_BACKCHANNEL = 1
 
 
 @dataclass
@@ -184,7 +184,6 @@ class SpeechClip:
     def _set_merge_end_properties(self, last: SpeechClip) -> None:
         self.end_time = last.end_time
         self.end_of_turn_probability = last.end_of_turn_probability
-        self.set_flag(SpeechClipFlags.END_OF_TURN, last.has_flag(SpeechClipFlags.END_OF_TURN))
 
     def _set_merge_base_properties(self, other: SpeechClip) -> None:
         speakers: set[str] = set()

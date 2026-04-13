@@ -145,6 +145,12 @@ class SessionSettings(BaseModel, frozen=True):
         Path,
         Field(description="Path to SpeechClipSet JSON file with speakers identified (read/written during processing)"),
     ]
+    backchannel_marked_path: Annotated[
+        Path,
+        Field(
+            description=("Path to SpeechClipSet JSON file with backchannels marked (read/written during processing)")
+        ),
+    ]
     diarizationlm_processed_path: Annotated[
         Path,
         Field(
@@ -391,6 +397,7 @@ class SessionSettings(BaseModel, frozen=True):
             "turn_end_updated_path",
             "first_stitched_path",
             "identity_stitched_path",
+            "backchannel_marked_path",
             "diarizationlm_processed_path",
             "indeterminate_speakers_path",
             "dangling_sentence_fix_path",
