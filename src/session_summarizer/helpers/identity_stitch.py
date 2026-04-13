@@ -39,13 +39,13 @@ from ..protocols import (
 #         if not prior_clip.identity == next_clip.identity:
 #             return MergeType.NO_MERGE
 
-#         if current_clip.duration > settings.diarization_stitching.max_identity_backchannel_duration:
+#         if current_clip.duration > settings.stitching.max_identity_backchannel_duration:
 #             return MergeType.NO_MERGE
 
 #         if not clips_are_close_enough(
 #             prior_clip,
 #             current_clip,
-#             settings.diarization_stitching.max_identity_backchannel_prior_gap,
+#             settings.stitching.max_identity_backchannel_prior_gap,
 #             settings.epsilon,
 #             logger,
 #         ):
@@ -54,7 +54,7 @@ from ..protocols import (
 #         if not clips_are_close_enough(
 #             current_clip,
 #             next_clip,
-#             settings.diarization_stitching.max_identity_backchannel_next_gap,
+#             settings.stitching.max_identity_backchannel_next_gap,
 #             settings.epsilon,
 #             logger,
 #         ):
@@ -81,7 +81,7 @@ class IdentityMergeSelector(MergeSelector):
         if not clips_are_close_enough(
             prior_clip,
             current_clip,
-            settings.diarization_stitching.identity_stitching_max_gap,
+            settings.stitching.identity_merge_max_gap_seconds,
             settings.epsilon,
             logger,
         ):

@@ -20,8 +20,8 @@ def diarize_audio(
     logger: LoggingProtocol,
 ) -> SpeechClipSet:
     logger.report_message("[blue]Diarizing audio.[/blue]")
-    final_path: Path = session_dir / settings.base_diarized_path
-    audio_path = session_dir / settings.cleaned_audio_file
+    final_path: Path = session_dir / settings.paths.base_diarization
+    audio_path = session_dir / settings.paths.cleaned_audio
 
     gpu_logger.report_gpu_usage("before processing")
 

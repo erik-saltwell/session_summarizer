@@ -24,7 +24,7 @@ def add_embeddings(
     gpu_logger: GpuLogger,
     logger: LoggingProtocol,
 ) -> SpeechClipSet:
-    audio_path: Path = session_dir / settings.cleaned_audio_file
+    audio_path: Path = session_dir / settings.paths.cleaned_audio
     audio_data, sample_rate = sf.read(str(audio_path), dtype="float32")
     if audio_data.ndim > 1:
         audio_data = audio_data.mean(axis=1)

@@ -18,14 +18,14 @@
 #         return "Update Turn End"
 
 #     def add_dependencies(self, settings: SessionSettings, session_dir: Path) -> None:
-#         self.inputs.append(session_dir / settings.diarizationlm_processed_path)
-#         self.outputs.append(session_dir / settings.turn_end_updated_path)
+#         self.inputs.append(session_dir / settings.paths.diarizationlm_processed)
+#         self.outputs.append(session_dir / settings.paths.turn_end_updated)
 #         self.dependencies.append(DiarizationLMCommand(self.session_id))
 
 #     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
 #         diarized_clips: SpeechClipSet = SpeechClipSet.load_from_json(
-#             session_dir / settings.diarizationlm_processed_path
+#             session_dir / settings.paths.diarizationlm_processed
 #         )
 
 #         turn_clips: SpeechClipSet = update_turn_end(settings, session_dir, diarized_clips, self, self.logger)
-#         self.save_speech_clip(turn_clips, session_dir, settings.turn_end_updated_path)
+#         self.save_speech_clip(turn_clips, session_dir, settings.paths.turn_end_updated)

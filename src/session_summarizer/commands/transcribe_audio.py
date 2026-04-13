@@ -20,14 +20,14 @@ class TranscribeAudioCommand(SessionProcessingCommand):
         return "Transcribe"
 
     def add_dependencies(self, settings: SessionSettings, session_dir: Path) -> None:
-        self.inputs.append(session_dir / settings.segments_path)
-        self.inputs.append(session_dir / settings.cleaned_audio_file)
-        self.outputs.append(session_dir / settings.transcript_file)
+        self.inputs.append(session_dir / settings.paths.vad_segments)
+        self.inputs.append(session_dir / settings.paths.cleaned_audio)
+        self.outputs.append(session_dir / settings.paths.transcript)
         self.dependencies.append(ComputeSegmentsCommand(self.session_id))
         self.dependencies.append(CleanAudioCommand(self.session_id))
 
     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
-        segments: SegmentSplitResultSet = SegmentSplitResultSet.load(session_dir / settings.segments_path)
+        segments: SegmentSplitResultSet = SegmentSplitResultSet.load(session_dir / settings.paths.vad_segments)
         result: TranscriptionResult = transcribe_from_cleaned_audio(settings, session_dir, segments, self, self.logger)
-        result.save_to_json(session_dir / settings.transcript_file)
-        self.save_cleaned_text(result, session_dir, settings.transcript_file)
+        result.save_to_json(session_dir / settings.paths.transcript)
+        self.save_cleaned_text(result, session_dir, settings.paths.transcript)

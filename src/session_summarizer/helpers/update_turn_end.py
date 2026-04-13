@@ -21,7 +21,7 @@
 #     logger: LoggingProtocol,
 # ) -> SpeechClipSet:
 #     with logger.status("Loading audio for Smart Turn scoring..."):
-#         audio = load_audio_mono_16k(session_dir / settings.cleaned_audio_file)
+#         audio = load_audio_mono_16k(session_dir / settings.paths.cleaned_audio)
 
 #     with logger.status("Loading Smart Turn model..."):
 #         predictor = LocalSmartTurnPredictor(device=settings.device)
@@ -37,7 +37,7 @@
 #     )
 #     gpu_logger.report_gpu_usage("after Smart Turn scoring")
 
-#     threshold = settings.diarization_stitching.turn_end_probability_threshold
+#     threshold = settings.stitching.turn_end_probability_threshold
 #     for clip in diarized_clips:
 #         if clip.end_of_turn_probability is not None:
 #             clip.set_flag(

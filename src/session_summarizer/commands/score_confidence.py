@@ -21,16 +21,16 @@ class ScoreConfidenceCommand(SessionProcessingCommand):
         return "Score Confidence"
 
     def add_dependencies(self, settings: SessionSettings, session_dir: Path) -> None:
-        self.inputs.append(session_dir / settings.aligned_transcript_path)
-        self.inputs.append(session_dir / settings.segments_path)
-        self.outputs.append(session_dir / settings.confidence_transcript_path)
+        self.inputs.append(session_dir / settings.paths.aligned_transcript)
+        self.inputs.append(session_dir / settings.paths.vad_segments)
+        self.outputs.append(session_dir / settings.paths.confidence_transcript)
         self.dependencies.append(AlignTranscriptCommand(self.session_id))
         self.dependencies.append(ComputeSegmentsCommand(self.session_id))
         self.dependencies.append(CleanAudioCommand(self.session_id))
 
     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
-        segments: SegmentSplitResultSet = SegmentSplitResultSet.load(session_dir / settings.segments_path)
-        alignment: AlignmentResult = AlignmentResult.load_from_json(session_dir / settings.aligned_transcript_path)
+        segments: SegmentSplitResultSet = SegmentSplitResultSet.load(session_dir / settings.paths.vad_segments)
+        alignment: AlignmentResult = AlignmentResult.load_from_json(session_dir / settings.paths.aligned_transcript)
 
         scored_alignment = score_confidence(settings, session_dir, alignment, segments, self, self.logger)
-        self.save_alignment_result(scored_alignment, session_dir, settings.confidence_transcript_path)
+        self.save_alignment_result(scored_alignment, session_dir, settings.paths.confidence_transcript)

@@ -22,17 +22,17 @@ class AlignTranscriptCommand(SessionProcessingCommand):
         return "Align Transcript"
 
     def add_dependencies(self, settings: SessionSettings, session_dir: Path) -> None:
-        self.inputs.append(session_dir / settings.transcript_file)
-        self.inputs.append(session_dir / settings.segments_path)
-        self.inputs.append(session_dir / settings.cleaned_audio_file)
-        self.outputs.append(session_dir / settings.aligned_transcript_path)
+        self.inputs.append(session_dir / settings.paths.transcript)
+        self.inputs.append(session_dir / settings.paths.vad_segments)
+        self.inputs.append(session_dir / settings.paths.cleaned_audio)
+        self.outputs.append(session_dir / settings.paths.aligned_transcript)
         self.dependencies.append(TranscribeAudioCommand(self.session_id))
         self.dependencies.append(ComputeSegmentsCommand(self.session_id))
         self.dependencies.append(CleanAudioCommand(self.session_id))
 
     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
-        segments: SegmentSplitResultSet = SegmentSplitResultSet.load(session_dir / settings.segments_path)
-        transcript: TranscriptionResult = TranscriptionResult.load_from_json(session_dir / settings.transcript_file)
+        segments: SegmentSplitResultSet = SegmentSplitResultSet.load(session_dir / settings.paths.vad_segments)
+        transcript: TranscriptionResult = TranscriptionResult.load_from_json(session_dir / settings.paths.transcript)
 
         alignment: AlignmentResult = align_transcript(settings, session_dir, transcript, segments, self, self.logger)
-        self.save_alignment_result(alignment, session_dir, settings.aligned_transcript_path)
+        self.save_alignment_result(alignment, session_dir, settings.paths.aligned_transcript)

@@ -19,12 +19,12 @@
 # #         return "First Stitch Clips"
 
 # #     def add_dependencies(self, settings: SessionSettings, session_dir: Path) -> None:
-# #         self.inputs.append(session_dir / settings.turn_end_updated_path)
-# #         self.outputs.append(session_dir / settings.first_stitched_path)
+# #         self.inputs.append(session_dir / settings.paths.turn_end_updated)
+# #         self.outputs.append(session_dir / settings.paths.first_stitched)
 # #         self.dependencies.append(UpdateTurnEndCommand(self.session_id))
 
 # #     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
-# #         turn_clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.turn_end_updated_path)
+# #         turn_clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.paths.turn_end_updated)
 
 # #         stitch_results: StitchResults = StitchResults()
 # #         stitch_results.pre_stitching_segments = len(turn_clips)
@@ -33,4 +33,4 @@
 # #         stitch_results.post_stitching_segments = len(stitched_clips)
 # #         self.logger.report_table_message(asdict(stitch_results))
 
-# #         self.save_speech_clip(stitched_clips, session_dir, settings.first_stitched_path)
+# #         self.save_speech_clip(stitched_clips, session_dir, settings.paths.first_stitched)

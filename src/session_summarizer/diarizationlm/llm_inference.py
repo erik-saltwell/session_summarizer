@@ -6,6 +6,7 @@ import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 DEFAULT_MODEL_NAME = "google/DiarizationLM-8b-Fisher-v2"
+_UNREASONABLE_TOKENIZER_CONTEXT = 1_000_000
 
 
 class DiarizationLMModel:
@@ -34,6 +35,29 @@ class DiarizationLMModel:
     @property
     def is_loaded(self) -> bool:
         return self._model is not None
+
+    @property
+    def context_window(self) -> int | None:
+        if self._model is None or self._tokenizer is None:
+            raise RuntimeError("Model not loaded. Call load() first.")
+
+        config = getattr(self._model, "config", None)
+        for attr in ("max_position_embeddings", "n_positions", "seq_length"):
+            value = getattr(config, attr, None)
+            if isinstance(value, int) and 0 < value < _UNREASONABLE_TOKENIZER_CONTEXT:
+                return value
+
+        tokenizer_limit = getattr(self._tokenizer, "model_max_length", None)
+        if isinstance(tokenizer_limit, int) and 0 < tokenizer_limit < _UNREASONABLE_TOKENIZER_CONTEXT:
+            return tokenizer_limit
+
+        return None
+
+    def count_tokens(self, text: str) -> int:
+        if self._tokenizer is None:
+            raise RuntimeError("Model not loaded. Call load() first.")
+        inputs = self._tokenizer([text], return_tensors="pt")
+        return int(inputs.input_ids.shape[1])
 
     def infer(self, prompt: str, max_new_tokens: int | None = None) -> str:
         if self._model is None or self._tokenizer is None:

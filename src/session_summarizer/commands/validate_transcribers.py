@@ -56,14 +56,14 @@ class ValidateTranscribersCommand(SessionProcessingCommand):
         return "Validate Transcribers"
 
     def add_dependencies(self, settings: SessionSettings, session_dir: Path) -> None:
-        self.inputs.append(session_dir / settings.cleaned_audio_file)
-        self.inputs.append(session_dir / settings.segments_path)
+        self.inputs.append(session_dir / settings.paths.cleaned_audio)
+        self.inputs.append(session_dir / settings.paths.vad_segments)
         self.dependencies.append(ComputeSegmentsCommand(self.session_id))
         self.dependencies.append(CleanAudioCommand(self.session_id))
 
     def process_session(self, settings: SessionSettings, session_dir: Path) -> None:
         clean_audio(settings, session_dir, self, self.logger)
-        audio_path: Path = session_dir / settings.cleaned_audio_file
+        audio_path: Path = session_dir / settings.paths.cleaned_audio
         seg_results: SegmentSplitResultSet = compute_vad_segments(settings, session_dir, self, self.logger)
 
         results: dict[str, TranscriptionValidationResult] = {}

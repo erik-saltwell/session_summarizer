@@ -266,7 +266,7 @@
             "args": [
                 "validate-diarization",
                 "--session",
-                "20260225",
+                "test",
             ]
         },
         {

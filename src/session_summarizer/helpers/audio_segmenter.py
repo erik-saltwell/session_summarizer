@@ -39,7 +39,7 @@ def compute_vad_segments(
             pad_offset=settings.vad.pad_offset,
         )
 
-    vad_result = detector.detect(session_dir / settings.cleaned_audio_file, logger)
+    vad_result = detector.detect(session_dir / settings.paths.cleaned_audio, logger)
     gpu_logger.report_gpu_usage("after VAD")
 
     short_segments: SegmentSplitResult
@@ -47,11 +47,13 @@ def compute_vad_segments(
     with logger.status("Computing segment cut points."):
         short_segments = compute_segments(
             vad_result,
-            min_length=settings.min_segment_length_short,
-            max_length=settings.max_segment_length_short,
+            min_length=settings.segmentation.short_min_seconds,
+            max_length=settings.segmentation.short_max_seconds,
         )
         long_segments = compute_segments(
-            vad_result, min_length=settings.min_segment_length_long, max_length=settings.max_segment_length_long
+            vad_result,
+            min_length=settings.segmentation.long_min_seconds,
+            max_length=settings.segmentation.long_max_seconds,
         )
 
     logger.report_message("[blue]Comput segments complete.[/blue]")

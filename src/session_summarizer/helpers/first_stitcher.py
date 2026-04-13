@@ -34,13 +34,13 @@
 #         if not clips_are_same_speaker(prior_clip, next_clip, settings, True, logger):
 #             return MergeType.NO_MERGE
 
-#         if current_clip.duration > settings.diarization_stitching.max_backchannel_duration:
+#         if current_clip.duration > settings.stitching.max_backchannel_duration:
 #             return MergeType.NO_MERGE
 
 #         if not clips_are_close_enough(
 #             prior_clip,
 #             current_clip,
-#             settings.diarization_stitching.max_backchannel_prior_gap,
+#             settings.stitching.max_backchannel_prior_gap,
 #             settings.epsilon,
 #             logger,
 #         ):
@@ -49,7 +49,7 @@
 #         if not clips_are_close_enough(
 #             current_clip,
 #             next_clip,
-#             settings.diarization_stitching.max_backchannel_next_gap,
+#             settings.stitching.max_backchannel_next_gap,
 #             settings.epsilon,
 #             logger,
 #         ):
@@ -74,7 +74,7 @@
 #         if not clips_are_close_enough(
 #             prior_clip,
 #             current_clip,
-#             settings.diarization_stitching.unfinished_clip_merge_max_length,
+#             settings.stitching.unfinished_clip_merge_max_length,
 #             settings.epsilon,
 #             logger,
 #         ):

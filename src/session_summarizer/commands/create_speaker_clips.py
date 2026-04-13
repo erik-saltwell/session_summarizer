@@ -50,8 +50,8 @@ class CreateSpeakerClipsCommand(SessionProcessingCommand):
         return "Create Speaker Clips"
 
     def add_dependencies(self, settings: SessionSettings, session_dir: Path) -> None:
-        self.inputs.append(session_dir / settings.identified_speaker_path)
-        self.inputs.append(session_dir / settings.cleaned_audio_file)
+        self.inputs.append(session_dir / settings.paths.identified_speakers)
+        self.inputs.append(session_dir / settings.paths.cleaned_audio)
         self.dependencies.append(IdentifySpeakersCommand(self.session_id))
         self.dependencies.append(CleanAudioCommand(self.session_id))
 
@@ -60,8 +60,8 @@ class CreateSpeakerClipsCommand(SessionProcessingCommand):
         if _empty_temp_folder(temp_folder):
             self.report_message(f"Emptied speaker clip temp folder: {temp_folder}")
 
-        cleaned_audio_path = session_dir / settings.cleaned_audio_file
-        identified_clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.identified_speaker_path)
+        cleaned_audio_path = session_dir / settings.paths.cleaned_audio
+        identified_clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.paths.identified_speakers)
 
         saved_count = 0
         skipped_count = 0
@@ -77,8 +77,8 @@ class CreateSpeakerClipsCommand(SessionProcessingCommand):
             use_multi_speaker_clips: bool = self.use_multi_speaker_clips
             similarity_residual: float = clip.similarity_residual if clip.similarity_residual is not None else 0.0
             target_residual: float = (
-                settings.speaker_clip_minimum_similarity_residual
-                if settings.speaker_clip_minimum_similarity_residual is not None
+                settings.speaker_clips.min_similarity_residual
+                if settings.speaker_clips.min_similarity_residual is not None
                 else 1.00
             )
 
@@ -111,8 +111,8 @@ class CreateSpeakerClipsCommand(SessionProcessingCommand):
                 cleaned_audio_path,
                 clip,
                 clip.identity,
-                settings.speaker_clip_lead_in,
-                settings.speaker_clip_lead_out,
+                settings.speaker_clips.lead_in_seconds,
+                settings.speaker_clips.lead_out_seconds,
                 temp_folder=self.temp_folder,
             )
             saved_count += 1

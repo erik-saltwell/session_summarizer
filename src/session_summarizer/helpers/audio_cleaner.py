@@ -13,9 +13,9 @@ def clean_audio(
     gpu_logger: GpuLogger,
     logger: LoggingProtocol,
 ) -> None:
-    original_path = session_dir / settings.audio_file
+    original_path = session_dir / settings.paths.source_audio
     logger.report_message(f"[blue]Cleaning audio for {original_path}[/blue]")
-    final_path = session_dir / settings.cleaned_audio_file
+    final_path = session_dir / settings.paths.cleaned_audio
 
     if not original_path.exists():
         raise FileNotFoundError(original_path)

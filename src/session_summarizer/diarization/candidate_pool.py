@@ -26,7 +26,7 @@ class CandidatePool:
         settings: DiarizationStitchingSettings,
         epsilon: float,
     ) -> None:
-        radius: float = settings.max_nearest_distance if settings.fill_nearest else 0.0
+        radius: float = settings.max_nearest_gap_seconds if settings.fill_nearest else 0.0
         radius += epsilon
         extended_start: float = current_word.start_time - radius
         extended_end: float = current_word.end_time + radius
