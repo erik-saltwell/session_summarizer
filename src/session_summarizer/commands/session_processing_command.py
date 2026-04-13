@@ -106,9 +106,12 @@ class SessionProcessingCommand(ABC, CommmandProtocol):
         human_path = session_dir / Path(json_filename.stem + "_human.txt")
         error_formated_path = session_dir / Path(json_filename.stem + "_formatted.md")
 
+        markdown_path = session_dir / Path(json_filename.stem + "_markdown.md")
+
         clips.save_to_json(json_path)
         clips.save_to_human_format(human_path)
         clips.save_to_error_formatted_text(error_formated_path)
+        clips.save_to_markdown(markdown_path)
         self.save_cleaned_text(clips, session_dir, json_filename)
 
     def save_alignment_result(self, alignment_result: AlignmentResult, session_dir: Path, json_filename: Path) -> None:

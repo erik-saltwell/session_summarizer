@@ -18,6 +18,7 @@ from ..commands.add_embeddings import AddEmbeddingsCommand
 from ..commands.align_transcript import AlignTranscriptCommand
 from ..commands.clean_audio import CleanAudioCommand
 from ..commands.clean_session import CleanSessionCommand
+from ..commands.clear_logs import ClearLogsCommand
 from ..commands.compare_fulltext import CompareFullTextCommand
 from ..commands.compute_segments import ComputeSegmentsCommand
 from ..commands.create_speaker_clips import CreateSpeakerClipsCommand
@@ -800,8 +801,8 @@ epsilon: 0.000001
 # Reasonable default: 42
 #
 # Example:
-#   seed: 42
-seed: 42
+#   seed: 43
+seed: 43
 """
 
 
@@ -905,6 +906,13 @@ def clean_session(
     command.execute(logger)
 
 
+@app.command("clear-logs")
+def clear_logs() -> None:
+    """Delete all files in the logs directory."""
+    logger: LoggingProtocol = create_logger()
+    ClearLogsCommand().execute(logger)
+
+
 @app.command("compare-texts")
 def compare_texts(
     session: str = typer.Option(..., "--session", "-s", help="ID of the session to transcribe"),
@@ -934,18 +942,13 @@ def create_speaker_clips(
     temp_folder: str = typer.Option(
         ..., "--temp-folder", "-t", help="Name of temp folder inside voice samples to hold output"
     ),
-    use_multi_speaker_clips: bool = typer.Option(
-        False,
-        "--use-multi-speaker-clips",
-        help="Also save clips where multiple speakers are present, as long as an identity is assigned.",
-    ),
 ) -> None:
     """Save each identified speaker clip as an individual audio file."""
     confirm_session(session)
     _set_seed(session)
     logger: LoggingProtocol = create_logger()
     command: CreateSpeakerClipsCommand = CreateSpeakerClipsCommand(
-        session, use_multi_speaker_clips=use_multi_speaker_clips, temp_folder=Path(temp_folder)
+        session, use_multi_speaker_clips=False, temp_folder=Path(temp_folder)
     )
     command.execute(logger)
 

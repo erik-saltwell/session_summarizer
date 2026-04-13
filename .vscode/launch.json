@@ -190,6 +190,16 @@
             ]
         },
         {
+            "name": "-clear-logs",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "clear-logs"
+            ]
+        },
+        {
             "name": "register-speakers",
             "type": "debugpy",
             "request": "launch",
@@ -268,7 +278,7 @@
             "args": [
                 "validate-diarization",
                 "--session",
-                "test",
+                "20260225",
             ]
         },
         {
