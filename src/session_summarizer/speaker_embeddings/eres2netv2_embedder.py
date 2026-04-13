@@ -35,7 +35,7 @@ def _patch_torchaudio_sox_effects() -> None:
 
     sox = types.ModuleType("torchaudio.sox_effects")
     sox.apply_effects_tensor = apply_effects_tensor  # type: ignore[attr-defined]
-    torchaudio.sox_effects = sox
+    torchaudio.sox_effects = sox  # type: ignore
 
 
 _patch_torchaudio_sox_effects()
