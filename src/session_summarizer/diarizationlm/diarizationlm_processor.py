@@ -91,6 +91,16 @@ class DiarizationLMProcessor:
 
     def __init__(self, model: _DiarizationLMModelProtocol):
         self._model = model
+        self._last_prompt_segment_count: int | None = None
+        self._last_prompt_word_count: int | None = None
+
+    @property
+    def last_prompt_segment_count(self) -> int | None:
+        return self._last_prompt_segment_count
+
+    @property
+    def last_prompt_word_count(self) -> int | None:
+        return self._last_prompt_word_count
 
     def _context_window(self) -> int:
         context_window = self._model.context_window
@@ -228,6 +238,9 @@ class DiarizationLMProcessor:
         return completion
 
     def process(self, clip_set: SpeechClipSet, epsilon: float) -> SpeechClipSet:
+        self._last_prompt_segment_count = None
+        self._last_prompt_word_count = None
+
         if not self._model.is_loaded:
             raise RuntimeError("Model not loaded. Call model.load() before processing.")
 
@@ -239,6 +252,8 @@ class DiarizationLMProcessor:
         conversion = clip_set_to_utterance(clip_set, mapping, epsilon)
         if not conversion.word_records:
             logger.warning("No words found in clip set — returning original unchanged.")
+            self._last_prompt_segment_count = 0
+            self._last_prompt_word_count = 0
             return clip_set
 
         if conversion.passthrough_clip_indices:
@@ -252,6 +267,7 @@ class DiarizationLMProcessor:
         # actual context window would be exceeded.
         words = conversion.hyp_text.split()
         speaker_ids = conversion.hyp_spk.split()
+        self._last_prompt_word_count = len(words)
         if len(words) != len(conversion.word_records) or len(speaker_ids) != len(conversion.word_records):
             logger.warning(
                 "DiarizationLM conversion length mismatch: %d words, %d speakers, %d records. "
@@ -264,6 +280,7 @@ class DiarizationLMProcessor:
 
         context_window = self._context_window()
         segments = self._build_prompt_segments(words, speaker_ids, context_window, 0, len(words))
+        self._last_prompt_segment_count = len(segments)
         logger.info(
             "Generated %d prompt segment(s) for %d words using a %d-token context window.",
             len(segments),
