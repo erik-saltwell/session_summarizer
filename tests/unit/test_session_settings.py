@@ -12,6 +12,15 @@ def _required_fields() -> dict:
     """Return a complete dict of valid SessionSettings fields using Python types."""
     return {
         "attendees": ["TestPlayer"],
+        "session_info": {
+            "session_date": "2026-04-13",
+            "adventure_name": "Test Adventure",
+            "campaign_name": "Test Campaign",
+        },
+        "campaign_info": {
+            "players": {"TestPlayer": "TestCharacter"},
+            "glossary": [{"term": "TestTerm", "description": "A test term"}],
+        },
         "paths": {
             "source_audio": Path("session.m4a"),
             "cleaned_audio": Path("cleaned_audio.wav"),
@@ -28,6 +37,7 @@ def _required_fields() -> dict:
             "indeterminate_speakers": Path("indeterminate_speakers.json"),
             "dangling_sentence_fix": Path("dangling_sentence_fix.json"),
             "punctuated_text": Path("punctuated_text.json"),
+            "summary_path": Path("summary.md"),
         },
         "segmentation": {
             "short_min_seconds": 10.0,
@@ -77,6 +87,15 @@ def _required_yaml_fields() -> dict:
     """Return a complete dict of valid SessionSettings fields using plain strings (YAML-style)."""
     return {
         "attendees": ["TestPlayer"],
+        "session_info": {
+            "session_date": "2026-04-13",
+            "adventure_name": "Test Adventure",
+            "campaign_name": "Test Campaign",
+        },
+        "campaign_info": {
+            "players": {"TestPlayer": "TestCharacter"},
+            "glossary": [{"term": "TestTerm", "description": "A test term"}],
+        },
         "paths": {
             "source_audio": "session.m4a",
             "cleaned_audio": "cleaned_audio.wav",
@@ -93,6 +112,7 @@ def _required_yaml_fields() -> dict:
             "indeterminate_speakers": "indeterminate_speakers.json",
             "dangling_sentence_fix": "dangling_sentence_fix.json",
             "punctuated_text": "punctuated_text.json",
+            "summary_path": "summary.md",
         },
         "segmentation": {
             "short_min_seconds": 10.0,

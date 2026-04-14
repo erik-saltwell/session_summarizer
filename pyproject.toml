@@ -36,6 +36,7 @@ dependencies = [
     "diarizationlm>=0.1.5",
     "intervaltree>=3.2.1",
     "punctuators>=0.0.7",
+    "anthropic>=0.40.0",
 ]
 
 [project.scripts]

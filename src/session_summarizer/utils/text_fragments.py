@@ -9,10 +9,7 @@ from .common_paths import fragments_dir
 class FragmentID(StrEnum):
     """Identifiers for text fragment files stored in the fragments directory."""
 
-    RPG_POST_CLASSIFICATION_PROMPT = "rpg_post_classification_prompt.md"
-    ALPACA_PROMPT_TEMPLATE = "chat_template_alpaca.md"
-    ALPACA_EVAL_PROMPT_TEMPLATE = "eval_template_alpaca.md"
-    IMDB_TEST_PROMPT = "imdb_test_prompt.md"
+    SUMMARIZE_SESSION_SYSTEM_PROMPT = "summarize_session_prompt.md"
     NONE = "none.md"
 
 

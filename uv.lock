@@ -136,6 +136,25 @@ wheels = [
 ]
 
 [[package]]
+name = "anthropic"
+version = "0.94.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "anyio", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+    { name = "distro", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+    { name = "docstring-parser", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+    { name = "httpx", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+    { name = "jiter", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+    { name = "pydantic", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+    { name = "sniffio", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+    { name = "typing-extensions", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/3e/f2/fb4a04ff676742588a41f94dd318883d6d77e88e2b5e20b664ae3bf20e1b/anthropic-0.94.1.tar.gz", hash = "sha256:96c7033069c16074f90638dff8bf1f1616f9eefeb8ef7d1b0df4a0393ab34685", size = 654451, upload-time = "2026-04-13T18:08:18.453Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/05/18/6d5b5948cbe450d3c98336c8a8c4804aedb3ab24fa37922d05063f8ba266/anthropic-0.94.1-py3-none-any.whl", hash = "sha256:58fb20dc60f35e75a5a82a1c73a3e196ac3b18ff2ed4826cba345f4adb78919d", size = 627710, upload-time = "2026-04-13T18:08:19.629Z" },
+]
+
+[[package]]
 name = "antlr4-python3-runtime"
 version = "4.9.3"
 source = { registry = "https://pypi.org/simple" }
@@ -640,6 +659,15 @@ name = "docopt"
 version = "0.6.2"
 source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/a2/55/8f8cab2afd404cf578136ef2cc5dfb50baa1761b68c9da1fb1e4eed343c9/docopt-0.6.2.tar.gz", hash = "sha256:49b3a825280bd66b3aa83585ef59c4a8c82f2c8a522dbe754a8bc8d08c85c491", size = 25901, upload-time = "2014-06-16T11:18:57.406Z" }
+
+[[package]]
+name = "docstring-parser"
+version = "0.17.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b2/9d/c3b43da9515bd270df0f80548d9944e389870713cc1fe2b8fb35fe2bcefd/docstring_parser-0.17.0.tar.gz", hash = "sha256:583de4a309722b3315439bb31d64ba3eebada841f2e2cee23b99df001434c912", size = 27442, upload-time = "2025-07-21T07:35:01.868Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/55/e2/2537ebcff11c1ee1ff17d8d0b6f4db75873e3b0fb32c2d4a2ee31ecb310a/docstring_parser-0.17.0-py3-none-any.whl", hash = "sha256:cf2569abd23dce8099b300f9b4fa8191e9582dda731fd533daf54c4551658708", size = 36896, upload-time = "2025-07-21T07:35:00.684Z" },
+]
 
 [[package]]
 name = "docutils"
@@ -3555,6 +3583,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "addict", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+    { name = "anthropic", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "clearvoice", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "diarizationlm", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "diarizen", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
@@ -3600,6 +3629,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "addict", specifier = ">=2.4.0" },
+    { name = "anthropic", specifier = ">=0.40.0" },
     { name = "clearvoice", specifier = ">=0.1.2" },
     { name = "diarizationlm", specifier = ">=0.1.5" },
     { name = "diarizen", git = "https://github.com/BUTSpeechFIT/DiariZen.git" },
