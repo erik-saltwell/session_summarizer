@@ -28,9 +28,6 @@ class AddEmbeddingsCommand(SessionProcessingCommand):
         self.dependencies.append(ComputeSegmentsCommand(self.session_id))
         self.dependencies.append(CleanAudioCommand(self.session_id))
 
-    def should_enable_logging(self) -> bool:
-        return True
-
     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
         clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.paths.dangling_sentence_fix)
         embedded_clips: SpeechClipSet = add_embeddings(settings, session_dir, clips, self, self.logger)

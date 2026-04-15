@@ -29,12 +29,18 @@ class SessionProcessingCommand(ABC, CommmandProtocol):
     outputs: list[Path] = field(default_factory=list)
     dependencies: list[CommmandProtocol] = field(default_factory=list)
     test_clips: SpeechClipSet | None = None
+    detailed_logging: bool = False
 
-    def should_enable_logging(self) -> bool:
+    def should_log_gpu_load(self) -> bool:
         return False
 
     def enable_clip_test(self, clips: SpeechClipSet) -> None:
         self.test_clips = clips
+
+    def set_detailed_logging(self, should_log: bool) -> None:
+        self.detailed_logging = should_log
+
+    def initialize_for_processing(self, settings: SessionSettings, session_dir: Path) -> None: ...
 
     def validate_clips(self) -> None:
         if self.test_clips is None:
@@ -65,6 +71,10 @@ class SessionProcessingCommand(ABC, CommmandProtocol):
     @abstractmethod
     def process_session(self, settings: SessionSettings, session_dir: Path) -> None: ...
 
+    def report_detailed_message(self, message: str) -> None:
+        if self.detailed_logging:
+            self.logger.report_message(message)
+
     def report_message(self, message: str) -> None:
         self.logger.report_message(f"[blue]{message}[/blue]")
 
@@ -83,7 +93,8 @@ class SessionProcessingCommand(ABC, CommmandProtocol):
     def execute(self, logger: LoggingProtocol) -> None:
         self.logger = logger
         session_dir: Path = common_paths.session_dir(self.session_id)
-        self.gpu_logging_enabled = self.should_enable_logging()
+        self.gpu_logging_enabled = self.should_log_gpu_load()
+
         if not session_dir.exists():
             raise FileNotFoundError(f"Could not find directory: {session_dir}")
         settings: SessionSettings = SessionSettings.load_cascading(self.session_id)
@@ -94,6 +105,9 @@ class SessionProcessingCommand(ABC, CommmandProtocol):
 
         if not self.should_process:
             return
+
+        with silence_python_noise():
+            self.initialize_for_processing(settings, session_dir)
 
         self.report_gpu_usage(f"Before Processing {self.name()}")
         self.report_message(f"{self.name()}: Processing...")

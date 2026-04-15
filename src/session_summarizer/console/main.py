@@ -38,7 +38,7 @@ from ..commands.test_command import TestCommand
 from ..commands.transcribe_audio import TranscribeAudioCommand
 from ..commands.validate_diarization import ValidateDiarizationCommand
 from ..commands.validate_transcribers import ValidateTranscribersCommand
-from ..logging import CompositeLogger, FileLogger, RichConsoleLogger
+from ..logging import RichConsoleLogger
 from ..protocols import LoggingProtocol
 from ..settings.session_settings import SessionSettings
 from ..utils import flush_gpu_memory
@@ -77,9 +77,10 @@ def create_logger() -> LoggingProtocol:
     console = Console(file=sys.__stdout__)
     # error_console = Console(file=sys.__stderr__)
     console_logger: RichConsoleLogger = RichConsoleLogger(console)
-    logfile_path = common_paths.generate_logfile_path()
-    file_logger: FileLogger = FileLogger(logfile_path, verbose_training=True)
-    return CompositeLogger([console_logger, file_logger])
+    return console_logger
+    # logfile_path = common_paths.generate_logfile_path()
+    # file_logger: FileLogger = FileLogger(logfile_path, verbose_training=True)
+    # return CompositeLogger([console_logger, file_logger])
 
 
 def confirm_session(session_id: str) -> None:
