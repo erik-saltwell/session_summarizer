@@ -8,6 +8,11 @@ from typing import Any
 
 from ..protocols import LoggingProtocol
 
+_DIARIZEN_EMBEDDING_MODEL = "pyannote/wespeaker-voxceleb-resnet34-LM"
+_DIARIZEN_EMBEDDING_FILENAME = "pytorch_model.bin"
+_AGGLOMERATIVE_CLUSTERING_METHOD = "AgglomerativeClustering"
+_AGGLOMERATIVE_MIN_CLUSTER_SIZE = 13
+
 
 def _patch_torchaudio_for_pyannote() -> None:
     """Monkey-patch torchaudio and lightning_fabric APIs for compatibility with torchaudio 2.10+.
@@ -170,17 +175,39 @@ def merge_overlapping_diarization(raw: DiarizationResult) -> MergedDiarizationRe
     return MergedDiarizationResult(segments=merged)
 
 
+def _build_fixed_speaker_config(diarizen_hub: Path, speaker_count: int) -> dict[str, dict[str, dict[str, Any]]]:
+    import toml
+
+    config = toml.load((diarizen_hub / "config.toml").as_posix())
+    inference_args = config["inference"]["args"]
+    clustering_args = config["clustering"]["args"]
+
+    return {
+        "inference": {"args": inference_args},
+        "clustering": {
+            "args": {
+                "method": _AGGLOMERATIVE_CLUSTERING_METHOD,
+                "min_speakers": speaker_count,
+                "max_speakers": speaker_count,
+                "ahc_threshold": clustering_args["ahc_threshold"],
+                "min_cluster_size": _AGGLOMERATIVE_MIN_CLUSTER_SIZE,
+            }
+        },
+    }
+
+
 @dataclass
 class DiarizenDiarizer:
     """Speaker diarizer using BUT-FIT/diarizen-wavlm-large-s80-md-v2.
 
-    Speaker count is inferred automatically (no num_speakers required).
+    Speaker count is fixed from the configured session attendees.
     Supports up to 4 overlapping speakers.
 
     VRAM discipline: model is loaded and fully unloaded within each diarize() call.
     """
 
     model_name: str = "BUT-FIT/diarizen-wavlm-large-s80-md-v2"
+    speaker_count: int = 1
 
     def diarize(self, audio_path: Path, logger: LoggingProtocol) -> MergedDiarizationResult:
         _patch_torchaudio_for_pyannote()
@@ -189,6 +216,7 @@ class DiarizenDiarizer:
             import torch
             import torch.torch_version
             from diarizen.pipelines.inference import DiariZenPipeline
+            from huggingface_hub import hf_hub_download, snapshot_download
         except ImportError as e:
             raise ImportError("diarizen is required: pip install diarizen") from e
 
@@ -196,11 +224,26 @@ class DiarizenDiarizer:
         # TorchVersion objects, so we need to add it to the safe-globals allowlist.
         torch.serialization.add_safe_globals([torch.torch_version.TorchVersion])
 
-        logger.report_message(f"[blue]Loading DiariZen diarization model {self.model_name}...[/blue]")
-        pipeline = DiariZenPipeline.from_pretrained(self.model_name)
+        logger.report_message(
+            f"[blue]Loading DiariZen diarization model {self.model_name} "
+            f"with {self.speaker_count} expected speakers...[/blue]"
+        )
+        diarizen_hub = Path(snapshot_download(repo_id=self.model_name)).expanduser().absolute()
+        embedding_model = hf_hub_download(
+            repo_id=_DIARIZEN_EMBEDDING_MODEL,
+            filename=_DIARIZEN_EMBEDDING_FILENAME,
+        )
+        pipeline = DiariZenPipeline(
+            diarizen_hub=diarizen_hub,
+            embedding_model=embedding_model,
+            config_parse=_build_fixed_speaker_config(diarizen_hub, self.speaker_count),
+        )
 
         try:
-            logger.report_message("[blue]Running diarization (speaker count inferred automatically)...[/blue]")
+            logger.report_message(
+                f"[blue]Running diarization with {_AGGLOMERATIVE_CLUSTERING_METHOD} "
+                f"and {self.speaker_count} speakers...[/blue]"
+            )
             annotation = pipeline(str(audio_path.resolve()))
 
             segments: list[DiarizationSegment] = []

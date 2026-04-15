@@ -41,6 +41,18 @@
             ]
         },
         {
+            "name": "clean-diarization",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "clean-diarization",
+                "--session",
+                "test",
+            ]
+        },
+        {
             "name": "create-speaker-clips",
             "type": "debugpy",
             "request": "launch",
@@ -156,7 +168,7 @@
             "args": [
                 "mark-backchannels",
                 "--session",
-                "20260225",
+                "test",
             ]
         },
         {
@@ -242,7 +254,7 @@
             "args": [
                 "summarize-session",
                 "--session",
-                "20260225",
+                "test",
             ]
         },
         {

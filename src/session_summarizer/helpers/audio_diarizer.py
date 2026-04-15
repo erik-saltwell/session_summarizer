@@ -25,7 +25,7 @@ def diarize_audio(
 
     gpu_logger.report_gpu_usage("before processing")
 
-    diarizer: DiarizenDiarizer = DiarizenDiarizer()
+    diarizer: DiarizenDiarizer = DiarizenDiarizer(speaker_count=settings.number_of_speakers)
     diarization: MergedDiarizationResult = diarizer.diarize(audio_path, logger)
     logger.report_message(f"[blue]Converting to SpeechClipSet {final_path}...[/blue]")
     result: SpeechClipSet = create_speech_clips(diarization, alignment_result, settings, logger)

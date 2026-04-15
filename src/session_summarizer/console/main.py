@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import random
+import sys
 from importlib.metadata import PackageNotFoundError, metadata
 from importlib.metadata import version as dist_version
 from pathlib import Path
@@ -18,6 +19,7 @@ from ..commands.add_embeddings import AddEmbeddingsCommand
 from ..commands.align_transcript import AlignTranscriptCommand
 from ..commands.clean_audio import CleanAudioCommand
 from ..commands.clean_session import CleanSessionCommand
+from ..commands.clean_session_step import CleanSessionStepCommand
 from ..commands.clear_logs import ClearLogsCommand
 from ..commands.compare_fulltext import CompareFullTextCommand
 from ..commands.compute_segments import ComputeSegmentsCommand
@@ -46,6 +48,7 @@ from .console_validation import _validate_directory_exists
 load_dotenv()
 configure_logging()
 
+
 # Set random seeds for reproducible model inference
 
 
@@ -71,7 +74,8 @@ app = typer.Typer(
 
 
 def create_logger() -> LoggingProtocol:
-    console = Console()
+    console = Console(file=sys.__stdout__)
+    # error_console = Console(file=sys.__stderr__)
     console_logger: RichConsoleLogger = RichConsoleLogger(console)
     logfile_path = common_paths.generate_logfile_path()
     file_logger: FileLogger = FileLogger(logfile_path, verbose_training=True)
@@ -123,48 +127,6 @@ def apply_identity_stitiching(
     command.execute(logger)
 
 
-@app.command("diarizationlm")
-def diarizationlm(
-    session: str = typer.Option(..., "--session", "-s", help="ID of the session to process"),
-) -> None:
-    """Post-process diarization with DiarizationLM to correct speaker attribution errors."""
-    confirm_session(session)
-    _set_seed(session)
-    logger: LoggingProtocol = create_logger()
-    command: DiarizationLMCommand = DiarizationLMCommand(session, force=True)
-    command.execute(logger)
-
-
-@app.command("clean-audio")
-def clean_audio(
-    session: str = typer.Option(..., "--session", "-s", help="ID of the session to clean"),
-) -> None:
-    confirm_session(session)
-    _set_seed(session)
-    logger: LoggingProtocol = create_logger()
-    command: CleanAudioCommand = CleanAudioCommand(session, force=True)
-    command.execute(logger)
-
-
-@app.command("clean-session")
-def clean_session(
-    session: str = typer.Option(..., "--session", "-s", help="ID of the session to clean"),
-) -> None:
-    """Delete all generated files in a session folder, keeping settings.yaml and the original audio."""
-    confirm_session(session)
-    _set_seed(session)
-    logger: LoggingProtocol = create_logger()
-    command: CleanSessionCommand = CleanSessionCommand(session, force=True)
-    command.execute(logger)
-
-
-@app.command("clear-logs")
-def clear_logs() -> None:
-    """Delete all files in the logs directory."""
-    logger: LoggingProtocol = create_logger()
-    ClearLogsCommand().execute(logger)
-
-
 @app.command("compare-texts")
 def compare_texts(
     session: str = typer.Option(..., "--session", "-s", help="ID of the session to transcribe"),
@@ -202,6 +164,61 @@ def create_speaker_clips(
     command: CreateSpeakerClipsCommand = CreateSpeakerClipsCommand(
         session, use_multi_speaker_clips=False, temp_folder=Path(temp_folder)
     )
+    command.execute(logger)
+
+
+@app.command("clean-audio")
+def clean_audio(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to clean"),
+) -> None:
+    confirm_session(session)
+    _set_seed(session)
+    logger: LoggingProtocol = create_logger()
+    command: CleanAudioCommand = CleanAudioCommand(session, force=True)
+    command.execute(logger)
+
+
+@app.command("clean-diarization")
+def clean_diarization(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to clean"),
+) -> None:
+    """Delete all generated files in a session folder, keeping settings.yaml and the original audio."""
+    confirm_session(session)
+    _set_seed(session)
+    logger: LoggingProtocol = create_logger()
+    command: CleanSessionStepCommand = CleanSessionStepCommand(session, force=True)
+    command.commands_to_clean.append(DiarizeAudioCommand(session, force=True))
+    command.execute(logger)
+
+
+@app.command("clean-session")
+def clean_session(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to clean"),
+) -> None:
+    """Delete all generated files in a session folder, keeping settings.yaml and the original audio."""
+    confirm_session(session)
+    _set_seed(session)
+    logger: LoggingProtocol = create_logger()
+    command: CleanSessionCommand = CleanSessionCommand(session, force=True)
+    command.execute(logger)
+
+
+@app.command("clear-logs")
+def clear_logs() -> None:
+    """Delete all files in the logs directory."""
+    logger: LoggingProtocol = create_logger()
+    ClearLogsCommand().execute(logger)
+
+
+@app.command("diarizationlm")
+def diarizationlm(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to process"),
+) -> None:
+    """Post-process diarization with DiarizationLM to correct speaker attribution errors."""
+    confirm_session(session)
+    _set_seed(session)
+    logger: LoggingProtocol = create_logger()
+    command: DiarizationLMCommand = DiarizationLMCommand(session, force=True)
     command.execute(logger)
 
 

@@ -64,9 +64,9 @@ def _get_output(
 
 
 def _log(input: str, title: str, logger: LoggingProtocol) -> None:
-    logger.report_message(f"{title.upper()}: \n")
-    logger.report_message(input)
-    logger.add_break()
+    # logger.report_message(f"{title.upper()}: \n")
+    # logger.report_message(input)
+    # logger.add_break()
     return
 
 

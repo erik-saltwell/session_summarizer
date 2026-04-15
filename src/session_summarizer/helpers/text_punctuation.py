@@ -3,8 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import cast
 
-from punctuators.models import PunctCapSegModelONNX
-
 from ..evaluation.text_cleaner import clean_text_for_evaluation
 from ..processing_results import SpeechClipSet
 from ..protocols import GpuLogger, LoggingProtocol
@@ -18,6 +16,8 @@ def punctuate_text(
     gpu_logger: GpuLogger,
     logger: LoggingProtocol,
 ) -> SpeechClipSet:
+    from punctuators.models import PunctCapSegModelONNX
+
     segments: list[str] = [clean_text_for_evaluation(clip.text) for clip in clips]
     model = PunctCapSegModelONNX.from_pretrained("pcs_en")
     results = cast(list[str], model.infer(texts=segments, apply_sbd=False))

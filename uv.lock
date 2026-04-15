@@ -3606,6 +3606,7 @@ dependencies = [
     { name = "punctuators", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "pyannote-audio", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "pyannote-metrics", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+    { name = "python-dateutil", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "python-dotenv", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "rich", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "simplejson", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
@@ -3613,6 +3614,7 @@ dependencies = [
     { name = "torchaudio", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "torchvision", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "typer", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+    { name = "types-python-dateutil", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
 ]
 
 [package.dev-dependencies]
@@ -3624,6 +3626,7 @@ dev = [
     { name = "ruff", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "ssort", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "types-pyyaml", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+    { name = "types-toml", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
 ]
 
 [package.metadata]
@@ -3652,6 +3655,7 @@ requires-dist = [
     { name = "punctuators", specifier = ">=0.0.7" },
     { name = "pyannote-audio", git = "https://github.com/BUTSpeechFIT/DiariZen.git?subdirectory=pyannote-audio" },
     { name = "pyannote-metrics", specifier = ">=3.2.1" },
+    { name = "python-dateutil", specifier = ">=2.9.0.post0" },
     { name = "python-dotenv", specifier = ">=1.2.1" },
     { name = "rich", specifier = ">=14.2.0" },
     { name = "simplejson", specifier = ">=3.20.2" },
@@ -3659,6 +3663,7 @@ requires-dist = [
     { name = "torchaudio", specifier = "==2.10.0", index = "https://download.pytorch.org/whl/cu128" },
     { name = "torchvision", specifier = "==0.25.0", index = "https://download.pytorch.org/whl/cu128" },
     { name = "typer", specifier = ">=0.21.1" },
+    { name = "types-python-dateutil", specifier = ">=2.9.0.20260408" },
 ]
 
 [package.metadata.requires-dev]
@@ -3670,6 +3675,7 @@ dev = [
     { name = "ruff", specifier = ">=0.14.13" },
     { name = "ssort", specifier = ">=0.16.0" },
     { name = "types-pyyaml", specifier = ">=6.0.12.20250915" },
+    { name = "types-toml", specifier = ">=0.10.8.20260408" },
 ]
 
 [[package]]
@@ -4394,12 +4400,30 @@ wheels = [
 ]
 
 [[package]]
+name = "types-python-dateutil"
+version = "2.9.0.20260408"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/88/f3/2427775f80cd5e19a0a71ba8e5ab7645a01a852f43a5fd0ffc24f66338e0/types_python_dateutil-2.9.0.20260408.tar.gz", hash = "sha256:8b056ec01568674235f64ecbcef928972a5fac412f5aab09c516dfa2acfbb582", size = 16981, upload-time = "2026-04-08T04:28:10.995Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fd/c6/eeba37bfee282a6a97f889faef9352d6172c6a5088eb9a4daf570d9d748d/types_python_dateutil-2.9.0.20260408-py3-none-any.whl", hash = "sha256:473139d514a71c9d1fbd8bb328974bedcb1cc3dba57aad04ffa4157f483c216f", size = 18437, upload-time = "2026-04-08T04:28:10.095Z" },
+]
+
+[[package]]
 name = "types-pyyaml"
 version = "6.0.12.20250915"
 source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/7e/69/3c51b36d04da19b92f9e815be12753125bd8bc247ba0470a982e6979e71c/types_pyyaml-6.0.12.20250915.tar.gz", hash = "sha256:0f8b54a528c303f0e6f7165687dd33fafa81c807fcac23f632b63aa624ced1d3", size = 17522, upload-time = "2025-09-15T03:01:00.728Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/bd/e0/1eed384f02555dde685fff1a1ac805c1c7dcb6dd019c916fe659b1c1f9ec/types_pyyaml-6.0.12.20250915-py3-none-any.whl", hash = "sha256:e7d4d9e064e89a3b3cae120b4990cd370874d2bf12fa5f46c97018dd5d3c9ab6", size = 20338, upload-time = "2025-09-15T03:00:59.218Z" },
+]
+
+[[package]]
+name = "types-toml"
+version = "0.10.8.20260408"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/71/9b/887564a51a84c96ba08b715570e546f0ea793df6372b736bfbc596ca5536/types_toml-0.10.8.20260408.tar.gz", hash = "sha256:6b30b031235565a12febb1388900b129f1adeabfcfa594da46d0372b2ac107ad", size = 9341, upload-time = "2026-04-08T04:27:54.394Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/56/f1/942d95ba026779bc6e3064f8b094216588dc3276cc328cf8e03a0541918d/types_toml-0.10.8.20260408-py3-none-any.whl", hash = "sha256:e958d4c660385e548705a298f17dc162baf44c8b6d6aff79aeefe75f4f77ac87", size = 9677, upload-time = "2026-04-08T04:27:53.526Z" },
 ]
 
 [[package]]

@@ -12,7 +12,7 @@ import typer
 from ..evaluation import clean_text_for_evaluation
 from ..processing_results import AlignmentResult, SpeechClipSet
 from ..protocols import CommmandProtocol, LoggingProtocol, NullLogger, SessionSettings
-from ..utils import common_paths
+from ..utils import common_paths, flush_gpu_memory, silence_python_noise
 
 
 class PlainTextContainer(Protocol):
@@ -28,6 +28,21 @@ class SessionProcessingCommand(ABC, CommmandProtocol):
     inputs: list[Path] = field(default_factory=list)
     outputs: list[Path] = field(default_factory=list)
     dependencies: list[CommmandProtocol] = field(default_factory=list)
+    test_clips: SpeechClipSet | None = None
+
+    def should_enable_logging(self) -> bool:
+        return False
+
+    def enable_clip_test(self, clips: SpeechClipSet) -> None:
+        self.test_clips = clips
+
+    def validate_clips(self) -> None:
+        if self.test_clips is None:
+            return
+        longest_clip_duration = max([clip.duration for clip in self.test_clips])
+        if longest_clip_duration > 600:  # 10 minutes
+            # raise RuntimeError(f"Longest clip was {longest_clip_duration}, over 600 second limit.")
+            pass
 
     @property
     def should_process(self) -> bool:
@@ -68,6 +83,7 @@ class SessionProcessingCommand(ABC, CommmandProtocol):
     def execute(self, logger: LoggingProtocol) -> None:
         self.logger = logger
         session_dir: Path = common_paths.session_dir(self.session_id)
+        self.gpu_logging_enabled = self.should_enable_logging()
         if not session_dir.exists():
             raise FileNotFoundError(f"Could not find directory: {session_dir}")
         settings: SessionSettings = SessionSettings.load_cascading(self.session_id)
@@ -79,16 +95,23 @@ class SessionProcessingCommand(ABC, CommmandProtocol):
         if not self.should_process:
             return
 
+        self.report_gpu_usage(f"Before Processing {self.name()}")
         self.report_message(f"{self.name()}: Processing...")
 
         start = time.perf_counter()
         try:
-            self.process_session(settings, session_dir)
+            with silence_python_noise():
+                self.process_session(settings, session_dir)
             end = time.perf_counter()
             logger.report_message(f"[green]Command completed in {(end - start):.6f} seconds.[/green]")
         except Exception as exc:
             logger.report_exception(f"Error processing {self.name()}", exc)
             raise typer.Exit(code=1) from exc
+        finally:
+            flush_gpu_memory()
+            self.report_gpu_usage(f"After Processing {self.name()}")
+
+        self.validate_clips()
 
     def postpend_text(self, input: Path, tag: str, suffix: str) -> Path:
         return input.with_name(f"{input.stem}{tag}{suffix}")
@@ -102,6 +125,7 @@ class SessionProcessingCommand(ABC, CommmandProtocol):
             f.write(saved_text)
 
     def save_speech_clip(self, clips: SpeechClipSet, session_dir: Path, json_filename: Path) -> None:
+        self.enable_clip_test(clips)
         json_path = session_dir / json_filename
         human_path = session_dir / Path(json_filename.stem + "_human.txt")
         error_formated_path = session_dir / Path(json_filename.stem + "_formatted.md")
