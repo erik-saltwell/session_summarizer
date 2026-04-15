@@ -12,7 +12,7 @@ import typer
 from ..evaluation import clean_text_for_evaluation
 from ..processing_results import AlignmentResult, SpeechClipSet
 from ..protocols import CommmandProtocol, LoggingProtocol, NullLogger, SessionSettings
-from ..utils import common_paths, flush_gpu_memory, silence_python_noise
+from ..utils import Tracer, common_paths, flush_gpu_memory, silence_python_noise
 
 
 class PlainTextContainer(Protocol):
@@ -22,6 +22,7 @@ class PlainTextContainer(Protocol):
 @dataclass
 class SessionProcessingCommand(ABC, CommmandProtocol):
     session_id: str
+    tracer: Tracer
     force: bool = False
     logger: LoggingProtocol = NullLogger()
     gpu_logging_enabled: bool = False

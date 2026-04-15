@@ -15,6 +15,32 @@ common_paths.ensure_directory(log_path.parent)
 log_file = open(common_paths.generate_logfile_path(), "a", encoding="utf-8")
 
 
+def initialize_tracing(indent: int | None = None) -> None:
+    json_renderer: Processor
+    if indent is not None:
+        json_renderer = structlog.processors.JSONRenderer(indent=indent, sort_keys=True)
+    else:
+        json_renderer = structlog.processors.JSONRenderer(sort_keys=True)
+
+    structlog.configure(
+        processors=[
+            structlog.contextvars.merge_contextvars,
+            structlog.processors.add_log_level,
+            structlog.processors.TimeStamper(fmt="iso"),
+            structlog.processors.dict_tracebacks,
+            json_renderer,
+        ],
+        logger_factory=structlog.WriteLoggerFactory(file=log_file),
+    )
+
+
+def initialize_request() -> None:
+    structlog.contextvars.clear_contextvars()
+    structlog.contextvars.bind_contextvars(
+        request_id=f"req_{uuid.uuid4().hex}",  # your custom ID
+    )
+
+
 class StructLoggerProtocol(structlog.typing.BindableLogger, Protocol):
     def bind(self, **new_values: Any) -> StructLoggerProtocol: ...
     def info(self, event: str | None = None, **kw: Any) -> Any: ...
@@ -24,32 +50,6 @@ class StructLoggerProtocol(structlog.typing.BindableLogger, Protocol):
 @dataclass
 class Tracer:
     logger: StructLoggerProtocol = field(default_factory=structlog.get_logger)
-
-    @classmethod
-    def initialize_tracing(cls, indent: int | None = None) -> None:
-        json_renderer: Processor
-        if indent is not None:
-            json_renderer = structlog.processors.JSONRenderer(indent=indent, sort_keys=True)
-        else:
-            json_renderer = structlog.processors.JSONRenderer(sort_keys=True)
-
-        structlog.configure(
-            processors=[
-                structlog.contextvars.merge_contextvars,
-                structlog.processors.add_log_level,
-                structlog.processors.TimeStamper(fmt="iso"),
-                structlog.processors.dict_tracebacks,
-                json_renderer,
-            ],
-            logger_factory=structlog.WriteLoggerFactory(file=log_file),
-        )
-
-    @classmethod
-    def initialize_request(cls) -> None:
-        structlog.contextvars.clear_contextvars()
-        structlog.contextvars.bind_contextvars(
-            request_id=f"req_{uuid.uuid4().hex}",  # your custom ID
-        )
 
     def add_context(self, name: str, value: Any) -> None:
         self.logger = self.logger.bind(**{name: value})

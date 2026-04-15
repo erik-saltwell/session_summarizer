@@ -69,13 +69,13 @@ class ValidateDiarizationCommand(SessionProcessingCommand):
         self.inputs.extend(item[1] for item in get_diarization_registry(settings, session_dir))
         self.dependencies.extend(
             [
-                DiarizeAudioCommand(self.session_id),
-                DiarizationLMCommand(self.session_id),
-                AddEmbeddingsCommand(self.session_id),
-                IdentifySpeakersCommand(self.session_id),
-                StitichIdentitiesCommand(self.session_id),
-                IndeterminantSpeakerAssignmentCommand(self.session_id),
-                MarkBackchannelsCommand(self.session_id),
+                DiarizeAudioCommand(self.session_id, self.tracer),
+                DiarizationLMCommand(self.session_id, self.tracer),
+                AddEmbeddingsCommand(self.session_id, self.tracer),
+                IdentifySpeakersCommand(self.session_id, self.tracer),
+                StitichIdentitiesCommand(self.session_id, self.tracer),
+                IndeterminantSpeakerAssignmentCommand(self.session_id, self.tracer),
+                MarkBackchannelsCommand(self.session_id, self.tracer),
             ]
         )
 

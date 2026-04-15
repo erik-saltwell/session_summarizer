@@ -24,9 +24,9 @@ class ScoreConfidenceCommand(SessionProcessingCommand):
         self.inputs.append(session_dir / settings.paths.aligned_transcript)
         self.inputs.append(session_dir / settings.paths.vad_segments)
         self.outputs.append(session_dir / settings.paths.confidence_transcript)
-        self.dependencies.append(AlignTranscriptCommand(self.session_id))
-        self.dependencies.append(ComputeSegmentsCommand(self.session_id))
-        self.dependencies.append(CleanAudioCommand(self.session_id))
+        self.dependencies.append(AlignTranscriptCommand(self.session_id, self.tracer))
+        self.dependencies.append(ComputeSegmentsCommand(self.session_id, self.tracer))
+        self.dependencies.append(CleanAudioCommand(self.session_id, self.tracer))
 
     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
         segments: SegmentSplitResultSet = SegmentSplitResultSet.load(session_dir / settings.paths.vad_segments)

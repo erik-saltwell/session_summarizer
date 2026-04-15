@@ -41,13 +41,12 @@ from ..commands.validate_transcribers import ValidateTranscribersCommand
 from ..logging import RichConsoleLogger
 from ..protocols import LoggingProtocol
 from ..settings.session_settings import SessionSettings
-from ..utils import flush_gpu_memory
-from ..utils.logging_config import configure_logging
+from ..utils import Tracer, configure_logging, flush_gpu_memory, initialize_request, initialize_tracing
 from .console_validation import _validate_directory_exists
 
 load_dotenv()
 configure_logging()
-
+initialize_tracing()
 
 # Set random seeds for reproducible model inference
 
@@ -74,10 +73,12 @@ app = typer.Typer(
 
 
 def create_logger() -> LoggingProtocol:
+    initialize_request()
     console = Console(file=sys.__stdout__)
     # error_console = Console(file=sys.__stderr__)
     console_logger: RichConsoleLogger = RichConsoleLogger(console)
     return console_logger
+
     # logfile_path = common_paths.generate_logfile_path()
     # file_logger: FileLogger = FileLogger(logfile_path, verbose_training=True)
     # return CompositeLogger([console_logger, file_logger])
@@ -101,7 +102,8 @@ def add_embeddings(
     confirm_session(session)
     _set_seed(session)
     logger: LoggingProtocol = create_logger()
-    command: AddEmbeddingsCommand = AddEmbeddingsCommand(session, force=True)
+    tracer: Tracer = Tracer()
+    command: AddEmbeddingsCommand = AddEmbeddingsCommand(session, tracer, force=True)
     command.execute(logger)
 
 
@@ -112,7 +114,8 @@ def align_transcription(
     confirm_session(session)
     _set_seed(session)
     logger: LoggingProtocol = create_logger()
-    command: AlignTranscriptCommand = AlignTranscriptCommand(session, force=True)
+    tracer: Tracer = Tracer()
+    command: AlignTranscriptCommand = AlignTranscriptCommand(session, tracer, force=True)
     command.execute(logger)
 
 
@@ -124,7 +127,8 @@ def apply_identity_stitiching(
     confirm_session(session)
     _set_seed(session)
     logger: LoggingProtocol = create_logger()
-    command: StitichIdentitiesCommand = StitichIdentitiesCommand(session, force=True)
+    tracer: Tracer = Tracer()
+    command: StitichIdentitiesCommand = StitichIdentitiesCommand(session, tracer, force=True)
     command.execute(logger)
 
 
@@ -135,7 +139,8 @@ def compare_texts(
     confirm_session(session)
     _set_seed(session)
     logger: LoggingProtocol = create_logger()
-    command: CompareFullTextCommand = CompareFullTextCommand(session, force=True)
+    tracer: Tracer = Tracer()
+    command: CompareFullTextCommand = CompareFullTextCommand(session, tracer, force=True)
     command.execute(logger)
 
 
@@ -147,7 +152,8 @@ def compute_vad_segments(
     confirm_session(session)
     _set_seed(session)
     logger: LoggingProtocol = create_logger()
-    command: ComputeSegmentsCommand = ComputeSegmentsCommand(session, force=True)
+    tracer: Tracer = Tracer()
+    command: ComputeSegmentsCommand = ComputeSegmentsCommand(session, tracer, force=True)
     command.execute(logger)
 
 
@@ -162,8 +168,9 @@ def create_speaker_clips(
     confirm_session(session)
     _set_seed(session)
     logger: LoggingProtocol = create_logger()
+    tracer: Tracer = Tracer()
     command: CreateSpeakerClipsCommand = CreateSpeakerClipsCommand(
-        session, use_multi_speaker_clips=False, temp_folder=Path(temp_folder)
+        session, tracer, use_multi_speaker_clips=False, temp_folder=Path(temp_folder)
     )
     command.execute(logger)
 
@@ -175,7 +182,9 @@ def clean_audio(
     confirm_session(session)
     _set_seed(session)
     logger: LoggingProtocol = create_logger()
-    command: CleanAudioCommand = CleanAudioCommand(session, force=True)
+    tracer: Tracer = Tracer()
+
+    command: CleanAudioCommand = CleanAudioCommand(session, tracer, force=True)
     command.execute(logger)
 
 
@@ -187,8 +196,9 @@ def clean_diarization(
     confirm_session(session)
     _set_seed(session)
     logger: LoggingProtocol = create_logger()
-    command: CleanSessionStepCommand = CleanSessionStepCommand(session, force=True)
-    command.commands_to_clean.append(DiarizeAudioCommand(session, force=True))
+    tracer: Tracer = Tracer()
+    command: CleanSessionStepCommand = CleanSessionStepCommand(session, tracer, force=True)
+    command.commands_to_clean.append(DiarizeAudioCommand(session, tracer, force=True))
     command.execute(logger)
 
 
@@ -200,7 +210,8 @@ def clean_session(
     confirm_session(session)
     _set_seed(session)
     logger: LoggingProtocol = create_logger()
-    command: CleanSessionCommand = CleanSessionCommand(session, force=True)
+    tracer: Tracer = Tracer()
+    command: CleanSessionCommand = CleanSessionCommand(session, tracer, force=True)
     command.execute(logger)
 
 
@@ -219,7 +230,8 @@ def diarizationlm(
     confirm_session(session)
     _set_seed(session)
     logger: LoggingProtocol = create_logger()
-    command: DiarizationLMCommand = DiarizationLMCommand(session, force=True)
+    tracer: Tracer = Tracer()
+    command: DiarizationLMCommand = DiarizationLMCommand(session, tracer, force=True)
     command.execute(logger)
 
 
@@ -262,7 +274,8 @@ def diarize_audio(
     confirm_session(session)
     _set_seed(session)
     logger: LoggingProtocol = create_logger()
-    command: DiarizeAudioCommand = DiarizeAudioCommand(session, force=True)
+    tracer: Tracer = Tracer()
+    command: DiarizeAudioCommand = DiarizeAudioCommand(session, tracer, force=True)
     command.execute(logger)
 
 
@@ -661,7 +674,9 @@ def identify_speakers(
     confirm_session(session)
     _set_seed(session)
     logger: LoggingProtocol = create_logger()
-    command: IdentifySpeakersCommand = IdentifySpeakersCommand(session, force=True)
+    tracer: Tracer = Tracer()
+
+    command: IdentifySpeakersCommand = IdentifySpeakersCommand(session, tracer, force=True)
     command.execute(logger)
 
 
@@ -673,7 +688,9 @@ def mark_backchannels(
     confirm_session(session)
     _set_seed(session)
     logger: LoggingProtocol = create_logger()
-    command: MarkBackchannelsCommand = MarkBackchannelsCommand(session, force=True)
+    tracer: Tracer = Tracer()
+
+    command: MarkBackchannelsCommand = MarkBackchannelsCommand(session, tracer, force=True)
     command.execute(logger)
 
 
@@ -685,7 +702,9 @@ def punctuate_text(
     confirm_session(session)
     _set_seed(session)
     logger: LoggingProtocol = create_logger()
-    command: PunctuateTextCommand = PunctuateTextCommand(session, force=True)
+    tracer: Tracer = Tracer()
+
+    command: PunctuateTextCommand = PunctuateTextCommand(session, tracer, force=True)
     command.execute(logger)
 
 
@@ -703,7 +722,9 @@ def score_confidence(
     confirm_session(session)
     _set_seed(session)
     logger: LoggingProtocol = create_logger()
-    command: ScoreConfidenceCommand = ScoreConfidenceCommand(session, force=True)
+    tracer: Tracer = Tracer()
+
+    command: ScoreConfidenceCommand = ScoreConfidenceCommand(session, tracer, force=True)
     command.execute(logger)
 
 
@@ -714,7 +735,9 @@ def summarize_session(
     confirm_session(session)
     _set_seed(session)
     logger: LoggingProtocol = create_logger()
-    command: SummarizeSessionCommand = SummarizeSessionCommand(session, force=True)
+    tracer: Tracer = Tracer()
+
+    command: SummarizeSessionCommand = SummarizeSessionCommand(session, tracer, force=True)
     command.execute(logger)
 
 
@@ -725,7 +748,9 @@ def test(
     confirm_session(session)
     _set_seed(session)
     logger: LoggingProtocol = create_logger()
-    command: TestCommand = TestCommand(session, force=True)
+    tracer: Tracer = Tracer()
+
+    command: TestCommand = TestCommand(session, tracer, force=True)
     command.execute(logger)
 
 
@@ -736,7 +761,9 @@ def transcribe(
     confirm_session(session)
     _set_seed(session)
     logger: LoggingProtocol = create_logger()
-    command: TranscribeAudioCommand = TranscribeAudioCommand(session, force=True)
+    tracer: Tracer = Tracer()
+
+    command: TranscribeAudioCommand = TranscribeAudioCommand(session, tracer, force=True)
     command.execute(logger)
 
 
@@ -748,7 +775,9 @@ def validate_diarization(
     confirm_session(session)
     _set_seed(session)
     logger: LoggingProtocol = create_logger()
-    command: ValidateDiarizationCommand = ValidateDiarizationCommand(session, force=True)
+    tracer: Tracer = Tracer()
+
+    command: ValidateDiarizationCommand = ValidateDiarizationCommand(session, tracer, force=True)
     command.execute(logger)
 
 
@@ -760,7 +789,9 @@ def validate_transcribers(
     confirm_session(session)
     _set_seed(session)
     logger: LoggingProtocol = create_logger()
-    command: ValidateTranscribersCommand = ValidateTranscribersCommand(session, force=True)
+    tracer: Tracer = Tracer()
+
+    command: ValidateTranscribersCommand = ValidateTranscribersCommand(session, tracer, force=True)
     command.execute(logger)
 
 

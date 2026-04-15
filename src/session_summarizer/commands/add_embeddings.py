@@ -24,9 +24,9 @@ class AddEmbeddingsCommand(SessionProcessingCommand):
         self.inputs.append(session_dir / settings.paths.cleaned_audio)
         self.inputs.append(session_dir / settings.paths.vad_segments)
         self.outputs.append(session_dir / settings.paths.clips_with_embeddings)
-        self.dependencies.append(DanglingSentenceFixCommand(self.session_id))
-        self.dependencies.append(ComputeSegmentsCommand(self.session_id))
-        self.dependencies.append(CleanAudioCommand(self.session_id))
+        self.dependencies.append(DanglingSentenceFixCommand(self.session_id, self.tracer))
+        self.dependencies.append(ComputeSegmentsCommand(self.session_id, self.tracer))
+        self.dependencies.append(CleanAudioCommand(self.session_id, self.tracer))
 
     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
         clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.paths.dangling_sentence_fix)

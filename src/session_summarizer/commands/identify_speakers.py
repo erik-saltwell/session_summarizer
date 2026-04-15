@@ -30,7 +30,7 @@ class IdentifySpeakersCommand(SessionProcessingCommand):
     def add_dependencies(self, settings: SessionSettings, session_dir: Path) -> None:
         self.inputs.append(session_dir / settings.paths.clips_with_embeddings)
         self.outputs.append(session_dir / settings.paths.identified_speakers)
-        self.dependencies.append(AddEmbeddingsCommand(self.session_id))
+        self.dependencies.append(AddEmbeddingsCommand(self.session_id, self.tracer))
 
     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
         if not settings.attendees:
