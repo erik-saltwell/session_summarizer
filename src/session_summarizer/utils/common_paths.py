@@ -98,3 +98,7 @@ def test_transcript_path() -> Path:
 
 def is_test_session(session_id: str) -> bool:
     return session_id == _TEST_SESSION
+
+
+def command_dependencies_mermaid_file() -> Path:
+    return data_dir() / "command_dependencies.mmd"

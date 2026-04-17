@@ -114,6 +114,16 @@
             ]
         },
         {
+            "name": "document-dependencies",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "document-dependencies",
+            ]
+        },
+        {
             "name": "embeddings",
             "type": "debugpy",
             "request": "launch",

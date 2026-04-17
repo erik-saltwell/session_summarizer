@@ -8,8 +8,8 @@ from ..processing_results import SpeechClipFlags, SpeechClipSet
 from ..protocols import (
     SessionSettings,
 )
+from .indeterminate_speaker_assignment import IndeterminantSpeakerAssignmentCommand
 from .session_processing_command import SessionProcessingCommand
-from .stitch_identities import StitichIdentitiesCommand
 
 
 @dataclass
@@ -18,12 +18,12 @@ class MarkBackchannelsCommand(SessionProcessingCommand):
         return "Mark Backchannels"
 
     def add_dependencies(self, settings: SessionSettings, session_dir: Path) -> None:
-        self.inputs.append(session_dir / settings.paths.identity_stitched)
+        self.inputs.append(session_dir / settings.paths.indeterminate_speakers)
         self.outputs.append(session_dir / settings.paths.backchannel_marked)
-        self.dependencies.append(StitichIdentitiesCommand(self.session_id, self.tracer))
+        self.dependencies.append(IndeterminantSpeakerAssignmentCommand(self.session_id, self.tracer))
 
     def process_session(self, settings: SessionSettings, session_dir: Path) -> None:
-        clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.paths.identity_stitched)
+        clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.paths.indeterminate_speakers)
         backchannel_count = 0
         for clip in clips:
             is_clip_backchannel = is_backchannel(clip)

@@ -26,6 +26,7 @@ from ..commands.compute_segments import ComputeSegmentsCommand
 from ..commands.create_speaker_clips import CreateSpeakerClipsCommand
 from ..commands.diarizationlm_command import DiarizationLMCommand
 from ..commands.diarize_audio import DiarizeAudioCommand
+from ..commands.document_dependencies import DocumentDependenciesCommand
 from ..commands.identify_speakers import IdentifySpeakersCommand
 from ..commands.mark_backchannels import MarkBackchannelsCommand
 from ..commands.merge_speaker_clips import MergeSpeakerClipsCommand
@@ -649,6 +650,14 @@ epsilon: 0.000001
 # Allowed values: any integer. Reasonable default: 42
 seed: 43
 """
+
+
+@app.command("document-dependencies")
+def document_dependencies_cmd() -> None:
+    """Inspect all pipeline commands and write a Mermaid file/command dependency graph."""
+    logger, _tracer = initialize_logging()
+    command: DocumentDependenciesCommand = DocumentDependenciesCommand()
+    command.execute(logger)
 
 
 @app.command("generate-sample-settings")
