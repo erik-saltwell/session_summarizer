@@ -14,7 +14,7 @@ class AnonymousClips:
     def add_anonymous_word(
         self, new_word: WordAlignment, settings: DiarizationStitchingSettings, epsilon: float
     ) -> None:
-        radius: float = settings.anonymous_join_gap + epsilon
+        radius: float = settings.anonymous_join_gap_seconds + epsilon
 
         if self._current_clip is not None and new_word.start_time > self._current_clip.end_time + radius:
             self.flush_current_clip()  # we need to start a new clip since the new word is too far from the current clip

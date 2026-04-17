@@ -39,7 +39,7 @@ class DiarizationStitchingSettings(BaseModel, frozen=True):
     """
 
     # ── Overlap acceptance thresholds ──────────────────────────────────
-    # A candidate segment may pass *either* thresholds to count as an
+    # A candidate segment may pass *either* threshold to count as an
     # "in-range" overlap.  Relaxed defaults accommodate the boundary jitter
     # inherent in both ASR word timestamps and diarization segment edges.
 
@@ -47,26 +47,30 @@ class DiarizationStitchingSettings(BaseModel, frozen=True):
     # the candidate segment.  0.20 means at least 20% of the word must
     # fall inside the segment.  Avoids "barely touching" overlaps that
     # arise from boundary jitter.
+    # Used by: speech_clip_factory.py when scoring candidate segments.
     min_overlap_fraction_word: float
 
     # Absolute floor: ignore overlaps shorter than this (seconds).
     # 20 ms matches typical speech-processing frame sizes (25 ms); overlaps
     # below one frame are not acoustically meaningful.
+    # Used by: speech_clip_factory.py when scoring candidate segments.
     min_overlap_seconds: float
 
     # ── Fallback: nearest-segment assignment ───────────────────────────
     # When no candidate passes the overlap thresholds, the algorithm can
     # assign the word to the closest segment by midpoint distance, as long
-    # as the gap between their intervals is within max_nearest_distance.
+    # as the gap between their intervals is within max_nearest_gap_seconds.
 
     # Enable nearest-segment fallback.
+    # Used by: candidate_pool.py to decide whether to attempt nearest-segment fallback.
     fill_nearest: bool
 
     # Maximum gap (seconds) between a word and a non-overlapping segment
     # for nearest-assignment to apply. 250 ms is a common tolerance scale
     # in speech scoring; keeps the fallback conservative so it won't jump
     # speakers across long silences.
-    max_nearest_distance: float
+    # Used by: candidate_pool.py to filter nearest-segment candidates.
+    max_nearest_gap_seconds: float
 
     # ── Fallback: anonymous segments ───────────────────────────────────
     # If nearest-assignment also fails (or is disabled), words can be
@@ -76,119 +80,53 @@ class DiarizationStitchingSettings(BaseModel, frozen=True):
 
     # Maximum gap (seconds) between consecutive anonymous words that will
     # be merged into the same anonymous segment.
-    anonymous_join_gap: float
+    # Used by: anonymous_clips.py when merging consecutive anonymous words.
+    anonymous_join_gap_seconds: float
 
     # ── Post-processing ────────────────────────────────────────────────
 
     # Merge adjacent segments that share the same speaker label when
     # separated by at most merge_gap_seconds.  Reduces fragmentation
     # caused by brief pauses or diarization over-segmentation.
+    # Used by: speech_clip_factory.py during post-processing merge pass.
     merge_gap_seconds: float
-
-    # Maximum gap (seconds) between an unfinished speech clip (not marked
-    # as an end-of-turn) and a following clip with the same speaker, for
-    # them to be merged. Helps preserve conversational flow by avoiding
-    # artificial breaks in ongoing speech, while respecting turn boundaries.
-    unfinished_clip_merge_max_length: float
 
     # Maximum gap (seconds) between two clips with the same identified
     # speaker that can still be merged into a single clip during identity
     # stitching.  Larger values allow merging across longer pauses; smaller
     # values keep clips separate when the same speaker resumes after silence.
-    identity_stitching_max_gap: float
-
-    # Minimum cosine similarity (0.0–1.0) between two clip embeddings for
-    # them to be considered the same speaker during identity stitching.
-    # Lower values accept weaker matches; higher values require stronger
-    # acoustic similarity before merging.
-    identity_similarity_threshold: float
+    # Used by: identity_stitch.py when merging same-speaker clips.
+    identity_merge_max_gap_seconds: float
 
     # Widen each segment's time boundaries to fully contain its assigned
     # words.  Useful for UI rendering where words must not extend beyond
     # their parent segment, but reduces diarization boundary fidelity.
+    # Used by: speech_clip_factory.py during post-processing expansion.
     expand_segments_to_fit_words: bool
 
     # Cap on how far a segment boundary may be expanded (seconds).
+    # Used by: speech_clip_factory.py to limit boundary expansion.
     expansion_limit_seconds: float
 
     # ── Candidate scoring ──────────────────────────────────────────────
 
     # How to rank candidate segments that overlap a word. See ScoringMode
     # for details on each strategy.
+    # Used by: candidate_score.py and speech_clip_factory.py for segment ranking.
     scoring_mode: ScoringMode
 
     # When two candidates score identically, prefer the shorter segment.
     # This avoids bias toward long segments that span many words.
+    # Used by: candidate_score.py as a tie-breaker.
     prefer_shorter_on_tie: bool
-
-    # ── Backchannel detection ──────────────────────────────────────────
-
-    # Maximum duration (seconds) a clip may be to still qualify as a
-    # backchannel utterance (e.g. "mm-hmm", "right", "yeah").  Clips longer
-    # than this threshold are never treated as backchannels.
-    max_backchannel_duration: float
-
-    # Maximum gap (seconds) between a clip and its predecessor for the clip
-    # to be considered a backchannel.  Backchannels typically occur during or
-    # immediately after another speaker's speech; large prior-gaps indicate a
-    # new independent utterance instead.
-    max_backchannel_prior_gap: float
-
-    # Maximum gap (seconds) between a clip and its successor for the clip to
-    # be considered a backchannel.  If the following speech is far away, the
-    # short utterance is more likely a standalone contribution than a
-    # mid-stream backchannel.
-    max_backchannel_next_gap: float
-
-    # ── Identity-based backchannel detection ───────────────────────────
-    # Same concept as backchannel detection above, but applied during
-    # identity stitching where speaker labels come from embedding
-    # similarity rather than diarization labels.
-
-    # Maximum duration (seconds) a clip may be to still qualify as a
-    # backchannel during identity stitching.
-    max_identity_backchannel_duration: float
-
-    # Maximum gap (seconds) between a clip and its predecessor for the
-    # clip to be considered a backchannel during identity stitching.
-    max_identity_backchannel_prior_gap: float
-
-    # Maximum gap (seconds) between a clip and its successor for the
-    # clip to be considered a backchannel during identity stitching.
-    max_identity_backchannel_next_gap: float
-
-    # ── Turn detection ─────────────────────────────────────────────────
-
-    # Probability threshold for classifying a speech clip as the end of a
-    # conversational turn.  A clip whose AI-model turn-end probability meets
-    # or exceeds this value is flagged as a turn boundary.  Lower values
-    # increase sensitivity (more boundaries detected); higher values require
-    # stronger model confidence.
-    turn_end_probability_threshold: float
-
-    # ── Tiny clip merging ──────────────────────────────────────────────
-
-    # Clips shorter than this duration (seconds) are merged into the closest
-    # adjacent clip rather than kept as standalone segments.  Eliminates
-    # very short fragments that typically result from diarization jitter or
-    # brief silence mis-attribution.
-    tiny_clip_threshold: float
 
     @field_validator(
         "min_overlap_seconds",
-        "max_nearest_distance",
-        "anonymous_join_gap",
+        "max_nearest_gap_seconds",
+        "anonymous_join_gap_seconds",
         "merge_gap_seconds",
-        "unfinished_clip_merge_max_length",
-        "identity_stitching_max_gap",
+        "identity_merge_max_gap_seconds",
         "expansion_limit_seconds",
-        "max_backchannel_duration",
-        "max_backchannel_prior_gap",
-        "max_backchannel_next_gap",
-        "max_identity_backchannel_duration",
-        "max_identity_backchannel_prior_gap",
-        "max_identity_backchannel_next_gap",
-        "tiny_clip_threshold",
     )
     @classmethod
     def non_negative(cls, v: float) -> float:
@@ -196,7 +134,7 @@ class DiarizationStitchingSettings(BaseModel, frozen=True):
             raise ValueError("must be non-negative")
         return v
 
-    @field_validator("min_overlap_fraction_word", "turn_end_probability_threshold", "identity_similarity_threshold")
+    @field_validator("min_overlap_fraction_word")
     @classmethod
     def zero_to_one(cls, v: float) -> float:
         if v < 0 or v > 1:

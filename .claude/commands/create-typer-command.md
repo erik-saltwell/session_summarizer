@@ -121,7 +121,7 @@ def apply_my_new_step(
 
     # Extract settings values; pass as plain arguments to domain code
     processor = MyProcessor(device=settings.device, threshold=settings.my_new_step_threshold)
-    result = processor.process(session_dir / settings.cleaned_audio_file, logger)
+    result = processor.process(session_dir / settings.paths.cleaned_audio, logger)
 
     return result
 ```
@@ -324,11 +324,11 @@ Add the new path to the `paths` list:
 
 ```python
         paths = [
-            settings.base_diarized_path,
+            settings.paths.base_diarization,
             settings.turn_end_updated_path,
             settings.first_stitched_path,
-            settings.identified_speaker_path,
-            settings.identity_stitched_path,
+            settings.paths.identified_speakers,
+            settings.paths.identity_stitched,
             settings.my_new_step_path,          # <-- add here
         ]
 ```

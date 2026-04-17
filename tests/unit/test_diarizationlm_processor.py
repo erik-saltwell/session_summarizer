@@ -67,7 +67,7 @@ def test_processor_uses_single_prompt_when_it_fits_context() -> None:
     assert result[0].text == "hello there general kenobi"
 
 
-def test_processor_falls_back_only_for_failed_chunk() -> None:
+def test_processor_falls_back_to_original_when_inference_fails() -> None:
     clips = SpeechClipSet()
     clips.extend_clips(
         [
@@ -79,7 +79,7 @@ def test_processor_falls_back_only_for_failed_chunk() -> None:
     model = LocallyFailingFakeDiarizationLMModel(context_window=264)
     result = DiarizationLMProcessor(model).process(clips, epsilon=0.000001)
 
-    assert len(model.prompts) == 2
-    assert len(result) == 1
+    assert len(model.prompts) == 1
+    assert len(result) == 2
     assert result[0].speakers == {"A"}
-    assert result[0].text == "w0 w1 w2 w3 w4 w5 w6 w7"
+    assert result[1].speakers == {"B"}

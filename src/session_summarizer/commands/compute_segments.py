@@ -18,10 +18,10 @@ class ComputeSegmentsCommand(SessionProcessingCommand):
         return "Compute Segments"
 
     def add_dependencies(self, settings: SessionSettings, session_dir: Path) -> None:
-        self.inputs.append(session_dir / settings.cleaned_audio_file)
-        self.outputs.append(session_dir / settings.segments_path)
+        self.inputs.append(session_dir / settings.paths.cleaned_audio)
+        self.outputs.append(session_dir / settings.paths.vad_segments)
         self.dependencies.append(CleanAudioCommand(self.session_id))
 
     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
         results: SegmentSplitResultSet = compute_vad_segments(settings, session_dir, self, self.logger)
-        results.save(session_dir / settings.segments_path)
+        results.save(session_dir / settings.paths.vad_segments)

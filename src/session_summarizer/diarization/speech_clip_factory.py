@@ -65,7 +65,7 @@ class SimpleMergeSelector(MergeSelector):
         if not clips_are_close_enough(
             prior_clip,
             current_clip,
-            settings.diarization_stitching.merge_gap_seconds,
+            settings.stitching.merge_gap_seconds,
             settings.epsilon,
             logger,
         ):
@@ -126,9 +126,9 @@ def create_speech_clips(
 
     # caching values for efficiency since they are used in inner loops
     epsilon: float = settings.epsilon
-    stitch_settings = settings.diarization_stitching
+    stitch_settings = settings.stitching
     should_fill_nearest: bool = stitch_settings.fill_nearest
-    max_nearest_distance: float = stitch_settings.max_nearest_distance + epsilon
+    max_nearest_distance: float = stitch_settings.max_nearest_gap_seconds + epsilon
     scoring_mode: ScoringMode = stitch_settings.scoring_mode
     prefer_shorter_on_tie: bool = stitch_settings.prefer_shorter_on_tie
 
@@ -158,9 +158,9 @@ def create_speech_clips(
 
     speech_clips.extend_clips(anonymous_clips.get_clips())
 
-    if settings.diarization_stitching.expand_segments_to_fit_words:
+    if settings.stitching.expand_segments_to_fit_words:
         for clip in speech_clips:
-            clip.expand_bounds_to_include_words(epsilon, settings.diarization_stitching.expansion_limit_seconds)
+            clip.expand_bounds_to_include_words(epsilon, settings.stitching.expansion_limit_seconds)
 
     speech_clips = merge_clips(speech_clips, SimpleMergeSelector(), settings, logger)
     speech_clips = _remove_empty_clips(speech_clips)

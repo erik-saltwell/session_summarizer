@@ -46,13 +46,13 @@ def _result_column(result: TranscriptionValidationResult) -> list[str]:
 
 
 def _iterate_file_paths(settings: SessionSettings) -> Iterator[PathAndName]:
-    yield PathAndName(settings.transcript_file, "Transcript")
-    yield PathAndName(settings.aligned_transcript_path, "AlignedTranscript")
-    yield PathAndName(settings.confidence_transcript_path, "ScoredTranscript")
-    yield PathAndName(settings.base_diarized_path, "Diarized")
-    yield PathAndName(settings.diarizationlm_processed_path, "DiarizeLM")
-    yield PathAndName(settings.speech_clips_with_embedding, "Embeddings_Added")
-    yield PathAndName(settings.identified_speaker_path, "Speakers Identified")
+    yield PathAndName(settings.paths.transcript, "Transcript")
+    yield PathAndName(settings.paths.aligned_transcript, "AlignedTranscript")
+    yield PathAndName(settings.paths.confidence_transcript, "ScoredTranscript")
+    yield PathAndName(settings.paths.base_diarization, "Diarized")
+    yield PathAndName(settings.paths.diarizationlm_processed, "DiarizeLM")
+    yield PathAndName(settings.paths.clips_with_embeddings, "Embeddings_Added")
+    yield PathAndName(settings.paths.identified_speakers, "Speakers Identified")
 
 
 @dataclass

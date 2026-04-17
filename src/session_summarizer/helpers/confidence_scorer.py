@@ -66,7 +66,7 @@ def score_confidence(
     logger: LoggingProtocol,
 ) -> AlignmentResult:
     logger.report_message("[blue]Creating confidence scores.[/blue]")
-    audio_path: Path = session_dir / settings.cleaned_audio_file
+    audio_path: Path = session_dir / settings.paths.cleaned_audio
 
     gpu_logger.report_gpu_usage("before processing")
 

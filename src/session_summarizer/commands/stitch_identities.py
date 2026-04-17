@@ -19,13 +19,13 @@ class StitichIdentitiesCommand(SessionProcessingCommand):
         return "Stitch Identities"
 
     def add_dependencies(self, settings: SessionSettings, session_dir: Path) -> None:
-        self.inputs.append(session_dir / settings.identified_speaker_path)
-        self.outputs.append(session_dir / settings.identity_stitched_path)
+        self.inputs.append(session_dir / settings.paths.identified_speakers)
+        self.outputs.append(session_dir / settings.paths.identity_stitched)
         self.dependencies.append(IdentifySpeakersCommand(self.session_id))
 
     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
         identified_speaker_clips: SpeechClipSet = SpeechClipSet.load_from_json(
-            session_dir / settings.identified_speaker_path
+            session_dir / settings.paths.identified_speakers
         )
 
         stitch_results: StitchResults = StitchResults()
@@ -38,4 +38,4 @@ class StitichIdentitiesCommand(SessionProcessingCommand):
         stitch_results.post_stitching_segments = len(id_stitched_clips)
         self.logger.report_table_message(asdict(stitch_results))
 
-        self.save_speech_clip(id_stitched_clips, session_dir, settings.identity_stitched_path)
+        self.save_speech_clip(id_stitched_clips, session_dir, settings.paths.identity_stitched)

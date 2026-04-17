@@ -21,7 +21,7 @@
 #     logger: LoggingProtocol,
 # ) -> SpeechClipSet:
 #     with logger.status("Loading audio for Smart Turn scoring..."):
-#         audio = load_audio_mono_16k(session_dir / settings.cleaned_audio_file)
+#         audio = load_audio_mono_16k(session_dir / settings.paths.cleaned_audio)
 
 #     with logger.status("Loading Smart Turn model..."):
 #         predictor = LocalSmartTurnPredictor(device=settings.device)

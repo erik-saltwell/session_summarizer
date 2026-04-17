@@ -12,301 +12,491 @@ from .vad_settings import VadSettings
 _SETTINGS_FILE = "settings.yaml"
 
 
-class GlossaryEntry(BaseModel, frozen=True):
-    name: Annotated[str, Field(description="A proper noun that may appear in the session transcript")]
-    description: Annotated[
-        str | None,
-        Field(description="Optional description or context for this term"),
-    ] = None
+SUPPORTED_AUDIO_SUFFIXES: frozenset[str] = frozenset(
+    {".m4a", ".mp3", ".wav", ".flac", ".ogg", ".opus", ".wma", ".aac", ".webm"}
+)
 
 
-class AdventureSettings(BaseModel, frozen=True):
-    pcs: Annotated[
-        dict[str, str],
-        Field(min_length=1, description="Mapping of player name to character name for all PCs in the adventure"),
-    ]
-    glossary: Annotated[
-        list[GlossaryEntry],
+class PipelinePaths(BaseModel, frozen=True):
+    """File paths for every processing artifact in the pipeline.
+
+    All paths can be specified as relative (resolved against the settings
+    file's parent directory) or absolute.
+    """
+
+    source_audio: Annotated[
+        Path,
         Field(
             description=(
-                "List of proper nouns (places, NPCs, items, factions, etc.) that may appear in the session transcript"
+                "Path to the original session recording. Read by: clean_audio command (input to noise reduction)."
+            )
+        ),
+    ]
+    cleaned_audio: Annotated[
+        Path,
+        Field(
+            description=(
+                "Path to the noise-reduced audio WAV. "
+                "Written by: clean_audio. Read by: most downstream commands "
+                "(transcription, alignment, diarization, embedding, etc.)."
+            )
+        ),
+    ]
+    transcript: Annotated[
+        Path,
+        Field(
+            description=("Path to the initial ASR transcript JSON. Written by: transcribe. Read by: align_transcript.")
+        ),
+    ]
+    aligned_transcript: Annotated[
+        Path,
+        Field(
+            description=(
+                "Path to the word-aligned transcript JSON with per-word timestamps. "
+                "Written by: align_transcript. Read by: score_confidence."
+            )
+        ),
+    ]
+    confidence_transcript: Annotated[
+        Path,
+        Field(
+            description=(
+                "Path to the transcript JSON annotated with per-word confidence scores (0.0–1.0). "
+                "Written by: score_confidence. Read by: diarize_audio."
+            )
+        ),
+    ]
+    vad_segments: Annotated[
+        Path,
+        Field(
+            description=(
+                "Path to the VAD segments JSON containing silence-aware cut points. "
+                "Written by: compute_vad_segments. Read by: transcription, diarization, "
+                "alignment, embedding, and other segment-aware commands."
+            )
+        ),
+    ]
+    base_diarization: Annotated[
+        Path,
+        Field(
+            description=(
+                "Path to the initial SpeechClipSet JSON from diarization + word assignment. "
+                "Written by: diarize_audio. Read by: add_embeddings, validate_diarization."
+            )
+        ),
+    ]
+    clips_with_embeddings: Annotated[
+        Path,
+        Field(
+            description=(
+                "Path to the SpeechClipSet JSON with speaker embedding vectors added. "
+                "Written by: add_embeddings. Read by: identify_speakers, create_speaker_clips."
+            )
+        ),
+    ]
+    identified_speakers: Annotated[
+        Path,
+        Field(
+            description=(
+                "Path to the SpeechClipSet JSON with speaker identities assigned via "
+                "cosine similarity matching. "
+                "Written by: identify_speakers. Read by: stitch_identities, create_speaker_clips."
+            )
+        ),
+    ]
+    identity_stitched: Annotated[
+        Path,
+        Field(
+            description=(
+                "Path to the SpeechClipSet JSON after same-identity clip merging. "
+                "Written by: stitch_identities. Read by: mark_backchannels, punctuate_text."
+            )
+        ),
+    ]
+    backchannel_marked: Annotated[
+        Path,
+        Field(
+            description=(
+                "Path to the SpeechClipSet JSON with backchannel flags applied. "
+                "Written by: mark_backchannels. Read by: punctuate_text."
+            )
+        ),
+    ]
+    diarizationlm_processed: Annotated[
+        Path,
+        Field(
+            description=(
+                "Path to the SpeechClipSet JSON after DiarizationLM post-processing. "
+                "Written by: diarizationlm. Read by: dangling_sentence_fix."
+            )
+        ),
+    ]
+    indeterminate_speakers: Annotated[
+        Path,
+        Field(
+            description=(
+                "Path to the SpeechClipSet JSON with unidentifiable speakers assigned "
+                "an indeterminate label. "
+                "Written by: indeterminate_speaker_assignment."
+            )
+        ),
+    ]
+    dangling_sentence_fix: Annotated[
+        Path,
+        Field(
+            description=(
+                "Path to the SpeechClipSet JSON after mid-sentence clip boundaries "
+                "have been repaired. "
+                "Written by: dangling_sentence_fix command."
+            )
+        ),
+    ]
+    punctuated_text: Annotated[
+        Path,
+        Field(
+            description=(
+                "Path to the final SpeechClipSet JSON after punctuation and capitalisation "
+                "have been restored to clip transcripts. "
+                "Written by: punctuate_text (terminal pipeline artifact)."
+            )
+        ),
+    ]
+    summary_path: Annotated[
+        Path,
+        Field(
+            description=(
+                "Path where the final session summary generated by Claude is written. "
+                "Written by: summarize_session command."
             )
         ),
     ]
 
-    @field_validator("pcs")
+    @field_validator("source_audio")
     @classmethod
-    def _pc_names_must_be_non_empty(cls, v: dict[str, str]) -> dict[str, str]:
-        for player, character in v.items():
-            if not player.strip():
-                raise ValueError(
-                    f"PC player name is blank — every player name must be a non-empty string, got {player!r}"
-                )
-            if not character.strip():
-                raise ValueError(
-                    f"PC character name for '{player}' is blank — character names must be non-empty strings, "
-                    f"got {character!r}"
-                )
+    def _validate_audio_suffix(cls, v: Path) -> Path:
+        if v.suffix.lower() not in SUPPORTED_AUDIO_SUFFIXES:
+            raise ValueError(f"Unsupported audio format {v.suffix!r}. Supported: {sorted(SUPPORTED_AUDIO_SUFFIXES)}")
         return v
 
-    def to_prompt_fragment(self) -> str:
-        result: str = """\
-<campaign_information>
-Players of this campaign and their characters:
-"""
-        for key, value in self.pcs.items():
-            result += f"- {key}: {value}\n"
 
-        result += """/
+class SegmentationSettings(BaseModel, frozen=True):
+    """Duration bounds for VAD-based audio chunking.
 
-Glossary of terms:
-"""
+    Two chunking modes exist — short (for ASR transcription) and long
+    (for GPU-heavy operations like diarization).  Each mode has a min/max
+    bound in seconds.
+    """
 
-        for glossary_entry in self.glossary:
-            result += f"- {glossary_entry.name}"
-            f"{': ' + glossary_entry.description if glossary_entry.description is not None else ''}\n"
+    short_min_seconds: Annotated[
+        float,
+        Field(
+            description=(
+                "Minimum audio segment length in seconds for short VAD-based chunking. "
+                "Chunks shorter than this are merged with neighbours. "
+                "Used by: audio_segmenter.py for Canary transcription segments."
+            )
+        ),
+    ]
+    short_max_seconds: Annotated[
+        float,
+        Field(
+            description=(
+                "Maximum audio segment length in seconds for short VAD-based chunking. "
+                "Continuous speech longer than this is hard-cut. "
+                "Used by: audio_segmenter.py for Canary transcription segments."
+            )
+        ),
+    ]
+    long_min_seconds: Annotated[
+        float,
+        Field(
+            description=(
+                "Minimum audio segment length in seconds for long VAD-based chunking. "
+                "Chunks shorter than this are merged with neighbours. "
+                "Used by: audio_segmenter.py for OOM-sensitive operations (diarization)."
+            )
+        ),
+    ]
+    long_max_seconds: Annotated[
+        float,
+        Field(
+            description=(
+                "Maximum audio segment length in seconds for long VAD-based chunking. "
+                "Continuous speech longer than this is hard-cut. "
+                "Used by: audio_segmenter.py for OOM-sensitive operations (diarization)."
+            )
+        ),
+    ]
 
-        result += """/
-</campaign_information>
-"""
-        return result
+    @model_validator(mode="after")
+    def _validate_bounds(self) -> Self:
+        if self.short_min_seconds >= self.short_max_seconds:
+            raise ValueError(
+                f"short_min_seconds ({self.short_min_seconds}) must be less than "
+                f"short_max_seconds ({self.short_max_seconds})"
+            )
+        if self.long_min_seconds >= self.long_max_seconds:
+            raise ValueError(
+                f"long_min_seconds ({self.long_min_seconds}) must be less than "
+                f"long_max_seconds ({self.long_max_seconds})"
+            )
+        return self
 
 
-SUPPORTED_AUDIO_SUFFIXES: frozenset[str] = frozenset(
-    {".m4a", ".mp3", ".wav", ".flac", ".ogg", ".opus", ".wma", ".aac", ".webm"}
-)
+class SpeakerClipSettings(BaseModel, frozen=True):
+    """Settings for speaker clip creation, filtering, and merging.
+
+    Controls how individual speaker audio clips are extracted from the
+    cleaned audio, how outliers are removed, and how short clips are merged.
+    """
+
+    lead_in_seconds: Annotated[
+        float,
+        Field(
+            description=(
+                "Seconds of audio padding before each speaker clip. "
+                "Used by: create_speaker_clips command when extracting individual audio files."
+            )
+        ),
+    ]
+    lead_out_seconds: Annotated[
+        float,
+        Field(
+            description=(
+                "Seconds of audio padding after each speaker clip. "
+                "Used by: create_speaker_clips command when extracting individual audio files."
+            )
+        ),
+    ]
+    min_similarity_residual: Annotated[
+        float,
+        Field(
+            description=(
+                "Minimum cosine similarity residual (0.0–1.0) a clip must have to be "
+                "included as a speaker sample. The residual is the difference between "
+                "a clip's best-match similarity and the mean similarity across all speakers. "
+                "Used by: create_speaker_clips to filter ambiguous clips."
+            )
+        ),
+    ]
+    min_duration_seconds: Annotated[
+        float,
+        Field(
+            description=(
+                "Target minimum speaker clip duration in seconds. Short clips are "
+                "iteratively merged until none fall below this threshold. "
+                "Used by: register_speakers and merge_speaker_clips commands."
+            )
+        ),
+    ]
+    min_centroid_similarity: Annotated[
+        float,
+        Field(
+            description=(
+                "Minimum cosine similarity (0.0–1.0) a speaker clip must have to the "
+                "group centroid to be kept. Clips below this are removed as outliers. "
+                "Used by: remove_outlier_speakers and remove_outlier_speaker_clips."
+            )
+        ),
+    ]
+    silence_gap_seconds: Annotated[
+        float,
+        Field(
+            description=(
+                "Seconds of silence inserted between clips when combining or merging "
+                "speaker audio. Prevents utterance bleed-through for better embedding quality. "
+                "Used by: register_speakers and merge_speaker_clips commands."
+            )
+        ),
+    ] = 0.5
+
+    @field_validator("lead_in_seconds", "lead_out_seconds")
+    @classmethod
+    def _lead_must_be_non_negative(cls, v: float, info: ValidationInfo) -> float:
+        if v < 0.0:
+            raise ValueError(f"{info.field_name} must be >= 0.0, got {v!r}")
+        return v
+
+    @field_validator("min_similarity_residual")
+    @classmethod
+    def _similarity_residual_must_be_in_range(cls, v: float) -> float:
+        if not (0.0 <= v <= 1.0):
+            raise ValueError(f"min_similarity_residual must be between 0.0 and 1.0, got {v!r}")
+        return v
+
+    @field_validator("min_duration_seconds", "silence_gap_seconds")
+    @classmethod
+    def _duration_must_be_non_negative(cls, v: float, info: ValidationInfo) -> float:
+        if v < 0.0:
+            raise ValueError(f"{info.field_name} must be >= 0.0, got {v!r}")
+        return v
+
+    @field_validator("min_centroid_similarity")
+    @classmethod
+    def _min_centroid_similarity_must_be_in_range(cls, v: float) -> float:
+        if not (0.0 <= v <= 1.0):
+            raise ValueError(f"min_centroid_similarity must be between 0.0 and 1.0, got {v!r}")
+        return v
+
+
+class SpeakerIdentificationSettings(BaseModel, frozen=True):
+    """Thresholds for assigning speaker identities to clips."""
+
+    assignment_threshold: Annotated[
+        float,
+        Field(
+            description=(
+                "Minimum similarity residual (0.0–1.0) required to assign a speaker "
+                "identity to a clip. Clips below this threshold are left as indeterminate. "
+                "Used by: indeterminate_speakers.py to decide identity assignment."
+            )
+        ),
+    ]
+
+    @field_validator("assignment_threshold")
+    @classmethod
+    def _must_be_in_range(cls, v: float) -> float:
+        if not (0.0 <= v <= 1.0):
+            raise ValueError(f"assignment_threshold must be between 0.0 and 1.0, got {v!r}")
+        return v
+
+
+class GlossaryEntry(BaseModel, frozen=True):
+    """A single proper-noun entry in the campaign glossary."""
+
+    term: Annotated[
+        str,
+        Field(description="The proper noun or name to recognise in transcripts."),
+    ]
+    description: str = ""
+
+    @field_validator("term")
+    @classmethod
+    def _term_must_be_non_empty(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError(f"glossary term must be a non-empty string, got {v!r}")
+        return v
+
+
+class CampaignInfo(BaseModel, frozen=True):
+    """Campaign-level context used when generating session summaries."""
+
+    players: Annotated[
+        dict[str, str],
+        Field(description="Mapping of player names to their character names."),
+    ]
+    glossary: Annotated[
+        list[GlossaryEntry],
+        Field(description="List of proper nouns (places, NPCs, items) that may appear in transcripts."),
+    ]
+
+    @field_validator("players")
+    @classmethod
+    def _players_must_have_non_empty_entries(cls, v: dict[str, str]) -> dict[str, str]:
+        for player, character in v.items():
+            if not player.strip():
+                raise ValueError(f"player name must be a non-empty string, got {player!r}")
+            if not character.strip():
+                raise ValueError(f"character name for player {player!r} must be a non-empty string, got {character!r}")
+        return v
+
+
+class SessionInfo(BaseModel, frozen=True):
+    """Metadata about the current TTRPG session being processed."""
+
+    session_date: Annotated[
+        str,
+        Field(description="Date of the recorded session in YYYY-MM-DD format."),
+    ]
+    adventure_name: Annotated[
+        str,
+        Field(description="Name of the adventure or module being played in this session."),
+    ]
+    campaign_name: Annotated[
+        str,
+        Field(description="Name of the overarching campaign this session belongs to."),
+    ]
+
+    @field_validator("session_date", "adventure_name", "campaign_name")
+    @classmethod
+    def _must_be_non_empty(cls, v: str, info: ValidationInfo) -> str:
+        if not v.strip():
+            raise ValueError(f"{info.field_name} must be a non-empty string, got {v!r}")
+        return v
 
 
 class SessionSettings(BaseModel, frozen=True):
     attendees: Annotated[
         list[str],
         Field(
-            min_length=1, description="List of player names present in the session; drives diarization speaker count"
-        ),
-    ]
-    adventure_settings: Annotated[
-        AdventureSettings,
-        Field(description="Adventure-specific metadata: PC roster and glossary of proper nouns"),
-    ]
-    audio_file: Annotated[
-        Path,
-        Field(description="Path to the audio file for the session"),
-    ]
-    cleaned_audio_file: Annotated[
-        Path,
-        Field(description="Path to the cleaned audio file (created during processing)"),
-    ]
-    transcript_file: Annotated[
-        Path,
-        Field(description="Path to the transcript JSON file (created during processing)"),
-    ]
-    aligned_transcript_path: Annotated[
-        Path,
-        Field(description="Path to the word-aligned transcript JSON (created during processing)"),
-    ]
-    confidence_transcript_path: Annotated[
-        Path,
-        Field(
-            description="Path to the transcript JSON annotated with per-word confidence scores"
-            " (created during processing)"
-        ),
-    ]
-    base_diarized_path: Annotated[
-        Path,
-        Field(description="Path to the list of diarized segments generated from audio. (created during processing)"),
-    ]
-    speech_clips_with_embedding: Annotated[
-        Path,
-        Field(
-            description="Path to SpeechClipSet JSON file with speaker embeddings added (read/written during processing)"
-        ),
-    ]
-    identified_speaker_path: Annotated[
-        Path,
-        Field(description="Path to SpeechClipSet JSON file with identified speakers (read/written during processing)"),
-    ]
-    turn_end_updated_path: Annotated[
-        Path,
-        Field(
+            min_length=1,
             description=(
-                "Path to SpeechClipSet JSON file with END_OF_TURN flags applied (read/written during processing)"
-            )
-        ),
-    ]
-    first_stitched_path: Annotated[
-        Path,
-        Field(
-            description=(
-                "Path to SpeechClipSet JSON file that has had initial stitching (read/written during processing)"
-            )
-        ),
-    ]
-    identity_stitched_path: Annotated[
-        Path,
-        Field(description="Path to SpeechClipSet JSON file with speakers identified (read/written during processing)"),
-    ]
-    backchannel_marked_path: Annotated[
-        Path,
-        Field(
-            description=("Path to SpeechClipSet JSON file with backchannels marked (read/written during processing)")
-        ),
-    ]
-    diarizationlm_processed_path: Annotated[
-        Path,
-        Field(
-            description=(
-                "Path to SpeechClipSet JSON file after DiarizationLM post-processing (read/written during processing)"
-            )
-        ),
-    ]
-    indeterminate_speakers_path: Annotated[
-        Path,
-        Field(
-            description=(
-                "Path to SpeechClipSet JSON file with speakers that could not be identified assigned "
-                "(read/written during processing)"
-            )
-        ),
-    ]
-    dangling_sentence_fix_path: Annotated[
-        Path,
-        Field(
-            description=(
-                "Path to SpeechClipSet JSON file where dangling sentences have been fixed (written during processing)"
-            )
-        ),
-    ]
-    punctuated_text_path: Annotated[
-        Path,
-        Field(
-            description=(
-                "Path to SpeechClipSet JSON file written after punctuation and capitalisation "
-                "have been restored to clip transcripts (written during processing)"
-            )
-        ),
-    ]
-    device: Annotated[
-        Literal["cpu", "cuda"],
-        Field(description="Device for model inference — 'cpu' or 'cuda'"),
-    ]
-
-    segments_path: Annotated[
-        Path,
-        Field(description="Path to the VAD segments JSON output (created during processing)"),
-    ]
-    min_segment_length_short: Annotated[
-        float,
-        Field(
-            description=(
-                "Minimum audio segment length in seconds for short VAD-based chunking (used for Canary transcription)"
+                "List of speaker names present in the session. Drives diarization speaker count "
+                "and speaker identification matching. "
+                "Used by: identify_speakers (identity matching), diarize_audio (speaker count)."
             ),
         ),
     ]
-    max_segment_length_short: Annotated[
-        float,
-        Field(
-            description=(
-                "Maximum audio segment length in seconds for short VAD-based chunking (used for Canary transcription)"
-            ),
-        ),
+    session_info: Annotated[
+        SessionInfo,
+        Field(description="Metadata about the current session: date, adventure, and campaign"),
     ]
-    min_segment_length_long: Annotated[
-        float,
-        Field(
-            description=(
-                "Minimum audio segment length in seconds for long VAD-based chunking "
-                "(used for operations that are sensitive to OOM, e.g. diarization)"
-            ),
-        ),
+    campaign_info: Annotated[
+        CampaignInfo,
+        Field(description="Campaign context: player-to-character mapping and glossary of proper nouns"),
     ]
-    max_segment_length_long: Annotated[
-        float,
-        Field(
-            description=(
-                "Maximum audio segment length in seconds for long VAD-based chunking "
-                "(used for operations that are sensitive to OOM, e.g. diarization)"
-            ),
-        ),
+    paths: Annotated[
+        PipelinePaths,
+        Field(description="File paths for all processing artifacts in the pipeline"),
     ]
-    high_confidence_similarity_threshold: Annotated[
-        float,
-        Field(
-            description=(
-                "Minimum cosine similarity score (0.0–1.0) for a speaker embedding match to be "
-                "considered high-confidence during initial speaker identification"
-            ),
-        ),
+    segmentation: Annotated[
+        SegmentationSettings,
+        Field(description="Duration bounds for VAD-based audio chunking (short and long modes)"),
     ]
-    speaker_identity_assignment_threshold: Annotated[
-        float,
-        Field(
-            description=(
-                "Minimum cosine similarity score (0.0–1.0) required to assign a speaker identity "
-                "to a clip; clips below this threshold are left as indeterminate"
-            ),
-        ),
+    speaker_clips: Annotated[
+        SpeakerClipSettings,
+        Field(description="Settings for speaker clip creation, filtering, and merging"),
+    ]
+    speaker_identification: Annotated[
+        SpeakerIdentificationSettings,
+        Field(description="Thresholds for assigning speaker identities to clips"),
     ]
     vad: Annotated[
         VadSettings,
         Field(description="VAD model and post-processing hyperparameters"),
     ]
-
-    speaker_clip_lead_in: Annotated[
-        float,
-        Field(description="Seconds of audio padding before each speaker clip when creating individual audio files"),
-    ]
-    speaker_clip_lead_out: Annotated[
-        float,
-        Field(description="Seconds of audio padding after each speaker clip when creating individual audio files"),
-    ]
-
-    speaker_clip_minimum_similarity_residual: Annotated[
-        float,
-        Field(
-            description="Minimum cosine similarity residual a clip must have to be included as a speaker clip sample"
-        ),
-    ]
-    minimum_speaker_clip_duration: Annotated[
-        float,
-        Field(
-            description=(
-                "Target minimum speaker clip duration in seconds; short clips are merged until none fall below "
-                "this threshold"
-            )
-        ),
-    ]
-    min_speaker_similarity: Annotated[
-        float,
-        Field(
-            description=(
-                "Minimum cosine similarity (0.0–1.0) a speaker clip must have to the group centroid "
-                "to be kept; clips below this threshold are removed as outliers"
-            )
-        ),
-    ]
-    speaker_clip_gap_length: Annotated[
-        float,
-        Field(
-            description="Seconds of silence inserted between clips when combining or merging speaker audio",
-        ),
-    ] = 0.5
-
-    diarization_stitching: Annotated[
+    stitching: Annotated[
         DiarizationStitchingSettings,
+        Field(description="Policy knobs for assigning ASR words to diarized speaker segments"),
+    ]
+    device: Annotated[
+        Literal["cpu", "cuda"],
         Field(
-            description="Policy knobs for assigning ASR words to diarized speaker segments",
+            description=(
+                "Compute device for model inference — 'cpu' or 'cuda'. "
+                "Used by: all commands that load ML models (transcription, alignment, "
+                "diarization, embedding, confidence scoring, etc.)."
+            )
         ),
     ]
-
     epsilon: Annotated[
         float,
-        Field(description="Small floating-point tolerance."),
+        Field(
+            description=(
+                "Small floating-point tolerance for time-boundary comparisons. "
+                "Used by: speech_clip_factory, candidate_pool, anonymous_clips, "
+                "identity_stitch, diarizationlm_refiner, validate_diarization."
+            )
+        ),
     ]
-
     seed: Annotated[
         int,
         Field(
-            description="Random seed for reproducible model inference across all frameworks (Python, NumPy, PyTorch)"
+            description=(
+                "Random seed for reproducible model inference across all frameworks "
+                "(Python random, NumPy, PyTorch). "
+                "Used by: main.py _set_seed() at CLI startup."
+            )
         ),
     ]
 
@@ -317,20 +507,6 @@ class SessionSettings(BaseModel, frozen=True):
             raise ValueError(f"epsilon must be >= 0.0, got {v!r}")
         return v
 
-    @field_validator("speaker_clip_lead_in", "speaker_clip_lead_out")
-    @classmethod
-    def _lead_must_be_non_negative(cls, v: float, info: ValidationInfo) -> float:
-        if v < 0.0:
-            raise ValueError(f"{info.field_name} must be >= 0.0, got {v!r}")
-        return v
-
-    @field_validator("high_confidence_similarity_threshold", "speaker_identity_assignment_threshold")
-    @classmethod
-    def _similarity_threshold_must_be_in_range(cls, v: float, info: ValidationInfo) -> float:
-        if not (0.0 <= v <= 1.0):
-            raise ValueError(f"{info.field_name} must be between 0.0 and 1.0, got {v!r}")
-        return v
-
     @field_validator("attendees")
     @classmethod
     def _attendee_names_must_be_non_empty(cls, v: list[str]) -> list[str]:
@@ -339,44 +515,6 @@ class SessionSettings(BaseModel, frozen=True):
                 raise ValueError(f"attendee name is blank — every name must be a non-empty string, got {name!r}")
         return v
 
-    @field_validator("speaker_clip_minimum_similarity_residual")
-    @classmethod
-    def _similarity_residual_must_be_in_range(cls, v: float) -> float:
-        if not (0.0 <= v <= 1.0):
-            raise ValueError(f"speaker_clip_minimum_similarity_residual must be between 0.0 and 1.0, got {v!r}")
-        return v
-
-    @field_validator("minimum_speaker_clip_duration", "speaker_clip_gap_length")
-    @classmethod
-    def _speaker_clip_params_must_be_non_negative(cls, v: float, info: ValidationInfo) -> float:
-        if v < 0.0:
-            raise ValueError(f"{info.field_name} must be >= 0.0, got {v!r}")
-        return v
-
-    @field_validator("min_speaker_similarity")
-    @classmethod
-    def _min_speaker_similarity_must_be_in_range(cls, v: float) -> float:
-        if not (0.0 <= v <= 1.0):
-            raise ValueError(f"min_speaker_similarity must be between 0.0 and 1.0, got {v!r}")
-        return v
-
-    @model_validator(mode="after")
-    def _validate_audio_file(self) -> Self:
-        path = self.audio_file
-        if path.suffix.lower() not in SUPPORTED_AUDIO_SUFFIXES:
-            raise ValueError(f"Unsupported audio format {path.suffix!r}. Supported: {sorted(SUPPORTED_AUDIO_SUFFIXES)}")
-        if self.min_segment_length_short >= self.max_segment_length_short:
-            raise ValueError(
-                f"min_segment_length_short ({self.min_segment_length_short}) must be less than "
-                f"max_segment_length_short ({self.max_segment_length_short})"
-            )
-        if self.min_segment_length_long >= self.max_segment_length_long:
-            raise ValueError(
-                f"min_segment_length_long ({self.min_segment_length_long}) must be less than "
-                f"max_segment_length_long ({self.max_segment_length_long})"
-            )
-        return self
-
     @property
     def number_of_speakers(self) -> int:
         """Derived from the length of attendees; used by the diarizer."""
@@ -384,32 +522,17 @@ class SessionSettings(BaseModel, frozen=True):
 
     @staticmethod
     def _resolve_paths(data: dict, base_dir: Path) -> None:
-        for key in (
-            "audio_file",
-            "cleaned_audio_file",
-            "transcript_file",
-            "aligned_transcript_path",
-            "confidence_transcript_path",
-            "segments_path",
-            "base_diarized_path",
-            "speech_clips_with_embedding",
-            "identified_speaker_path",
-            "turn_end_updated_path",
-            "first_stitched_path",
-            "identity_stitched_path",
-            "backchannel_marked_path",
-            "diarizationlm_processed_path",
-            "indeterminate_speakers_path",
-            "dangling_sentence_fix_path",
-            "punctuated_text_path",
-        ):
-            raw = data.get(key)
+        paths_dict = data.get("paths")
+        if paths_dict is None:
+            return
+        for key in list(paths_dict.keys()):
+            raw = paths_dict[key]
             if raw is None:
                 continue
             p = Path(raw)
             if not p.is_absolute():
                 p = (base_dir / p).resolve()
-            data[key] = p
+            paths_dict[key] = p
 
     @classmethod
     def load(cls, path: Path) -> SessionSettings:

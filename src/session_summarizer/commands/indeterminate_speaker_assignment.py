@@ -18,15 +18,15 @@ class IndeterminantSpeakerAssignmentCommand(SessionProcessingCommand):
         return "Indeterminant Speakers"
 
     def add_dependencies(self, settings: SessionSettings, session_dir: Path) -> None:
-        self.inputs.append(session_dir / settings.identity_stitched_path)
-        self.outputs.append(session_dir / settings.indeterminate_speakers_path)
+        self.inputs.append(session_dir / settings.paths.identity_stitched)
+        self.outputs.append(session_dir / settings.paths.indeterminate_speakers)
         self.dependencies.append(StitichIdentitiesCommand(self.session_id))
 
     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
-        input_clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.identity_stitched_path)
+        input_clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.paths.identity_stitched)
 
         output_clips: SpeechClipSet = assign_indeterminate_speakers(
             settings, session_dir, input_clips, self, self.logger
         )
 
-        self.save_speech_clip(output_clips, session_dir, settings.indeterminate_speakers_path)
+        self.save_speech_clip(output_clips, session_dir, settings.paths.indeterminate_speakers)

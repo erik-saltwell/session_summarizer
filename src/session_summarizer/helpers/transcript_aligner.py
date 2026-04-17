@@ -75,7 +75,7 @@ def align_transcript(
         gpu_logger.report_gpu_usage("Created aligner")
 
     alignment: AlignmentResult = aligner.align(
-        session_dir / settings.cleaned_audio_file, transcription, segments, logger
+        session_dir / settings.paths.cleaned_audio, transcription, segments, logger
     )
     gpu_logger.report_gpu_usage("after alignment")
 

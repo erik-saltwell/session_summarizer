@@ -30,7 +30,7 @@ class SummarizeSessionCommand(SessionProcessingCommand):
     def add_dependencies(self, settings: SessionSettings, session_dir: Path) -> None:
         self.inputs.append(session_dir / settings.paths.punctuated_text)
         self.outputs.append(session_dir / settings.paths.summary_path)
-        self.dependencies.append(PunctuateTextCommand(self.session_id, self.tracer))
+        self.dependencies.append(PunctuateTextCommand(self.session_id))
 
     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
         input_clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.paths.punctuated_text)

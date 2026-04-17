@@ -13,7 +13,7 @@ def _should_unassign_speaker(clip: SpeechClip, settings: SessionSettings) -> boo
     if clip.similarity_residual is None:
         return False
 
-    if isnan(clip.similarity_residual) or clip.similarity_residual < settings.speaker_identity_assignment_threshold:
+    if isnan(clip.similarity_residual) or clip.similarity_residual < settings.speaker_identification.assignment_threshold:
         return True
 
     return False

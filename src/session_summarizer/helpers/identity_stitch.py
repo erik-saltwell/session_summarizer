@@ -81,7 +81,7 @@ class IdentityMergeSelector(MergeSelector):
         if not clips_are_close_enough(
             prior_clip,
             current_clip,
-            settings.diarization_stitching.identity_stitching_max_gap,
+            settings.stitching.identity_merge_max_gap_seconds,
             settings.epsilon,
             logger,
         ):

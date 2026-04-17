@@ -14,6 +14,7 @@ class FragmentID(StrEnum):
     ALPACA_EVAL_PROMPT_TEMPLATE = "eval_template_alpaca.md"
     IMDB_TEST_PROMPT = "imdb_test_prompt.md"
     NONE = "none.md"
+    SUMMARIZE_SESSION_SYSTEM_PROMPT = "summarize_session_prompt.md"
 
 
 def get_fragment_path(fragment_id: FragmentID) -> Path:
