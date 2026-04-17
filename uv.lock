@@ -3614,6 +3614,7 @@ dependencies = [
     { name = "torchaudio", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "torchvision", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "typer", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+    { name = "types-python-dateutil", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
 ]
 
 [package.dev-dependencies]
@@ -3661,6 +3662,7 @@ requires-dist = [
     { name = "torchaudio", specifier = "==2.10.0", index = "https://download.pytorch.org/whl/cu128" },
     { name = "torchvision", specifier = "==0.25.0", index = "https://download.pytorch.org/whl/cu128" },
     { name = "typer", specifier = ">=0.21.1" },
+    { name = "types-python-dateutil", specifier = ">=2.9.0.20260408" },
 ]
 
 [package.metadata.requires-dev]
@@ -4402,6 +4404,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/36/bf/8825b5929afd84d0dabd606c67cd57b8388cb3ec385f7ef19c5cc2202069/typer-0.21.1.tar.gz", hash = "sha256:ea835607cd752343b6b2b7ce676893e5a0324082268b48f27aa058bdb7d2145d", size = 110371, upload-time = "2026-01-06T11:21:10.989Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a0/1d/d9257dd49ff2ca23ea5f132edf1281a0c4f9de8a762b9ae399b670a59235/typer-0.21.1-py3-none-any.whl", hash = "sha256:7985e89081c636b88d172c2ee0cfe33c253160994d47bdfdc302defd7d1f1d01", size = 47381, upload-time = "2026-01-06T11:21:09.824Z" },
+]
+
+[[package]]
+name = "types-python-dateutil"
+version = "2.9.0.20260408"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/88/f3/2427775f80cd5e19a0a71ba8e5ab7645a01a852f43a5fd0ffc24f66338e0/types_python_dateutil-2.9.0.20260408.tar.gz", hash = "sha256:8b056ec01568674235f64ecbcef928972a5fac412f5aab09c516dfa2acfbb582", size = 16981, upload-time = "2026-04-08T04:28:10.995Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fd/c6/eeba37bfee282a6a97f889faef9352d6172c6a5088eb9a4daf570d9d748d/types_python_dateutil-2.9.0.20260408-py3-none-any.whl", hash = "sha256:473139d514a71c9d1fbd8bb328974bedcb1cc3dba57aad04ffa4157f483c216f", size = 18437, upload-time = "2026-04-08T04:28:10.095Z" },
 ]
 
 [[package]]
