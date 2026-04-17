@@ -52,6 +52,13 @@ class SpeechClip:
         return result
 
     @property
+    def is_backchannel(self) -> bool:
+        return self.has_flag(SpeechClipFlags.IS_BACKCHANNEL)
+
+    def set_backchannel(self, is_backchannel: bool) -> None:
+        self.set_flag(SpeechClipFlags.IS_BACKCHANNEL, is_backchannel)
+
+    @property
     def word_count(self) -> int:
         if self.words is None:
             return 0
