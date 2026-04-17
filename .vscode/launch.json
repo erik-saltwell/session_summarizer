@@ -232,18 +232,6 @@
             ]
         },
         {
-            "name": "score-confidence",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "session_summarizer",
-            "console": "integratedTerminal",
-            "args": [
-                "score-confidence",
-                "--session",
-                "test",
-            ]
-        },
-        {
             "name": "segment",
             "type": "debugpy",
             "request": "launch",

@@ -137,13 +137,11 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol, TextPhraseSet):
                 "flags": int(clip.flags),
                 "cosine_similarity": clip.cosine_similarity,
                 "similarity_residual": clip.similarity_residual,
-                "end_of_turn_probability": clip.end_of_turn_probability,
                 "words": [
                     {
                         "word": w.word,
                         "start_time": w.start_time,
                         "end_time": w.end_time,
-                        "confidence": w.confidence,
                         "ground_truth": w.ground_truth,
                     }
                     for w in clip.words
@@ -197,7 +195,6 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol, TextPhraseSet):
                         word=w["word"],
                         start_time=w["start_time"],
                         end_time=w["end_time"],
-                        confidence=w.get("confidence", 0.0),
                         ground_truth=w.get("ground_truth", None),
                     )
                     for w in raw_words
@@ -215,7 +212,6 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol, TextPhraseSet):
                 cosine_similarity=item.get("cosine_similarity"),
                 similarity_residual=item.get("similarity_residual"),
                 flags=SpeechClipFlags(item.get("flags", 0)),
-                end_of_turn_probability=item.get("end_of_turn_probability"),
                 words=words,
             )
             instance.append(clip)

@@ -8,9 +8,8 @@ from session_summarizer.commands.clean_audio import CleanAudioCommand
 
 from ..helpers.audio_segmenter import SegmentSplitResultSet
 from ..helpers.transcript_aligner import align_transcript
-from ..processing_results.transcriber_protocol import TranscriptionResult
+from ..processing_results import AlignmentResult, TranscriptionResult
 from ..settings.session_settings import SessionSettings
-from ..transcription.parakeet_ctc_confidence_scorer import AlignmentResult
 from .compute_segments import ComputeSegmentsCommand
 from .session_processing_command import SessionProcessingCommand
 from .transcribe_audio import TranscribeAudioCommand

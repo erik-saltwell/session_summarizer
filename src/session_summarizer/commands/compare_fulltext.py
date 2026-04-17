@@ -15,7 +15,6 @@ from .align_transcript import AlignTranscriptCommand
 from .diarizationlm_command import DiarizationLMCommand
 from .diarize_audio import DiarizeAudioCommand
 from .identify_speakers import IdentifySpeakersCommand
-from .score_confidence import ScoreConfidenceCommand
 from .session_processing_command import SessionProcessingCommand
 from .transcribe_audio import TranscribeAudioCommand
 
@@ -48,7 +47,6 @@ def _result_column(result: TranscriptionValidationResult) -> list[str]:
 def _iterate_file_paths(settings: SessionSettings) -> Iterator[PathAndName]:
     yield PathAndName(settings.paths.transcript, "Transcript")
     yield PathAndName(settings.paths.aligned_transcript, "AlignedTranscript")
-    yield PathAndName(settings.paths.confidence_transcript, "ScoredTranscript")
     yield PathAndName(settings.paths.base_diarization, "Diarized")
     yield PathAndName(settings.paths.diarizationlm_processed, "DiarizeLM")
     yield PathAndName(settings.paths.clips_with_embeddings, "Embeddings_Added")
@@ -68,7 +66,6 @@ class CompareFullTextCommand(SessionProcessingCommand):
                 AddEmbeddingsCommand(self.session_id, self.tracer),
                 DiarizationLMCommand(self.session_id, self.tracer),
                 DiarizeAudioCommand(self.session_id, self.tracer),
-                ScoreConfidenceCommand(self.session_id, self.tracer),
                 AlignTranscriptCommand(self.session_id, self.tracer),
                 TranscribeAudioCommand(self.session_id, self.tracer),
             ]

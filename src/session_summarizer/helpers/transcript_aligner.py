@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ..processing_results import TranscriptionResult
+from ..processing_results import AlignmentResult, TranscriptionResult
 from ..protocols import (
     GpuLogger,
     LoggingProtocol,
     SessionSettings,
 )
-from ..transcription import AlignmentResult, ParakeetCTCWordAligner
+from ..transcription import ParakeetCTCWordAligner
 from ..vad import SegmentSplitResultSet
 
 _PAUSE_THRESHOLD_S = 0.5  # gap between words that triggers a new segment

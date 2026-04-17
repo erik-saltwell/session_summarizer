@@ -20,7 +20,6 @@ class WordAlignment(TextPhraseBuilder):
     word: str
     start_time: float  # seconds
     end_time: float  # seconds
-    confidence: float = 0.0  # acoustic confidence [0.0, 1.0]
     ground_truth: str | None = None
 
     @property

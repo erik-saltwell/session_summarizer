@@ -31,7 +31,6 @@ class SpeechClip:
     identity: str | None = None
     embedding: list[float] | None = None
     flags: SpeechClipFlags = field(default=SpeechClipFlags.NONE)
-    end_of_turn_probability: float | None = None
     words: list[WordAlignment] | None = None
 
     @property
@@ -71,12 +70,6 @@ class SpeechClip:
     @property
     def duration(self) -> float:
         return self.end_time - self.start_time
-
-    @property
-    def confidence_avg(self) -> float:
-        if not self.words:
-            return 0.0
-        return sum(w.confidence for w in self.words) / len(self.words)
 
     @property
     def wder(self) -> float:
@@ -190,7 +183,6 @@ class SpeechClip:
 
     def _set_merge_end_properties(self, last: SpeechClip) -> None:
         self.end_time = last.end_time
-        self.end_of_turn_probability = last.end_of_turn_probability
 
     def _set_merge_base_properties(self, other: SpeechClip) -> None:
         speakers: set[str] = set()

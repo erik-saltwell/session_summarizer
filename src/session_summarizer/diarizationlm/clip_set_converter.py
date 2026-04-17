@@ -96,13 +96,10 @@ def _build_clip(
     identity: str | None = None
     embedding: list[float] | None = None
     flags = SpeechClipFlags.NONE
-    end_of_turn_probability: float | None = None
 
     if len(unique_sources) == 1:
         src_clip = original[source_clip_indices[0]]
-        # flags and end_of_turn_probability are audio/text properties — always carry forward.
         flags = src_clip.flags
-        end_of_turn_probability = src_clip.end_of_turn_probability
         # identity and embedding are speaker-specific — only carry when the speaker didn't change.
         if _effective_speaker(src_clip) == speaker:
             identity = src_clip.identity
@@ -116,7 +113,6 @@ def _build_clip(
         identity=identity,
         embedding=embedding,
         flags=flags,
-        end_of_turn_probability=end_of_turn_probability,
         words=list(words),
     )
     clip.compute_word_derived_values()

@@ -3,13 +3,12 @@ from __future__ import annotations
 from pathlib import Path
 
 from ..diarization import DiarizenDiarizer, MergedDiarizationResult, create_speech_clips
-from ..processing_results import SpeechClipSet
+from ..processing_results import AlignmentResult, SpeechClipSet
 from ..protocols import (
     GpuLogger,
     LoggingProtocol,
     SessionSettings,
 )
-from ..transcription import AlignmentResult
 
 
 def diarize_audio(

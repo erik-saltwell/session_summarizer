@@ -4,12 +4,10 @@ from attr import dataclass
 
 from session_summarizer.diarization.clip_merger import MergeType
 
-from ..processing_results.speech_clip import SpeechClip
-from ..processing_results.speech_clip_set import SpeechClipSet
+from ..processing_results import AlignmentResult, SpeechClip, SpeechClipSet, WordAlignment
 from ..protocols import LoggingProtocol
 from ..settings.diarization_stitching_settings import ScoringMode
 from ..settings.session_settings import DiarizationStitchingSettings, SessionSettings
-from ..transcription.parakeet_ctc_confidence_scorer import AlignmentResult, WordAlignment
 from .anonymous_clips import AnonymousClips
 from .candidate_pool import CandidatePool
 from .candidate_score import CandidateScore, score_candidate

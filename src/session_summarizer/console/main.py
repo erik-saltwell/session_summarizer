@@ -32,7 +32,6 @@ from ..commands.mark_backchannels import MarkBackchannelsCommand
 from ..commands.merge_speaker_clips import MergeSpeakerClipsCommand
 from ..commands.register_speakers import RegisterSpeakersCommand
 from ..commands.remove_outlier_speaker_clips import RemoveOutlierSpeakerClipsCommand
-from ..commands.score_confidence import ScoreConfidenceCommand
 from ..commands.stitch_identities import StitichIdentitiesCommand
 from ..commands.summarize_session import SummarizeSessionCommand
 from ..commands.test_command import TestCommand
@@ -716,18 +715,6 @@ def register_speakers() -> None:
     """Merge clips, remove outliers, and register centroid embeddings into registered_speakers.yaml."""
     logger, tracer = initialize_logging()
     RegisterSpeakersCommand().execute(logger)
-
-
-@app.command("score-confidence")
-def score_confidence(
-    session: str = typer.Option(..., "--session", "-s", help="ID of the session to transcribe"),
-) -> None:
-    confirm_session(session)
-    _set_seed(session)
-    logger, tracer = initialize_logging()
-
-    command: ScoreConfidenceCommand = ScoreConfidenceCommand(session, tracer, force=True)
-    command.execute(logger)
 
 
 @app.command("summarize-session")
