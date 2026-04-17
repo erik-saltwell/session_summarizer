@@ -1,7 +1,9 @@
 from .command_runner import run_command
 from .flush_gpu_memory import flush_gpu_memory
 from .logging_config import configure_logging
+from .silence_python_output import silence_python_noise
 from .text_fragments import FragmentID, get_fragment, get_fragment_path
+from .tracer import Tracer, initialize_request, initialize_tracing
 
 __all__ = [
     "configure_logging",
@@ -10,4 +12,8 @@ __all__ = [
     "run_command",
     "flush_gpu_memory",
     "FragmentID",
+    "Tracer",
+    "silence_python_noise",
+    "initialize_request",
+    "initialize_tracing",
 ]

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import random
+import sys
 from importlib.metadata import PackageNotFoundError, metadata
 from importlib.metadata import version as dist_version
 from pathlib import Path
@@ -18,6 +19,7 @@ from ..commands.add_embeddings import AddEmbeddingsCommand
 from ..commands.align_transcript import AlignTranscriptCommand
 from ..commands.clean_audio import CleanAudioCommand
 from ..commands.clean_session import CleanSessionCommand
+from ..commands.clean_session_step import CleanSessionStepCommand
 from ..commands.clear_logs import ClearLogsCommand
 from ..commands.compare_fulltext import CompareFullTextCommand
 from ..commands.compute_segments import ComputeSegmentsCommand
@@ -31,19 +33,20 @@ from ..commands.register_speakers import RegisterSpeakersCommand
 from ..commands.remove_outlier_speaker_clips import RemoveOutlierSpeakerClipsCommand
 from ..commands.score_confidence import ScoreConfidenceCommand
 from ..commands.stitch_identities import StitichIdentitiesCommand
+from ..commands.summarize_session import SummarizeSessionCommand
 from ..commands.test_command import TestCommand
 from ..commands.transcribe_audio import TranscribeAudioCommand
 from ..commands.validate_diarization import ValidateDiarizationCommand
 from ..commands.validate_transcribers import ValidateTranscribersCommand
-from ..logging import CompositeLogger, FileLogger, RichConsoleLogger
+from ..logging import RichConsoleLogger
 from ..protocols import LoggingProtocol
 from ..settings.session_settings import SessionSettings
-from ..utils import flush_gpu_memory
-from ..utils.logging_config import configure_logging
+from ..utils import Tracer, configure_logging, flush_gpu_memory, initialize_request, initialize_tracing
 from .console_validation import _validate_directory_exists
 
 load_dotenv()
 configure_logging()
+initialize_tracing()
 
 # Set random seeds for reproducible model inference
 
@@ -67,6 +70,210 @@ app = typer.Typer(
     add_completion=True,
     help="CLI for session-summarizer",
 )
+
+
+def initialize_logging() -> tuple[LoggingProtocol, Tracer]:
+    logger: LoggingProtocol
+    tracer: Tracer
+
+    request_id = initialize_request()
+    tracer = Tracer()
+
+    console = Console(file=sys.__stdout__)
+    # error_console = Console(file=sys.__stderr__)
+    console_logger: RichConsoleLogger = RichConsoleLogger(console)
+
+    # logfile_path = common_paths.generate_logfile_path()
+    # file_logger: FileLogger = FileLogger(logfile_path, verbose_training=True)
+    # logger = CompositeLogger([console_logger, file_logger])
+
+    logger = console_logger
+    logger.report_message(f"Session id: {request_id}")
+    return logger, tracer
+
+
+def confirm_session(session_id: str) -> None:
+    session_dir = common_paths.session_dir(session_id)
+    errors: list[str] = _validate_directory_exists(session_dir)
+    if errors and len(errors) > 0:
+        console: Console = Console()
+        for error in errors:
+            console.print(f"[red]Error: {error}[/red]")
+        raise typer.Exit(1)
+
+
+@app.command("add-embeddings")
+def add_embeddings(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to process"),
+) -> None:
+    """Generate speaker embeddings for each speech clip and save to disk."""
+    confirm_session(session)
+    _set_seed(session)
+    logger, tracer = initialize_logging()
+    command: AddEmbeddingsCommand = AddEmbeddingsCommand(session, tracer, force=True)
+    command.execute(logger)
+
+
+@app.command("align-transcription")
+def align_transcription(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to transcribe"),
+) -> None:
+    confirm_session(session)
+    _set_seed(session)
+    logger, tracer = initialize_logging()
+    command: AlignTranscriptCommand = AlignTranscriptCommand(session, tracer, force=True)
+    command.execute(logger)
+
+
+@app.command("apply-identity-stitching")
+def apply_identity_stitiching(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to process"),
+) -> None:
+    """Score each speech clip with end-of-turn probability and set the END_OF_TURN flag."""
+    confirm_session(session)
+    _set_seed(session)
+    logger, tracer = initialize_logging()
+    command: StitichIdentitiesCommand = StitichIdentitiesCommand(session, tracer, force=True)
+    command.execute(logger)
+
+
+@app.command("compare-texts")
+def compare_texts(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to transcribe"),
+) -> None:
+    confirm_session(session)
+    _set_seed(session)
+    logger, tracer = initialize_logging()
+    command: CompareFullTextCommand = CompareFullTextCommand(session, tracer, force=True)
+    command.execute(logger)
+
+
+@app.command("compute-vad-segments")
+def compute_vad_segments(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to segment"),
+) -> None:
+    """Run VAD on cleaned audio and compute optimal cut points for chunked processing."""
+    confirm_session(session)
+    _set_seed(session)
+    logger, tracer = initialize_logging()
+    command: ComputeSegmentsCommand = ComputeSegmentsCommand(session, tracer, force=True)
+    command.execute(logger)
+
+
+@app.command("create-speaker-clips")
+def create_speaker_clips(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to process"),
+    temp_folder: str = typer.Option(
+        ..., "--temp-folder", "-t", help="Name of temp folder inside voice samples to hold output"
+    ),
+) -> None:
+    """Save each identified speaker clip as an individual audio file."""
+    confirm_session(session)
+    _set_seed(session)
+    logger, tracer = initialize_logging()
+    command: CreateSpeakerClipsCommand = CreateSpeakerClipsCommand(
+        session, tracer, use_multi_speaker_clips=False, temp_folder=Path(temp_folder)
+    )
+    command.execute(logger)
+
+
+@app.command("clean-audio")
+def clean_audio(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to clean"),
+) -> None:
+    confirm_session(session)
+    _set_seed(session)
+    logger, tracer = initialize_logging()
+
+    command: CleanAudioCommand = CleanAudioCommand(session, tracer, force=True)
+    command.execute(logger)
+
+
+@app.command("clean-diarization")
+def clean_diarization(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to clean"),
+) -> None:
+    """Delete all generated files in a session folder, keeping settings.yaml and the original audio."""
+    confirm_session(session)
+    _set_seed(session)
+    logger, tracer = initialize_logging()
+    command: CleanSessionStepCommand = CleanSessionStepCommand(session, tracer, force=True)
+    command.commands_to_clean.append(DiarizeAudioCommand(session, tracer, force=True))
+    command.execute(logger)
+
+
+@app.command("clean-session")
+def clean_session(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to clean"),
+) -> None:
+    """Delete all generated files in a session folder, keeping settings.yaml and the original audio."""
+    confirm_session(session)
+    _set_seed(session)
+    logger, tracer = initialize_logging()
+    command: CleanSessionCommand = CleanSessionCommand(session, tracer, force=True)
+    command.execute(logger)
+
+
+@app.command("clear-logs")
+def clear_logs() -> None:
+    """Delete all files in the logs directory."""
+    logger, tracer = initialize_logging()
+    ClearLogsCommand().execute(logger)
+
+
+@app.command("diarizationlm")
+def diarizationlm(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to process"),
+) -> None:
+    """Post-process diarization with DiarizationLM to correct speaker attribution errors."""
+    confirm_session(session)
+    _set_seed(session)
+    logger, tracer = initialize_logging()
+    command: DiarizationLMCommand = DiarizationLMCommand(session, tracer, force=True)
+    command.execute(logger)
+
+
+@app.command("merge-speaker-clips")
+def merge_speaker_clips(
+    speaker: str = typer.Option(
+        ..., "--speaker", "-s", help="Speaker label — must match a subdirectory in voice_samples/"
+    ),
+    output_folder: str = typer.Option(..., "--output-folder", "-o", help="Folder to write the merged clips into"),
+) -> None:
+    """Merge short clips for a speaker until all are >= speaker_clips.min_duration_seconds."""
+    logger, tracer = initialize_logging()
+    command: MergeSpeakerClipsCommand = MergeSpeakerClipsCommand(
+        speaker_label=speaker,
+        output_folder=Path(output_folder),
+    )
+    command.execute(logger)
+
+
+@app.command("remove-outlier-speaker-clips")
+def remove_outlier_speaker_clips(
+    speaker: str = typer.Option(
+        ..., "--speaker", "-s", help="Speaker label — must match a subdirectory in voice_samples/"
+    ),
+    output_folder: str = typer.Option(..., "--output-folder", "-o", help="Folder to write the merged clips into"),
+) -> None:
+    """Merge short clips for a speaker until all are >= speaker_clips.min_duration_seconds."""
+    logger, tracer = initialize_logging()
+    command: RemoveOutlierSpeakerClipsCommand = RemoveOutlierSpeakerClipsCommand(
+        speaker_label=speaker,
+        output_folder=Path(output_folder),
+    )
+    command.execute(logger)
+
+
+@app.command("diarize-audio")
+def diarize_audio(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to transcribe"),
+) -> None:
+    confirm_session(session)
+    _set_seed(session)
+    logger, tracer = initialize_logging()
+    command: DiarizeAudioCommand = DiarizeAudioCommand(session, tracer, force=True)
+    command.execute(logger)
 
 
 _SAMPLE_SETTINGS = """\
@@ -444,196 +651,6 @@ seed: 43
 """
 
 
-def create_logger() -> LoggingProtocol:
-    console = Console()
-    console_logger: RichConsoleLogger = RichConsoleLogger(console)
-    logfile_path = common_paths.generate_logfile_path()
-    file_logger: FileLogger = FileLogger(logfile_path, verbose_training=True)
-    return CompositeLogger([console_logger, file_logger])
-
-
-def confirm_session(session_id: str) -> None:
-    session_dir = common_paths.session_dir(session_id)
-    errors: list[str] = _validate_directory_exists(session_dir)
-    if errors and len(errors) > 0:
-        console: Console = Console()
-        for error in errors:
-            console.print(f"[red]Error: {error}[/red]")
-        raise typer.Exit(1)
-
-
-@app.command("add-embeddings")
-def add_embeddings(
-    session: str = typer.Option(..., "--session", "-s", help="ID of the session to process"),
-) -> None:
-    """Generate speaker embeddings for each speech clip and save to disk."""
-    confirm_session(session)
-    _set_seed(session)
-    logger: LoggingProtocol = create_logger()
-    command: AddEmbeddingsCommand = AddEmbeddingsCommand(session, force=True)
-    command.execute(logger)
-
-
-@app.command("align-transcription")
-def align_transcription(
-    session: str = typer.Option(..., "--session", "-s", help="ID of the session to transcribe"),
-) -> None:
-    confirm_session(session)
-    _set_seed(session)
-    logger: LoggingProtocol = create_logger()
-    command: AlignTranscriptCommand = AlignTranscriptCommand(session, force=True)
-    command.execute(logger)
-
-
-# @app.command("apply-first-stitching")
-# def apply_first_stitching(
-#     session: str = typer.Option(..., "--session", "-s", help="ID of the session to process"),
-# ) -> None:
-#     """Score each speech clip with end-of-turn probability and set the END_OF_TURN flag."""
-#     confirm_session(session)
-#     _set_seed(session)
-#     logger: LoggingProtocol = create_logger()
-#     command: FirstStitchClipsCommand = FirstStitchClipsCommand(session, force=True)
-#     command.execute(logger)
-
-
-@app.command("apply-identity-stitching")
-def apply_identity_stitiching(
-    session: str = typer.Option(..., "--session", "-s", help="ID of the session to process"),
-) -> None:
-    """Score each speech clip with end-of-turn probability and set the END_OF_TURN flag."""
-    confirm_session(session)
-    _set_seed(session)
-    logger: LoggingProtocol = create_logger()
-    command: StitichIdentitiesCommand = StitichIdentitiesCommand(session, force=True)
-    command.execute(logger)
-
-
-@app.command("diarizationlm")
-def diarizationlm(
-    session: str = typer.Option(..., "--session", "-s", help="ID of the session to process"),
-) -> None:
-    """Post-process diarization with DiarizationLM to correct speaker attribution errors."""
-    confirm_session(session)
-    _set_seed(session)
-    logger: LoggingProtocol = create_logger()
-    command: DiarizationLMCommand = DiarizationLMCommand(session, force=True)
-    command.execute(logger)
-
-
-@app.command("clean-audio")
-def clean_audio(
-    session: str = typer.Option(..., "--session", "-s", help="ID of the session to clean"),
-) -> None:
-    confirm_session(session)
-    _set_seed(session)
-    logger: LoggingProtocol = create_logger()
-    command: CleanAudioCommand = CleanAudioCommand(session, force=True)
-    command.execute(logger)
-
-
-@app.command("clean-session")
-def clean_session(
-    session: str = typer.Option(..., "--session", "-s", help="ID of the session to clean"),
-) -> None:
-    """Delete all generated files in a session folder, keeping settings.yaml and the original audio."""
-    confirm_session(session)
-    _set_seed(session)
-    logger: LoggingProtocol = create_logger()
-    command: CleanSessionCommand = CleanSessionCommand(session, force=True)
-    command.execute(logger)
-
-
-@app.command("clear-logs")
-def clear_logs() -> None:
-    """Delete all files in the logs directory."""
-    logger: LoggingProtocol = create_logger()
-    ClearLogsCommand().execute(logger)
-
-
-@app.command("compare-texts")
-def compare_texts(
-    session: str = typer.Option(..., "--session", "-s", help="ID of the session to transcribe"),
-) -> None:
-    confirm_session(session)
-    _set_seed(session)
-    logger: LoggingProtocol = create_logger()
-    command: CompareFullTextCommand = CompareFullTextCommand(session, force=True)
-    command.execute(logger)
-
-
-@app.command("compute-vad-segments")
-def compute_vad_segments(
-    session: str = typer.Option(..., "--session", "-s", help="ID of the session to segment"),
-) -> None:
-    """Run VAD on cleaned audio and compute optimal cut points for chunked processing."""
-    confirm_session(session)
-    _set_seed(session)
-    logger: LoggingProtocol = create_logger()
-    command: ComputeSegmentsCommand = ComputeSegmentsCommand(session, force=True)
-    command.execute(logger)
-
-
-@app.command("create-speaker-clips")
-def create_speaker_clips(
-    session: str = typer.Option(..., "--session", "-s", help="ID of the session to process"),
-    temp_folder: str = typer.Option(
-        ..., "--temp-folder", "-t", help="Name of temp folder inside voice samples to hold output"
-    ),
-) -> None:
-    """Save each identified speaker clip as an individual audio file."""
-    confirm_session(session)
-    _set_seed(session)
-    logger: LoggingProtocol = create_logger()
-    command: CreateSpeakerClipsCommand = CreateSpeakerClipsCommand(
-        session, use_multi_speaker_clips=False, temp_folder=Path(temp_folder)
-    )
-    command.execute(logger)
-
-
-@app.command("merge-speaker-clips")
-def merge_speaker_clips(
-    speaker: str = typer.Option(
-        ..., "--speaker", "-s", help="Speaker label — must match a subdirectory in voice_samples/"
-    ),
-    output_folder: str = typer.Option(..., "--output-folder", "-o", help="Folder to write the merged clips into"),
-) -> None:
-    """Merge short clips for a speaker until all are >= minimum_speaker_clip_duration."""
-    logger: LoggingProtocol = create_logger()
-    command: MergeSpeakerClipsCommand = MergeSpeakerClipsCommand(
-        speaker_label=speaker,
-        output_folder=Path(output_folder),
-    )
-    command.execute(logger)
-
-
-@app.command("remove-outlier-speaker-clips")
-def remove_outlier_speaker_clips(
-    speaker: str = typer.Option(
-        ..., "--speaker", "-s", help="Speaker label — must match a subdirectory in voice_samples/"
-    ),
-    output_folder: str = typer.Option(..., "--output-folder", "-o", help="Folder to write the merged clips into"),
-) -> None:
-    """Merge short clips for a speaker until all are >= minimum_speaker_clip_duration."""
-    logger: LoggingProtocol = create_logger()
-    command: RemoveOutlierSpeakerClipsCommand = RemoveOutlierSpeakerClipsCommand(
-        speaker_label=speaker,
-        output_folder=Path(output_folder),
-    )
-    command.execute(logger)
-
-
-@app.command("diarize-audio")
-def diarize_audio(
-    session: str = typer.Option(..., "--session", "-s", help="ID of the session to transcribe"),
-) -> None:
-    confirm_session(session)
-    _set_seed(session)
-    logger: LoggingProtocol = create_logger()
-    command: DiarizeAudioCommand = DiarizeAudioCommand(session, force=True)
-    command.execute(logger)
-
-
 @app.command("generate-sample-settings")
 def generate_sample_settings() -> None:
     """Generate a well-documented sample settings.yaml in the data directory."""
@@ -653,8 +670,9 @@ def identify_speakers(
     """Identify speakers in each speech clip by comparing embeddings to registered attendees."""
     confirm_session(session)
     _set_seed(session)
-    logger: LoggingProtocol = create_logger()
-    command: IdentifySpeakersCommand = IdentifySpeakersCommand(session, force=True)
+    logger, tracer = initialize_logging()
+
+    command: IdentifySpeakersCommand = IdentifySpeakersCommand(session, tracer, force=True)
     command.execute(logger)
 
 
@@ -665,8 +683,9 @@ def mark_backchannels(
     """Mark short acknowledgement clips as backchannels."""
     confirm_session(session)
     _set_seed(session)
-    logger: LoggingProtocol = create_logger()
-    command: MarkBackchannelsCommand = MarkBackchannelsCommand(session, force=True)
+    logger, tracer = initialize_logging()
+
+    command: MarkBackchannelsCommand = MarkBackchannelsCommand(session, tracer, force=True)
     command.execute(logger)
 
 
@@ -677,15 +696,16 @@ def punctuate_text(
     """Identify speakers in each speech clip by comparing embeddings to registered attendees."""
     confirm_session(session)
     _set_seed(session)
-    logger: LoggingProtocol = create_logger()
-    command: PunctuateTextCommand = PunctuateTextCommand(session, force=True)
+    logger, tracer = initialize_logging()
+
+    command: PunctuateTextCommand = PunctuateTextCommand(session, tracer, force=True)
     command.execute(logger)
 
 
 @app.command("register-speakers")
 def register_speakers() -> None:
     """Merge clips, remove outliers, and register centroid embeddings into registered_speakers.yaml."""
-    logger: LoggingProtocol = create_logger()
+    logger, tracer = initialize_logging()
     RegisterSpeakersCommand().execute(logger)
 
 
@@ -695,8 +715,21 @@ def score_confidence(
 ) -> None:
     confirm_session(session)
     _set_seed(session)
-    logger: LoggingProtocol = create_logger()
-    command: ScoreConfidenceCommand = ScoreConfidenceCommand(session, force=True)
+    logger, tracer = initialize_logging()
+
+    command: ScoreConfidenceCommand = ScoreConfidenceCommand(session, tracer, force=True)
+    command.execute(logger)
+
+
+@app.command("summarize-session")
+def summarize_session(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to transcribe"),
+) -> None:
+    confirm_session(session)
+    _set_seed(session)
+    logger, tracer = initialize_logging()
+
+    command: SummarizeSessionCommand = SummarizeSessionCommand(session, tracer, force=True)
     command.execute(logger)
 
 
@@ -706,8 +739,9 @@ def test(
 ) -> None:
     confirm_session(session)
     _set_seed(session)
-    logger: LoggingProtocol = create_logger()
-    command: TestCommand = TestCommand(session, force=True)
+    logger, tracer = initialize_logging()
+
+    command: TestCommand = TestCommand(session, tracer, force=True)
     command.execute(logger)
 
 
@@ -717,21 +751,10 @@ def transcribe(
 ) -> None:
     confirm_session(session)
     _set_seed(session)
-    logger: LoggingProtocol = create_logger()
-    command: TranscribeAudioCommand = TranscribeAudioCommand(session, force=True)
+    logger, tracer = initialize_logging()
+
+    command: TranscribeAudioCommand = TranscribeAudioCommand(session, tracer, force=True)
     command.execute(logger)
-
-
-# @app.command("update-turn-end")
-# def update_turn_end(
-#     session: str = typer.Option(..., "--session", "-s", help="ID of the session to process"),
-# ) -> None:
-#     """Score each speech clip with end-of-turn probability and set the END_OF_TURN flag."""
-#     confirm_session(session)
-#     _set_seed(session)
-#     logger: LoggingProtocol = create_logger()
-#     command: UpdateTurnEndCommand = UpdateTurnEndCommand(session, force=True)
-#     command.execute(logger)
 
 
 @app.command("validate-diarization")
@@ -741,8 +764,9 @@ def validate_diarization(
     """Evaluate diarization quality across pipeline stages and display a metrics comparison table."""
     confirm_session(session)
     _set_seed(session)
-    logger: LoggingProtocol = create_logger()
-    command: ValidateDiarizationCommand = ValidateDiarizationCommand(session, force=True)
+    logger, tracer = initialize_logging()
+
+    command: ValidateDiarizationCommand = ValidateDiarizationCommand(session, tracer, force=True)
     command.execute(logger)
 
 
@@ -753,8 +777,9 @@ def validate_transcribers(
     """Transcribe test audio with every registered transcriber and compare accuracy metrics."""
     confirm_session(session)
     _set_seed(session)
-    logger: LoggingProtocol = create_logger()
-    command: ValidateTranscribersCommand = ValidateTranscribersCommand(session, force=True)
+    logger, tracer = initialize_logging()
+
+    command: ValidateTranscribersCommand = ValidateTranscribersCommand(session, tracer, force=True)
     command.execute(logger)
 
 

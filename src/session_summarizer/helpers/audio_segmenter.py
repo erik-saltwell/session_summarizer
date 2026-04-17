@@ -51,7 +51,9 @@ def compute_vad_segments(
             max_length=settings.segmentation.short_max_seconds,
         )
         long_segments = compute_segments(
-            vad_result, min_length=settings.segmentation.long_min_seconds, max_length=settings.segmentation.long_max_seconds
+            vad_result,
+            min_length=settings.segmentation.long_min_seconds,
+            max_length=settings.segmentation.long_max_seconds,
         )
 
     logger.report_message("[blue]Comput segments complete.[/blue]")

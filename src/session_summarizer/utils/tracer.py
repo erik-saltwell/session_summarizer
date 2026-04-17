@@ -34,11 +34,13 @@ def initialize_tracing(indent: int | None = None) -> None:
     )
 
 
-def initialize_request() -> None:
+def initialize_request() -> str:
+    req_id: str = f"req_{uuid.uuid4().hex}"
     structlog.contextvars.clear_contextvars()
     structlog.contextvars.bind_contextvars(
-        request_id=f"req_{uuid.uuid4().hex}",  # your custom ID
+        request_id=req_id,  # your custom ID
     )
+    return req_id
 
 
 class StructLoggerProtocol(structlog.typing.BindableLogger, Protocol):

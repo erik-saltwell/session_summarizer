@@ -64,13 +64,13 @@ class CompareFullTextCommand(SessionProcessingCommand):
         self.inputs.extend(path_and_name.filepath for path_and_name in _iterate_file_paths(settings))
         self.dependencies.extend(
             [
-                IdentifySpeakersCommand(self.session_id),
-                AddEmbeddingsCommand(self.session_id),
-                DiarizationLMCommand(self.session_id),
-                DiarizeAudioCommand(self.session_id),
-                ScoreConfidenceCommand(self.session_id),
-                AlignTranscriptCommand(self.session_id),
-                TranscribeAudioCommand(self.session_id),
+                IdentifySpeakersCommand(self.session_id, self.tracer),
+                AddEmbeddingsCommand(self.session_id, self.tracer),
+                DiarizationLMCommand(self.session_id, self.tracer),
+                DiarizeAudioCommand(self.session_id, self.tracer),
+                ScoreConfidenceCommand(self.session_id, self.tracer),
+                AlignTranscriptCommand(self.session_id, self.tracer),
+                TranscribeAudioCommand(self.session_id, self.tracer),
             ]
         )
 

@@ -52,8 +52,8 @@ class CreateSpeakerClipsCommand(SessionProcessingCommand):
     def add_dependencies(self, settings: SessionSettings, session_dir: Path) -> None:
         self.inputs.append(session_dir / settings.paths.identified_speakers)
         self.inputs.append(session_dir / settings.paths.cleaned_audio)
-        self.dependencies.append(IdentifySpeakersCommand(self.session_id))
-        self.dependencies.append(CleanAudioCommand(self.session_id))
+        self.dependencies.append(IdentifySpeakersCommand(self.session_id, self.tracer))
+        self.dependencies.append(CleanAudioCommand(self.session_id, self.tracer))
 
     def process_session(self, settings: SessionSettings, session_dir: Path) -> None:
         temp_folder = _resolve_temp_folder(self.temp_folder)

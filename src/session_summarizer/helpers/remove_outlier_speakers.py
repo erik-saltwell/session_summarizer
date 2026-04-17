@@ -23,7 +23,9 @@ def create_clips_without_outliers(
         logger.report_message("[yellow]No .wav files found — nothing to do.[/yellow]")
         return None
 
-    logger.report_message(f"[blue]Removing clips with similarity < {settings.speaker_clips.min_centroid_similarity}.[/blue]")
+    logger.report_message(
+        f"[blue]Removing clips with similarity < {settings.speaker_clips.min_centroid_similarity}.[/blue]"
+    )
 
     embeddings: dict[Path, torch.Tensor] = {}
     for wav in wav_files:

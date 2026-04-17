@@ -21,7 +21,7 @@ class StitichIdentitiesCommand(SessionProcessingCommand):
     def add_dependencies(self, settings: SessionSettings, session_dir: Path) -> None:
         self.inputs.append(session_dir / settings.paths.identified_speakers)
         self.outputs.append(session_dir / settings.paths.identity_stitched)
-        self.dependencies.append(IdentifySpeakersCommand(self.session_id))
+        self.dependencies.append(IdentifySpeakersCommand(self.session_id, self.tracer))
 
     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
         identified_speaker_clips: SpeechClipSet = SpeechClipSet.load_from_json(

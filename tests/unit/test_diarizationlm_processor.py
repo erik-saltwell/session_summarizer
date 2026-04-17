@@ -7,8 +7,11 @@ from session_summarizer.processing_results import SpeechClip, SpeechClipSet, Wor
 class FakeDiarizationLMModel:
     def __init__(self, context_window: int):
         self.context_window = context_window
-        self.is_loaded = True
         self.prompts: list[str] = []
+
+    @property
+    def is_loaded(self) -> bool:
+        return True
 
     def count_tokens(self, text: str) -> int:
         return len(text.split())

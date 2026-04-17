@@ -1,11 +1,17 @@
 from __future__ import annotations
 
-from typing import Any, cast
+from typing import Any, Protocol, cast
 
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 DEFAULT_MODEL_NAME = "google/DiarizationLM-8b-Fisher-v2"
+
+
+class DiarizationLMModelProtocol(Protocol):
+    @property
+    def is_loaded(self) -> bool: ...
+    def infer(self, prompt: str, max_new_tokens: int | None = None) -> str: ...
 
 
 class DiarizationLMModel:

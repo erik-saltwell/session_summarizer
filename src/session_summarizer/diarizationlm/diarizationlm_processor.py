@@ -7,7 +7,7 @@ from diarizationlm import utils as dlm_utils
 from session_summarizer.processing_results.speech_clip_set import SpeechClipSet
 
 from .clip_set_converter import clip_set_to_utterance, rebuild_clip_set
-from .llm_inference import DiarizationLMModel
+from .llm_inference import DiarizationLMModelProtocol
 from .speaker_mapping import SpeakerMapping
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ _PROMPT_OPTIONS = dlm_utils.PromptOptions(
 class DiarizationLMProcessor:
     """Post-processes a SpeechClipSet using DiarizationLM to improve speaker assignments."""
 
-    def __init__(self, model: DiarizationLMModel):
+    def __init__(self, model: DiarizationLMModelProtocol):
         self._model = model
 
     def process(self, clip_set: SpeechClipSet, epsilon: float) -> SpeechClipSet:

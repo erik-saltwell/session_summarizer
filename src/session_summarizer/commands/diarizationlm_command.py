@@ -20,7 +20,7 @@ class DiarizationLMCommand(SessionProcessingCommand):
     def add_dependencies(self, settings: SessionSettings, session_dir: Path) -> None:
         self.inputs.append(session_dir / settings.paths.base_diarization)
         self.outputs.append(session_dir / settings.paths.diarizationlm_processed)
-        self.dependencies.append(DiarizeAudioCommand(self.session_id))
+        self.dependencies.append(DiarizeAudioCommand(self.session_id, self.tracer))
 
     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
         clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.paths.base_diarization)

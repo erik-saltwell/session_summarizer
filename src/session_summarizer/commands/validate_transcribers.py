@@ -58,8 +58,8 @@ class ValidateTranscribersCommand(SessionProcessingCommand):
     def add_dependencies(self, settings: SessionSettings, session_dir: Path) -> None:
         self.inputs.append(session_dir / settings.paths.cleaned_audio)
         self.inputs.append(session_dir / settings.paths.vad_segments)
-        self.dependencies.append(ComputeSegmentsCommand(self.session_id))
-        self.dependencies.append(CleanAudioCommand(self.session_id))
+        self.dependencies.append(ComputeSegmentsCommand(self.session_id, self.tracer))
+        self.dependencies.append(CleanAudioCommand(self.session_id, self.tracer))
 
     def process_session(self, settings: SessionSettings, session_dir: Path) -> None:
         clean_audio(settings, session_dir, self, self.logger)

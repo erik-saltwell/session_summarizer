@@ -20,7 +20,7 @@ class MarkBackchannelsCommand(SessionProcessingCommand):
     def add_dependencies(self, settings: SessionSettings, session_dir: Path) -> None:
         self.inputs.append(session_dir / settings.paths.identity_stitched)
         self.outputs.append(session_dir / settings.paths.backchannel_marked)
-        self.dependencies.append(StitichIdentitiesCommand(self.session_id))
+        self.dependencies.append(StitichIdentitiesCommand(self.session_id, self.tracer))
 
     def process_session(self, settings: SessionSettings, session_dir: Path) -> None:
         clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.paths.identity_stitched)

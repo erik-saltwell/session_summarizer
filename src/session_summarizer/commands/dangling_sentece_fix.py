@@ -20,7 +20,7 @@ class DanglingSentenceFixCommand(SessionProcessingCommand):
     def add_dependencies(self, settings: SessionSettings, session_dir: Path) -> None:
         self.inputs.append(session_dir / settings.paths.diarizationlm_processed)
         self.outputs.append(session_dir / settings.paths.dangling_sentence_fix)
-        self.dependencies.append(DiarizationLMCommand(self.session_id))
+        self.dependencies.append(DiarizationLMCommand(self.session_id, self.tracer))
 
     def process_session(self, settings: SessionSettings, session_dir: Path) -> None:
         input_clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.paths.diarizationlm_processed)

@@ -26,9 +26,9 @@ class AlignTranscriptCommand(SessionProcessingCommand):
         self.inputs.append(session_dir / settings.paths.vad_segments)
         self.inputs.append(session_dir / settings.paths.cleaned_audio)
         self.outputs.append(session_dir / settings.paths.aligned_transcript)
-        self.dependencies.append(TranscribeAudioCommand(self.session_id))
-        self.dependencies.append(ComputeSegmentsCommand(self.session_id))
-        self.dependencies.append(CleanAudioCommand(self.session_id))
+        self.dependencies.append(TranscribeAudioCommand(self.session_id, self.tracer))
+        self.dependencies.append(ComputeSegmentsCommand(self.session_id, self.tracer))
+        self.dependencies.append(CleanAudioCommand(self.session_id, self.tracer))
 
     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
         segments: SegmentSplitResultSet = SegmentSplitResultSet.load(session_dir / settings.paths.vad_segments)
