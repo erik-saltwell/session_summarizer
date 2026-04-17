@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 from difflib import SequenceMatcher
 
-from ..helpers import UNASSIGNED_SPEAKER_NAME
+from ..helpers.unassigned_speaker import UNASSIGNED_SPEAKER_NAME
 from ..processing_results.speech_clip import SpeechClip
 from ..processing_results.speech_clip_set import SpeechClipSet
 from .text_cleaner import clean_text_for_evaluation
@@ -70,7 +70,11 @@ def compute_wder(hyp: SpeechClipSet, ref: SpeechClipSet, epsilon: float) -> floa
     last_clip_idx: int = len(hyp) - 1
 
     for idx, clip in enumerate(hyp):
-        if not clip.words or clip.identity == UNASSIGNED_SPEAKER_NAME:
+        if not clip.words:
+            continue
+        if clip.identity == UNASSIGNED_SPEAKER_NAME:
+            continue
+        if clip.is_backchannel:
             continue
 
         prior: SpeechClip | None = None

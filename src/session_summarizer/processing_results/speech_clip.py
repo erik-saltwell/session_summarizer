@@ -12,7 +12,7 @@ from .segment_protocol import (
 )
 
 _ANONYMOUS_SPEAKER = "anonymous"
-_ANONYMOUS_SPEAKER_SET: set[str] = set(_ANONYMOUS_SPEAKER)
+_ANONYMOUS_SPEAKER_SET: set[str] = set({_ANONYMOUS_SPEAKER})
 
 
 class SpeechClipFlags(IntFlag):
