@@ -17,6 +17,9 @@ def convert_to_48k_wav(input_path: Path, temp_wav_path: Path) -> None:
 
     cmd = [
         "ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
         "-y",
         "-i",
         str(input_path),
@@ -113,6 +116,9 @@ def normalize_and_export_16k_mono(
 
     cmd = [
         "ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
         "-y",
         "-i",
         str(input_wav),
