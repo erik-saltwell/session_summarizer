@@ -7,7 +7,6 @@
 - src/session_summarizer/commands/AGENTS.md has additional rules and steps for creating new commands.
 - src/session_summarizer/settings/AGENTS.md has additional rules for creating or editing settings.
 
-
 <!-- code-review-graph MCP tools -->
 ## MCP Tools: code-review-graph
 

@@ -100,7 +100,7 @@ def _build_clip(
     if len(unique_sources) == 1:
         src_clip = original[source_clip_indices[0]]
         flags = src_clip.flags
-        # identity and embedding are speaker-specific — only carry when the speaker didn't change.
+        # identity and embedding are speaker-specific — only carry when the speaker didn't change.gi
         if _effective_speaker(src_clip) == speaker:
             identity = src_clip.identity
             embedding = src_clip.embedding
