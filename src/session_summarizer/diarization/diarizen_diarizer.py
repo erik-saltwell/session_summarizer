@@ -174,15 +174,15 @@ def merge_overlapping_diarization(raw: DiarizationResult) -> MergedDiarizationRe
 class DiarizenDiarizer:
     """Speaker diarizer using BUT-FIT/diarizen-wavlm-large-s80-md-v2.
 
-    Speaker count is inferred automatically (no num_speakers required).
-    Supports up to 4 overlapping speakers.
+    Speaker count is pinned via diarize(num_speakers=...) — min and max clusters
+    are both set to that value. Supports up to 4 overlapping speakers.
 
     VRAM discipline: model is loaded and fully unloaded within each diarize() call.
     """
 
     model_name: str = "BUT-FIT/diarizen-wavlm-large-s80-md-v2"
 
-    def diarize(self, audio_path: Path, logger: LoggingProtocol) -> MergedDiarizationResult:
+    def diarize(self, audio_path: Path, num_speakers: int, logger: LoggingProtocol) -> MergedDiarizationResult:
         _patch_torchaudio_for_pyannote()
 
         try:
@@ -198,9 +198,11 @@ class DiarizenDiarizer:
 
         logger.report_message(f"[blue]Loading DiariZen diarization model {self.model_name}...[/blue]")
         pipeline = DiariZenPipeline.from_pretrained(self.model_name)
+        pipeline.min_speakers = num_speakers
+        pipeline.max_speakers = num_speakers
 
         try:
-            logger.report_message("[blue]Running diarization (speaker count inferred automatically)...[/blue]")
+            logger.report_message(f"[blue]Running diarization (num_speakers={num_speakers})...[/blue]")
             annotation = pipeline(str(audio_path.resolve()))
 
             segments: list[DiarizationSegment] = []
