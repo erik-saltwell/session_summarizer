@@ -22,6 +22,3 @@ class RegisteredSpeakers(dict[str, list[float]]):
         raw = {name: {"embedding": embedding} for name, embedding in self.items()}
         with path.open("w", encoding="utf-8") as f:
             yaml.dump(raw, f, default_flow_style=False, allow_unicode=True)
-
-    # def integrate_embedding(self, name: str, embedding: list[float]) -> None:
-    #     self[name] = embedding
