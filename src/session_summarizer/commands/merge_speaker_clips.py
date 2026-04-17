@@ -24,7 +24,7 @@ class MergeSpeakerClipsCommand:
     def execute(self, logger: LoggingProtocol) -> None:
         self.logger = logger
         settings = SessionSettings.load(common_paths.data_dir() / _SETTINGS_FILE)
-        min_duration = settings.speaker_clips.min_duration_seconds
+        min_duration = settings.minimum_speaker_clip_duration
 
         input_dir = common_paths.voice_samples_for_speaker(self.speaker_label)
         if not input_dir.exists():
@@ -34,5 +34,5 @@ class MergeSpeakerClipsCommand:
             f"[blue]Merging clips for '{self.speaker_label}' (min duration: {min_duration:.2f}s)[/blue]"
         )
         merge_speaker_clips_to_min_duration(
-            input_dir, self.output_folder, min_duration, settings.speaker_clips.silence_gap_seconds, logger
+            input_dir, self.output_folder, min_duration, settings.speaker_clip_gap_length, logger
         )

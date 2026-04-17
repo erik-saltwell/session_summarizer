@@ -19,7 +19,7 @@ def transcribe_from_cleaned_audio(
     gpu_logger: GpuLogger,
     logger: LoggingProtocol,
 ) -> TranscriptionResult:
-    audio_path: Path = session_dir / settings.paths.cleaned_audio
+    audio_path: Path = session_dir / settings.cleaned_audio_file
 
     logger.report_message(f"[blue]Transcribing from clean audio at {audio_path}[/blue]")
 

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
 from pathlib import Path
 
 from ..processing_results import SpeechClip, SpeechClipSet
@@ -43,12 +42,6 @@ BACKCHANNEL_WORDS: set[str] = {
 _PUNCTUATION_RE = re.compile(r"[^\w]")
 
 
-@dataclass(frozen=True)
-class DanglingSentenceFixResult:
-    clips: SpeechClipSet
-    fixed_count: int
-
-
 def _strip_punctuation(word: str) -> str:
     return _PUNCTUATION_RE.sub("", word).lower()
 
@@ -83,12 +76,11 @@ def fix_dangling_sentences(
     clips: SpeechClipSet,
     gpu_logger: GpuLogger,
     logger: LoggingProtocol,
-) -> DanglingSentenceFixResult:
+) -> SpeechClipSet:
     clips.sort_clips()
 
     result: SpeechClipSet = SpeechClipSet()
     prior_clip: SpeechClip | None = None
-    fixed_count = 0
 
     for clip in clips:
         if prior_clip is None or clip.words is None or len(clip.words) == 0:
@@ -115,7 +107,6 @@ def fix_dangling_sentences(
         # Move dangling words to the prior clip
         for w in words_before:
             prior_clip.merge_with_word(w)
-        fixed_count += 1
 
         # Rebuild current clip with only the post-period words
         clip.words = words_after
@@ -127,4 +118,4 @@ def fix_dangling_sentences(
         prior_clip = clip
 
     result.sort_clips()
-    return DanglingSentenceFixResult(clips=result, fixed_count=fixed_count)
+    return result

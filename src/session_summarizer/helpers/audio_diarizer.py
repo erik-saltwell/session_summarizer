@@ -20,12 +20,12 @@ def diarize_audio(
     logger: LoggingProtocol,
 ) -> SpeechClipSet:
     logger.report_message("[blue]Diarizing audio.[/blue]")
-    final_path: Path = session_dir / settings.paths.base_diarization
-    audio_path = session_dir / settings.paths.cleaned_audio
+    final_path: Path = session_dir / settings.base_diarized_path
+    audio_path = session_dir / settings.cleaned_audio_file
 
     gpu_logger.report_gpu_usage("before processing")
 
-    diarizer: DiarizenDiarizer = DiarizenDiarizer(speaker_count=settings.number_of_speakers)
+    diarizer: DiarizenDiarizer = DiarizenDiarizer()
     diarization: MergedDiarizationResult = diarizer.diarize(audio_path, logger)
     logger.report_message(f"[blue]Converting to SpeechClipSet {final_path}...[/blue]")
     result: SpeechClipSet = create_speech_clips(diarization, alignment_result, settings, logger)

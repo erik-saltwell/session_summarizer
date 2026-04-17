@@ -33,7 +33,7 @@ class RemoveOutlierSpeakerClipsCommand:
 
         logger.report_message(
             f"[blue]Removing outlier clips for '{self.speaker_label}' "
-            f"(min similarity: {settings.speaker_clips.min_centroid_similarity})[/blue]"
+            f"(min similarity: {settings.min_speaker_similarity})[/blue]"
         )
         create_clips_without_outliers(settings, input_dir, self.output_folder, logger)
         final_count = len(list(self.output_folder.glob("*.wav")))

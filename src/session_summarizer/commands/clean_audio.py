@@ -16,8 +16,8 @@ class CleanAudioCommand(SessionProcessingCommand):
         return "Clean Audio"
 
     def add_dependencies(self, settings: SessionSettings, session_dir: Path) -> None:
-        self.inputs.append(session_dir / settings.paths.source_audio)
-        self.outputs.append(session_dir / settings.paths.cleaned_audio)
+        self.inputs.append(session_dir / settings.audio_file)
+        self.outputs.append(session_dir / settings.cleaned_audio_file)
 
     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
         clean_audio(settings, session_dir, self, self.logger)

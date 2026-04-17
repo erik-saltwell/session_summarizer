@@ -65,7 +65,7 @@ class SimpleMergeSelector(MergeSelector):
         if not clips_are_close_enough(
             prior_clip,
             current_clip,
-            settings.stitching.merge_gap_seconds,
+            settings.diarization_stitching.merge_gap_seconds,
             settings.epsilon,
             logger,
         ):
@@ -84,7 +84,7 @@ def _find_best_candidate(
     scoring_mode: ScoringMode,
     prefer_shorter_on_tie: bool,
     should_fill_nearest: bool,
-    max_nearest_gap_seconds: float,
+    max_nearest_distance: float,
 ) -> tuple[SpeechClip | None, CandidateScore | None]:
     best_candidate: SpeechClip | None = None
     best_score: CandidateScore | None = None
@@ -96,7 +96,7 @@ def _find_best_candidate(
             if best_score is None or score > best_score:
                 best_score = score
                 best_candidate = candidate
-        elif should_fill_nearest and (overlap > 0.0 or gap <= max_nearest_gap_seconds):
+        elif should_fill_nearest and (overlap > 0.0 or gap <= max_nearest_distance):
             score = score_candidate(candidate, word, epsilon, scoring_mode, prefer_shorter_on_tie, ignore_overlap=True)
             if best_score is None or score > best_score:
                 best_score = score
@@ -126,9 +126,9 @@ def create_speech_clips(
 
     # caching values for efficiency since they are used in inner loops
     epsilon: float = settings.epsilon
-    stitch_settings = settings.stitching
+    stitch_settings = settings.diarization_stitching
     should_fill_nearest: bool = stitch_settings.fill_nearest
-    max_nearest_gap_seconds: float = stitch_settings.max_nearest_gap_seconds + epsilon
+    max_nearest_distance: float = stitch_settings.max_nearest_distance + epsilon
     scoring_mode: ScoringMode = stitch_settings.scoring_mode
     prefer_shorter_on_tie: bool = stitch_settings.prefer_shorter_on_tie
 
@@ -147,7 +147,7 @@ def create_speech_clips(
             scoring_mode,
             prefer_shorter_on_tie,
             should_fill_nearest,
-            max_nearest_gap_seconds,
+            max_nearest_distance,
         )
 
         if best_candidate is not None:
@@ -158,9 +158,9 @@ def create_speech_clips(
 
     speech_clips.extend_clips(anonymous_clips.get_clips())
 
-    if settings.stitching.expand_segments_to_fit_words:
+    if settings.diarization_stitching.expand_segments_to_fit_words:
         for clip in speech_clips:
-            clip.expand_bounds_to_include_words(epsilon, settings.stitching.expansion_limit_seconds)
+            clip.expand_bounds_to_include_words(epsilon, settings.diarization_stitching.expansion_limit_seconds)
 
     speech_clips = merge_clips(speech_clips, SimpleMergeSelector(), settings, logger)
     speech_clips = _remove_empty_clips(speech_clips)

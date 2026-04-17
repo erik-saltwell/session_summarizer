@@ -13,7 +13,6 @@ from .diarizationlm_command import DiarizationLMCommand
 from .diarize_audio import DiarizeAudioCommand
 from .identify_speakers import IdentifySpeakersCommand
 from .indeterminate_speaker_assignment import IndeterminantSpeakerAssignmentCommand
-from .mark_backchannels import MarkBackchannelsCommand
 from .session_processing_command import SessionProcessingCommand
 from .stitch_identities import StitichIdentitiesCommand
 
@@ -26,13 +25,12 @@ from .stitch_identities import StitichIdentitiesCommand
 
 def get_diarization_registry(settings: SessionSettings, session_dir: Path) -> list[tuple[str, Path]]:
     results: list[tuple[str, Path]] = []
-    results.append(("Speaker Identified", session_dir / settings.paths.base_diarization))
-    results.append(("BaseDiarization", session_dir / settings.paths.diarizationlm_processed))
-    results.append(("Embedded", session_dir / settings.paths.clips_with_embeddings))
-    results.append(("Identified Speakers", session_dir / settings.paths.identified_speakers))
-    results.append(("Identity Stitched", settings.paths.identity_stitched))
-    results.append(("Unassign Speakers", settings.paths.indeterminate_speakers))
-    results.append(("Backchannel Marked", settings.paths.backchannel_marked))
+    results.append(("Speaker Identified", session_dir / settings.base_diarized_path))
+    results.append(("BaseDiarization", session_dir / settings.diarizationlm_processed_path))
+    results.append(("Embedded", session_dir / settings.speech_clips_with_embedding))
+    results.append(("Identified Speakers", session_dir / settings.identified_speaker_path))
+    results.append(("Identity Stitched", settings.identity_stitched_path))
+    results.append(("Unassign Speakers", settings.indeterminate_speakers_path))
 
     return results
 
@@ -69,13 +67,12 @@ class ValidateDiarizationCommand(SessionProcessingCommand):
         self.inputs.extend(item[1] for item in get_diarization_registry(settings, session_dir))
         self.dependencies.extend(
             [
-                DiarizeAudioCommand(self.session_id, self.tracer),
-                DiarizationLMCommand(self.session_id, self.tracer),
-                AddEmbeddingsCommand(self.session_id, self.tracer),
-                IdentifySpeakersCommand(self.session_id, self.tracer),
-                StitichIdentitiesCommand(self.session_id, self.tracer),
-                IndeterminantSpeakerAssignmentCommand(self.session_id, self.tracer),
-                MarkBackchannelsCommand(self.session_id, self.tracer),
+                DiarizeAudioCommand(self.session_id),
+                DiarizationLMCommand(self.session_id),
+                AddEmbeddingsCommand(self.session_id),
+                IdentifySpeakersCommand(self.session_id),
+                StitichIdentitiesCommand(self.session_id),
+                IndeterminantSpeakerAssignmentCommand(self.session_id),
             ]
         )
 

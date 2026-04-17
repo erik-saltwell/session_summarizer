@@ -30,7 +30,7 @@ class CleanSessionCommand(SessionProcessingCommand):
     def process_session(self, settings: SessionSettings, session_dir: Path) -> None:
         protected: set[Path] = {
             (session_dir / _SETTINGS_FILE).resolve(),
-            Path(settings.paths.source_audio).resolve(),
+            Path(settings.audio_file).resolve(),
         }
 
         removed: list[Path] = []

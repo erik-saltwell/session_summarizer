@@ -41,18 +41,6 @@
             ]
         },
         {
-            "name": "clean-diarization",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "session_summarizer",
-            "console": "integratedTerminal",
-            "args": [
-                "clean-diarization",
-                "--session",
-                "test",
-            ]
-        },
-        {
             "name": "create-speaker-clips",
             "type": "debugpy",
             "request": "launch",
@@ -68,25 +56,31 @@
             ]
         },
         {
-            "name": "clear-logs",
+            "name": "merge-speaker-clips",
             "type": "debugpy",
             "request": "launch",
             "module": "session_summarizer",
             "console": "integratedTerminal",
             "args": [
-                "clear-logs"
+                "merge-speaker-clips",
+                "--speaker",
+                "rich",
+                "--output-folder",
+                "rich_merged",
             ]
         },
         {
-            "name": "compare-texts",
+            "name": "remove-outlier-speaker-clips",
             "type": "debugpy",
             "request": "launch",
             "module": "session_summarizer",
             "console": "integratedTerminal",
             "args": [
-                "compare-texts",
-                "--session",
-                "test",
+                "remove-outlier-speaker-clips",
+                "--speaker",
+                "rich",
+                "--output-folder",
+                "rich_merged",
             ]
         },
         {
@@ -102,13 +96,13 @@
             ]
         },
         {
-            "name": "diarizationlm",
+            "name": "compare-texts",
             "type": "debugpy",
             "request": "launch",
             "module": "session_summarizer",
             "console": "integratedTerminal",
             "args": [
-                "diarizationlm",
+                "compare-texts",
                 "--session",
                 "test",
             ]
@@ -133,6 +127,18 @@
             "console": "integratedTerminal",
             "args": [
                 "generate-sample-settings",
+            ]
+        },
+        {
+            "name": "diarizationlm",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "diarizationlm",
+                "--session",
+                "test",
             ]
         },
         {
@@ -172,20 +178,6 @@
             ]
         },
         {
-            "name": "merge-speaker-clips",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "session_summarizer",
-            "console": "integratedTerminal",
-            "args": [
-                "merge-speaker-clips",
-                "--speaker",
-                "rich",
-                "--output-folder",
-                "rich_merged",
-            ]
-        },
-        {
             "name": "punctuate-text",
             "type": "debugpy",
             "request": "launch",
@@ -198,6 +190,16 @@
             ]
         },
         {
+            "name": "-clear-logs",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "clear-logs"
+            ]
+        },
+        {
             "name": "register-speakers",
             "type": "debugpy",
             "request": "launch",
@@ -205,20 +207,6 @@
             "console": "integratedTerminal",
             "args": [
                 "register-speakers"
-            ]
-        },
-        {
-            "name": "remove-outlier-speaker-clips",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "session_summarizer",
-            "console": "integratedTerminal",
-            "args": [
-                "remove-outlier-speaker-clips",
-                "--speaker",
-                "rich",
-                "--output-folder",
-                "rich_merged",
             ]
         },
         {
@@ -241,18 +229,6 @@
             "console": "integratedTerminal",
             "args": [
                 "compute-vad-segments",
-                "--session",
-                "test",
-            ]
-        },
-        {
-            "name": "summarize-session",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "session_summarizer",
-            "console": "integratedTerminal",
-            "args": [
-                "summarize-session",
                 "--session",
                 "test",
             ]

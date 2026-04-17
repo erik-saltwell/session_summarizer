@@ -24,7 +24,7 @@ class TestCommand(SessionProcessingCommand):
 
         with csv_path.open("w") as writer:
             writer.write("confidence,success_rate\n")
-            clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.paths.identity_stitched)
+            clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.identity_stitched_path)
             for clip in clips:
                 assert clip.identity is not None
                 identity: str = clip.identity.lower()
@@ -41,7 +41,7 @@ class TestCommand(SessionProcessingCommand):
             writer.write(
                 "speaker_count,word_count,duration,similarity,similarity_residual,avg_confidence,success_rate,text\n"
             )
-            clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.paths.identity_stitched)
+            clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.identity_stitched_path)
             for clip in clips:
                 if clip.cosine_similarity and clip.words:
                     writer.write(
@@ -57,7 +57,7 @@ class TestCommand(SessionProcessingCommand):
                     )
 
     def output_words_before_period_distribution(self, settings: SessionSettings, session_dir: Path) -> None:
-        clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.paths.identity_stitched)
+        clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.identity_stitched_path)
         counts: Counter[tuple[int, int]] = Counter()
         single_word_counts: Counter[str] = Counter()
         two_word_counts: Counter[str] = Counter()

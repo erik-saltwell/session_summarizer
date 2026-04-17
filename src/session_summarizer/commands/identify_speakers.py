@@ -28,9 +28,9 @@ class IdentifySpeakersCommand(SessionProcessingCommand):
         return "Identify Speakers"
 
     def add_dependencies(self, settings: SessionSettings, session_dir: Path) -> None:
-        self.inputs.append(session_dir / settings.paths.clips_with_embeddings)
-        self.outputs.append(session_dir / settings.paths.identified_speakers)
-        self.dependencies.append(AddEmbeddingsCommand(self.session_id, self.tracer))
+        self.inputs.append(session_dir / settings.speech_clips_with_embedding)
+        self.outputs.append(session_dir / settings.identified_speaker_path)
+        self.dependencies.append(AddEmbeddingsCommand(self.session_id))
 
     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
         if not settings.attendees:
@@ -50,9 +50,9 @@ class IdentifySpeakersCommand(SessionProcessingCommand):
             )
 
         clips_with_embeddings: SpeechClipSet = SpeechClipSet.load_from_json(
-            session_dir / settings.paths.clips_with_embeddings
+            session_dir / settings.speech_clips_with_embedding
         )
         identified_speaker_clips: SpeechClipSet = identify_speakers(
             settings, session_dir, clips_with_embeddings, self, self.logger
         )
-        self.save_speech_clip(identified_speaker_clips, session_dir, settings.paths.identified_speakers)
+        self.save_speech_clip(identified_speaker_clips, session_dir, settings.identified_speaker_path)

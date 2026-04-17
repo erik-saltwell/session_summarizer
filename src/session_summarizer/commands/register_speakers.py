@@ -49,8 +49,8 @@ class RegisterSpeakersCommand:
                 merge_speaker_clips_to_min_duration(
                     speaker_dir,
                     merged_dir,
-                    settings.speaker_clips.min_duration_seconds,
-                    settings.speaker_clips.silence_gap_seconds,
+                    settings.minimum_speaker_clip_duration,
+                    settings.speaker_clip_gap_length,
                     logger,
                 )
 
