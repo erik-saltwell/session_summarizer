@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from session_summarizer.diarizationlm.diarizationlm_processor import DiarizationLMProcessor
 from session_summarizer.processing_results import SpeechClip, SpeechClipSet, WordAlignment
+from session_summarizer.utils.tracer import Tracer
 
 
 class FakeDiarizationLMModel:
@@ -62,7 +63,7 @@ def test_processor_uses_single_prompt_when_it_fits_context() -> None:
     )
 
     model = FakeDiarizationLMModel(context_window=1000)
-    result = DiarizationLMProcessor(model).process(clips, epsilon=0.000001)
+    result = DiarizationLMProcessor(model).process(clips, epsilon=0.000001, tracer=Tracer())
 
     assert len(model.prompts) == 1
     assert len(result) == 1
@@ -80,7 +81,7 @@ def test_processor_falls_back_to_original_when_inference_fails() -> None:
     )
 
     model = LocallyFailingFakeDiarizationLMModel(context_window=264)
-    result = DiarizationLMProcessor(model).process(clips, epsilon=0.000001)
+    result = DiarizationLMProcessor(model).process(clips, epsilon=0.000001, tracer=Tracer())
 
     assert len(model.prompts) == 1
     assert len(result) == 2
