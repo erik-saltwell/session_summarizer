@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import gc
+import io
 import json
 import re
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 import torch
@@ -39,12 +41,13 @@ def enhance_with_mossformer2(model_input_wav: Path, enhanced_wav_path: Path) -> 
     """Run ClearVoice speech enhancement with MossFormer2_SE_48K."""
     enhanced_wav_path.parent.mkdir(parents=True, exist_ok=True)
 
-    clearvoice = ClearVoice(
-        task="speech_enhancement",
-        model_names=["MossFormer2_SE_48K"],
-    )
-
-    output_wav = clearvoice(input_path=str(model_input_wav), online_write=False)
+    _sink = io.StringIO()
+    with redirect_stdout(_sink), redirect_stderr(_sink):
+        clearvoice = ClearVoice(
+            task="speech_enhancement",
+            model_names=["MossFormer2_SE_48K"],
+        )
+        output_wav = clearvoice(input_path=str(model_input_wav), online_write=False)
     clearvoice.write(output_wav, output_path=str(enhanced_wav_path))
 
     # Explicitly tear down the GPU model while we still hold a reference.

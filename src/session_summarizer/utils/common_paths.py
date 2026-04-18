@@ -39,6 +39,11 @@ def generate_logfile_path() -> Path:
     return logs_dir() / timestamp
 
 
+def generate_tracefile_path() -> Path:
+    trace_file: str = "session_trace.log"
+    return logs_dir() / trace_file
+
+
 def fragments_dir() -> Path:
     """Return the shared fragments directory path."""
     return _FRAGMENTS_DIR

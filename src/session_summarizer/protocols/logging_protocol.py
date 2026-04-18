@@ -77,7 +77,9 @@ class LoggingProtocol(Protocol):
         """Insert visual line breaks in the output."""
         ...
 
-    def status(self, message: str) -> AbstractContextManager[StatusHandle]:
+    def status(
+        self, message: str, spinner: str = "dots", spinner_style: str = "status.spinner"
+    ) -> AbstractContextManager[StatusHandle]:
         """Return a context manager providing an active status indicator."""
         ...
 
@@ -154,7 +156,7 @@ class NullLogger(LoggingProtocol):
         return
 
     @contextmanager
-    def status(self, message: str) -> Iterator[StatusHandle]:
+    def status(self, message: str, spinner: str = "dots", spinner_style: str = "white") -> Iterator[StatusHandle]:
         """Yield a no-op status handle."""
         yield _NullStatus()
 

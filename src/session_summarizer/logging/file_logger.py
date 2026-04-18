@@ -92,7 +92,7 @@ class FileLogger(LoggingProtocol):
     # ----- status/progress -----
 
     @contextmanager
-    def status(self, message: str) -> Iterator[StatusHandle]:
+    def status(self, message: str, spinner: str = "dots", spinner_style: str = "white") -> Iterator[StatusHandle]:
         self.report_message(message)
         yield _NullStatus()
 

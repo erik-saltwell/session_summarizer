@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -12,7 +13,7 @@ from session_summarizer.utils import common_paths
 
 log_path: Path = common_paths.generate_logfile_path()
 common_paths.ensure_directory(log_path.parent)
-log_file = open(common_paths.generate_logfile_path(), "a", encoding="utf-8")
+log_file = open(common_paths.generate_tracefile_path(), "a", encoding="utf-8")
 
 
 def initialize_tracing(indent: int | None = None) -> None:
@@ -39,6 +40,7 @@ def initialize_request() -> str:
     structlog.contextvars.clear_contextvars()
     structlog.contextvars.bind_contextvars(
         request_id=req_id,  # your custom ID
+        start_time=datetime.now(),
     )
     return req_id
 

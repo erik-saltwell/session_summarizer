@@ -14,7 +14,6 @@ def clean_audio(
     logger: LoggingProtocol,
 ) -> None:
     original_path = session_dir / settings.paths.source_audio
-    logger.report_message(f"[blue]Cleaning audio for {original_path}[/blue]")
     final_path = session_dir / settings.paths.cleaned_audio
 
     if not original_path.exists():
@@ -42,5 +41,3 @@ def clean_audio(
         with logger.status("Normalizing to 16k mono..."):
             normalize_and_export_16k_mono(post_mosfet_path, final_path, stats)
         gpu_logger.report_gpu_usage("after 16k normalization")
-
-    logger.report_message(f"[blue]Cleaned audio written to {final_path}.[/blue]")

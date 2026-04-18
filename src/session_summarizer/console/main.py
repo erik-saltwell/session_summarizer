@@ -88,7 +88,7 @@ def initialize_logging() -> tuple[LoggingProtocol, Tracer]:
     # logger = CompositeLogger([console_logger, file_logger])
 
     logger = console_logger
-    logger.report_message(f"Session id: {request_id}")
+    logger.report_message(f"[blue]Session id: {request_id}[/blue]")
     return logger, tracer
 
 

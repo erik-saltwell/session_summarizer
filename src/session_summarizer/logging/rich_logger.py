@@ -66,8 +66,8 @@ class RichConsoleLogger(LoggingProtocol):
     # ----- status/progress -----
 
     @contextmanager
-    def status(self, message: str) -> Iterator[StatusHandle]:
-        st = Status(message, console=self._console)
+    def status(self, message: str, spinner: str = "dots", spinner_style: str = "white") -> Iterator[StatusHandle]:
+        st = Status(message, console=self._console, spinner=spinner, spinner_style=spinner_style)
         st.start()
 
         class _Handle:

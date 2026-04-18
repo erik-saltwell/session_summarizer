@@ -79,11 +79,11 @@ class CompositeLogger(LoggingProtocol):
             member.add_break(break_count)
 
     @contextmanager
-    def status(self, message: str) -> Iterator[StatusHandle]:
+    def status(self, message: str, spinner: str = "dots", spinner_style: str = "white") -> Iterator[StatusHandle]:
         with ExitStack() as stack:
             items: list[StatusHandle] = []
             for member in self.members:
-                items.append(stack.enter_context(member.status(message)))
+                items.append(stack.enter_context(member.status(message, spinner=spinner, spinner_style=spinner_style)))
             yield CompositeStatusHandle(items)
 
     @contextmanager

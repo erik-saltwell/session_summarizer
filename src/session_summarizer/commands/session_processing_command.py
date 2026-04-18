@@ -72,6 +72,10 @@ class SessionProcessingCommand(ABC, CommmandProtocol):
     @abstractmethod
     def process_session(self, settings: SessionSettings, session_dir: Path) -> None: ...
 
+    @property
+    def safe_name(self) -> str:
+        return self.name().replace(" ", "_")
+
     def report_detailed_message(self, message: str) -> None:
         if self.detailed_logging:
             self.logger.report_message(message)
@@ -111,22 +115,24 @@ class SessionProcessingCommand(ABC, CommmandProtocol):
             self.initialize_for_processing(settings, session_dir)
 
         self.report_gpu_usage(f"Before Processing {self.name()}")
-        self.report_message(f"{self.name()}: Processing...")
 
         start = time.perf_counter()
         try:
             with silence_python_noise():
-                self.process_session(settings, session_dir)
+                with logger.status(f"[green]{self.name()}...[/green]", spinner="toggle6", spinner_style="green"):
+                    self.process_session(settings, session_dir)
+            self.validate_clips()
             end = time.perf_counter()
-            logger.report_message(f"[green]Command completed in {(end - start):.6f} seconds.[/green]")
+            logger.report_message(f"[green]{self.name()} completed in {(end - start):.6f} seconds.[/green]")
+            self.tracer.add_context("duration", (end - start))
+            self.tracer.log(self.safe_name)
         except Exception as exc:
             logger.report_exception(f"Error processing {self.name()}", exc)
+            self.tracer.log_exception(exc, self.safe_name)
             raise typer.Exit(code=1) from exc
         finally:
             flush_gpu_memory()
             self.report_gpu_usage(f"After Processing {self.name()}")
-
-        self.validate_clips()
 
     def postpend_text(self, input: Path, tag: str, suffix: str) -> Path:
         return input.with_name(f"{input.stem}{tag}{suffix}")
