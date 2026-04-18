@@ -57,6 +57,16 @@ def voice_samples_dir() -> Path:
     return _VOICE_SAMPLES
 
 
+def write_file_at_root(filename: str, text: str) -> None:
+    output_path: Path = data_dir() / filename
+    output_path.write_text(text)
+
+
+def load_file_from_root(filename: str) -> str:
+    input_path: Path = data_dir() / filename
+    return input_path.read_text()
+
+
 def voice_samples_for_speaker(speaker: str, root_folder: Path | None = None) -> Path:
     if root_folder:
         return voice_samples_dir() / root_folder / speaker

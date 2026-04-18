@@ -58,6 +58,10 @@ class SpeechClip:
         self.set_flag(SpeechClipFlags.IS_BACKCHANNEL, is_backchannel)
 
     @property
+    def character_count(self) -> int:
+        return len(self.text)
+
+    @property
     def word_count(self) -> int:
         if self.words is None:
             return 0
@@ -164,14 +168,17 @@ class SpeechClip:
         return compute_duration_inside_meaningful_boundaries(self, epsilon)
 
     @classmethod
-    def create_from_word(cls, word: WordAlignment) -> SpeechClip:
-        return cls(
+    def create_from_word(cls, word: WordAlignment, speakers: set[str] | None = None) -> SpeechClip:
+        result: SpeechClip = cls(
             start_time=word.start_time,
             end_time=word.end_time,
             speakers={_ANONYMOUS_SPEAKER},
             text="",
             words=[word],
         )
+        if speakers:
+            result.speakers = speakers
+        return result
 
     def merge_with_word(self, word: WordAlignment) -> None:
         self.start_time = min(self.start_time, word.start_time)
