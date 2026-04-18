@@ -9,7 +9,7 @@ from session_summarizer.protocols.logging_protocol import GpuLogger
 from ..processing_results.speech_clip_set import SpeechClipSet
 from ..protocols import LoggingProtocol, SessionSettings
 from ..speaker_embeddings import RegisteredSpeakers
-from ..utils import common_paths
+from ..utils import Tracer, common_paths
 
 _REGISTERED_SPEAKERS_FILE = "registered_speakers.yaml"
 
@@ -27,6 +27,7 @@ def identify_speakers(
     clips_with_embeddings: SpeechClipSet,
     gpu_logger: GpuLogger,
     logger: LoggingProtocol,
+    tracer: Tracer,
 ) -> SpeechClipSet:
     speakers = RegisteredSpeakers.load(_resolve_speakers_file(session_dir))
     attendee_names: set[str] = set(settings.attendees)
@@ -36,7 +37,7 @@ def identify_speakers(
         logger.report_message("[yellow]No registered speakers match the attendee list.[/yellow]")
         return clips_with_embeddings
 
-    logger.report_message(f"Matching against {len(filtered)} attendee(s): {sorted(filtered.keys())}")
+    tracer.add_context("attendee_count", len(filtered))
 
     # Build a tensor of shape (num_attendees, embedding_dim) for batch cosine similarity
     names: list[str] = list(filtered.keys())
@@ -60,5 +61,6 @@ def identify_speakers(
             assigned += 1
             progress.advance()
 
-    logger.report_message(f"Assigned {assigned} clip(s), skipped {skipped} (no embedding)")
+    tracer.add_context("assigned_clip_count", assigned)
+    tracer.add_context("skipped_count", skipped)
     return clips_with_embeddings

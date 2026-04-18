@@ -6,6 +6,7 @@ from pathlib import Path
 from ..processing_results import SpeechClip, SpeechClipSet
 from ..protocols import GpuLogger, LoggingProtocol
 from ..settings import SessionSettings
+from ..utils import Tracer
 from .unassigned_speaker import UNASSIGNED_SPEAKER_NAME
 
 
@@ -28,8 +29,12 @@ def assign_indeterminate_speakers(
     clips: SpeechClipSet,
     gpu_logger: GpuLogger,
     logger: LoggingProtocol,
+    tracer: Tracer,
 ) -> SpeechClipSet:
+    unassigned_count: int = 0
     for clip in clips:
         if _should_unassign_speaker(clip, settings):
+            unassigned_count += 1
             clip.identity = UNASSIGNED_SPEAKER_NAME
+    tracer.add_context("unassigned_count", unassigned_count)
     return clips

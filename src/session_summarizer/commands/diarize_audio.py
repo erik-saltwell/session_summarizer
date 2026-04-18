@@ -31,8 +31,11 @@ class DiarizeAudioCommand(SessionProcessingCommand):
 
     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
         alignment: AlignmentResult = AlignmentResult.load_from_json(session_dir / settings.paths.aligned_transcript)
-        clips: SpeechClipSet = diarize_audio(settings, session_dir, alignment, self, self.logger)
+        clips: SpeechClipSet = diarize_audio(settings, session_dir, alignment, self, self.logger, self.tracer)
 
         if common_paths.is_test_session(self.session_id):
-            enhance_words_with_ground_truth(clips)
+            self.tracer.add_context("has_ground_truth", True)
+            enhance_words_with_ground_truth(clips, self.tracer)
+        else:
+            self.tracer.add_context("has_ground_truth", False)
         self.save_speech_clip(clips, session_dir, settings.paths.base_diarization)

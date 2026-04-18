@@ -6,6 +6,7 @@ from diarizationlm import utils as dlm_utils
 
 from session_summarizer.processing_results.speech_clip_set import SpeechClipSet
 
+from ..utils import Tracer
 from .clip_set_converter import clip_set_to_utterance, rebuild_clip_set
 from .llm_inference import DiarizationLMModelProtocol
 from .speaker_mapping import SpeakerMapping
@@ -26,7 +27,7 @@ class DiarizationLMProcessor:
     def __init__(self, model: DiarizationLMModelProtocol):
         self._model = model
 
-    def process(self, clip_set: SpeechClipSet, epsilon: float) -> SpeechClipSet:
+    def process(self, clip_set: SpeechClipSet, epsilon: float, tracer: Tracer) -> SpeechClipSet:
         if not self._model.is_loaded:
             raise RuntimeError("Model not loaded. Call model.load() before processing.")
 
@@ -60,7 +61,7 @@ class DiarizationLMProcessor:
             text_field="hyp_text",
             input_speaker_field="hyp_spk",
         )
-        logger.info("Generated %d prompt segment(s).", len(prompts))
+        tracer.add_context("input_segment_count", len(prompts))
 
         # Step 5: Run inference on each prompt.
         completions = []
@@ -111,9 +112,11 @@ class DiarizationLMProcessor:
                 corrected_speakers.append(conversion.word_records[word_idx].effective_speaker)
 
         # Step 8: Rebuild the SpeechClipSet.
-        return rebuild_clip_set(
+        result: SpeechClipSet = rebuild_clip_set(
             clip_set,
             conversion.word_records,
             corrected_speakers,
             conversion.passthrough_clip_indices,
         )
+        tracer.add_context("output_clip_count", len(result))
+        return result

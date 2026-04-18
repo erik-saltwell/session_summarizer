@@ -30,5 +30,5 @@ class AddEmbeddingsCommand(SessionProcessingCommand):
 
     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
         clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.paths.dangling_sentence_fix)
-        embedded_clips: SpeechClipSet = add_embeddings(settings, session_dir, clips, self, self.logger)
+        embedded_clips: SpeechClipSet = add_embeddings(settings, session_dir, clips, self, self.logger, self.tracer)
         self.save_speech_clip(embedded_clips, session_dir, settings.paths.clips_with_embeddings)

@@ -15,6 +15,7 @@ from ..protocols import (
     LoggingProtocol,
     SessionSettings,
 )
+from ..utils import Tracer
 
 
 class IdentityMergeSelector(MergeSelector):
@@ -50,8 +51,9 @@ def apply_identity_stitching(
     identified_clips: SpeechClipSet,
     gpu_logger: GpuLogger,
     logger: LoggingProtocol,
+    tracer: Tracer,
 ) -> SpeechClipSet:
     merge_selector: IdentityMergeSelector = IdentityMergeSelector()
-    merged_clips = merge_clips(identified_clips, merge_selector, settings, logger)
+    merged_clips = merge_clips(identified_clips, merge_selector, settings, logger, tracer)
 
     return merged_clips

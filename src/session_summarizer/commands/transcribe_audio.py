@@ -28,6 +28,8 @@ class TranscribeAudioCommand(SessionProcessingCommand):
 
     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
         segments: SegmentSplitResultSet = SegmentSplitResultSet.load(session_dir / settings.paths.vad_segments)
-        result: TranscriptionResult = transcribe_from_cleaned_audio(settings, session_dir, segments, self, self.logger)
+        result: TranscriptionResult = transcribe_from_cleaned_audio(
+            settings, session_dir, segments, self, self.logger, self.tracer
+        )
         result.save_to_json(session_dir / settings.paths.transcript)
         self.save_cleaned_text(result, session_dir, settings.paths.transcript)

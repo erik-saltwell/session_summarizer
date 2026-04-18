@@ -9,6 +9,7 @@ from ..protocols import (
     LoggingProtocol,
     SessionSettings,
 )
+from ..utils import Tracer
 
 
 def diarize_audio(
@@ -17,18 +18,16 @@ def diarize_audio(
     alignment_result: AlignmentResult,
     gpu_logger: GpuLogger,
     logger: LoggingProtocol,
+    tracer: Tracer,
 ) -> SpeechClipSet:
-    logger.report_message("[blue]Diarizing audio.[/blue]")
-    final_path: Path = session_dir / settings.paths.base_diarization
     audio_path = session_dir / settings.paths.cleaned_audio
 
     gpu_logger.report_gpu_usage("before processing")
 
-    diarizer: DiarizenDiarizer = DiarizenDiarizer()
-    diarization: MergedDiarizationResult = diarizer.diarize(audio_path, len(settings.attendees), logger)
-    logger.report_message(f"[blue]Converting to SpeechClipSet {final_path}...[/blue]")
-    result: SpeechClipSet = create_speech_clips(diarization, alignment_result, settings, logger)
-
-    logger.report_message("[blue]Diarization complete.[/blue]")
+    with logger.status("Diarizing..."):
+        diarizer: DiarizenDiarizer = DiarizenDiarizer()
+        diarization: MergedDiarizationResult = diarizer.diarize(audio_path, len(settings.attendees), logger, tracer)
+    with logger.status("Creating speech clips from diarization..."):
+        result: SpeechClipSet = create_speech_clips(diarization, alignment_result, settings, logger, tracer)
 
     return result

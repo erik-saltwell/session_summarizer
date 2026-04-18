@@ -5,17 +5,16 @@ from tempfile import TemporaryDirectory
 
 from ..audio import convert_to_48k_wav, enhance_with_mossformer2, measure_loudness, normalize_and_export_16k_mono
 from ..protocols import GpuLogger, LoggingProtocol, SessionSettings
+from ..utils import Tracer
 
 
 def clean_audio(
-    settings: SessionSettings,
-    session_dir: Path,
-    gpu_logger: GpuLogger,
-    logger: LoggingProtocol,
+    settings: SessionSettings, session_dir: Path, gpu_logger: GpuLogger, logger: LoggingProtocol, tracer: Tracer
 ) -> None:
     original_path = session_dir / settings.paths.source_audio
     final_path = session_dir / settings.paths.cleaned_audio
 
+    tracer.add_context("input_audio", original_path)
     if not original_path.exists():
         raise FileNotFoundError(original_path)
 
@@ -41,3 +40,4 @@ def clean_audio(
         with logger.status("Normalizing to 16k mono..."):
             normalize_and_export_16k_mono(post_mosfet_path, final_path, stats)
         gpu_logger.report_gpu_usage("after 16k normalization")
+        tracer.add_context("cleaned_audio", final_path)

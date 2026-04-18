@@ -7,6 +7,7 @@ from ..evaluation.text_cleaner import clean_text_for_evaluation
 from ..processing_results import SpeechClipSet
 from ..protocols import GpuLogger, LoggingProtocol
 from ..settings import SessionSettings
+from ..utils import Tracer
 
 
 def punctuate_text(
@@ -15,6 +16,7 @@ def punctuate_text(
     clips: SpeechClipSet,
     gpu_logger: GpuLogger,
     logger: LoggingProtocol,
+    tracer: Tracer,
 ) -> SpeechClipSet:
     from punctuators.models import PunctCapSegModelONNX
 

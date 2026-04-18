@@ -9,6 +9,7 @@ from ..protocols import (
     SessionSettings,
 )
 from ..transcription import CanaryQwenTranscriber
+from ..utils.tracer import Tracer
 from ..vad import SegmentSplitResultSet
 
 
@@ -18,10 +19,9 @@ def transcribe_from_cleaned_audio(
     segments: SegmentSplitResultSet,
     gpu_logger: GpuLogger,
     logger: LoggingProtocol,
+    tracer: Tracer,
 ) -> TranscriptionResult:
     audio_path: Path = session_dir / settings.paths.cleaned_audio
-
-    logger.report_message(f"[blue]Transcribing from clean audio at {audio_path}[/blue]")
 
     if not audio_path.exists():
         raise FileNotFoundError(audio_path)
@@ -33,8 +33,10 @@ def transcribe_from_cleaned_audio(
         transcriber = CanaryQwenTranscriber(device=settings.device)
         gpu_logger.report_gpu_usage("Created transcriber")
 
-    result: TranscriptionResult = transcriber.transcribe(audio_path, segments, logger)
-    gpu_logger.report_gpu_usage("After transcription")
+    with logger.status("Transcribing..."):
+        result: TranscriptionResult = transcriber.transcribe(audio_path, segments, logger, tracer)
 
-    logger.report_message("[blue]Transcription complete.[/blue]")
+    gpu_logger.report_gpu_usage("After transcription")
+    tracer.add_context("Transcribed text length", len(result.plain_text()))
+
     return result

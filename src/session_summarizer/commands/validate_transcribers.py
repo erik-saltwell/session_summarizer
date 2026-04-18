@@ -62,9 +62,9 @@ class ValidateTranscribersCommand(SessionProcessingCommand):
         self.dependencies.append(CleanAudioCommand(self.session_id, self.tracer))
 
     def process_session(self, settings: SessionSettings, session_dir: Path) -> None:
-        clean_audio(settings, session_dir, self, self.logger)
+        clean_audio(settings, session_dir, self, self.logger, self.tracer)
         audio_path: Path = session_dir / settings.paths.cleaned_audio
-        seg_results: SegmentSplitResultSet = compute_vad_segments(settings, session_dir, self, self.logger)
+        seg_results: SegmentSplitResultSet = compute_vad_segments(settings, session_dir, self, self.logger, self.tracer)
 
         results: dict[str, TranscriptionValidationResult] = {}
 
@@ -76,7 +76,9 @@ class ValidateTranscribersCommand(SessionProcessingCommand):
                 transcriber = factory(settings.device)
                 self.report_gpu_usage(f"before {transcriber_name}")
 
-                transcription: TranscriptionResult = transcriber.transcribe(audio_path, seg_results, self.logger)
+                transcription: TranscriptionResult = transcriber.transcribe(
+                    audio_path, seg_results, self.logger, self.tracer
+                )
                 self.report_gpu_usage(f"after {transcriber_name}")
 
                 validation = validate_transcriber(settings, session_dir, transcription, self.logger)

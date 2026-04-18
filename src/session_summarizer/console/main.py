@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+import os
+
+# Suppress TensorFlow C++ and oneDNN log spam before any ML library is imported
+os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "3")
+os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "0")
+
 import random
 import sys
 from importlib.metadata import PackageNotFoundError, metadata

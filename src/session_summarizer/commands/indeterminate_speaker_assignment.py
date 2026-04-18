@@ -26,7 +26,7 @@ class IndeterminantSpeakerAssignmentCommand(SessionProcessingCommand):
         input_clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.paths.identity_stitched)
 
         output_clips: SpeechClipSet = assign_indeterminate_speakers(
-            settings, session_dir, input_clips, self, self.logger
+            settings, session_dir, input_clips, self, self.logger, self.tracer
         )
 
         self.save_speech_clip(output_clips, session_dir, settings.paths.indeterminate_speakers)

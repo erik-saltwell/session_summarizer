@@ -23,5 +23,5 @@ class ComputeSegmentsCommand(SessionProcessingCommand):
         self.dependencies.append(CleanAudioCommand(self.session_id, self.tracer))
 
     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
-        results: SegmentSplitResultSet = compute_vad_segments(settings, session_dir, self, self.logger)
+        results: SegmentSplitResultSet = compute_vad_segments(settings, session_dir, self, self.logger, self.tracer)
         results.save(session_dir / settings.paths.vad_segments)

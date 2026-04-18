@@ -83,13 +83,13 @@ class ValidateDiarizationCommand(SessionProcessingCommand):
             reference_clips.save_to_json(ref_path)
 
             for name, hyp_path in get_diarization_registry(settings, session_dir):
-                self.logger.report_message(f"[blue]Evaluating {name}...[/blue]")
-                try:
-                    result = evaluate_diarization_result(hyp_path, ref_path, settings.epsilon)
-                    results[name] = result
-                except Exception as exc:
-                    self.logger.report_error(f"[red]{name} failed: {exc}[/red]")
-                    failed.append(name)
+                with self.logger.status(f"Evaluating {name}..."):
+                    try:
+                        result = evaluate_diarization_result(hyp_path, ref_path, settings.epsilon)
+                        results[name] = result
+                    except Exception as exc:
+                        self.logger.report_error(f"[red]{name} failed: {exc}[/red]")
+                        failed.append(name)
 
         # Build table: rows = metrics, columns = hypothesis names
         names = list(results.keys())

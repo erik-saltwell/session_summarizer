@@ -33,5 +33,7 @@ class AlignTranscriptCommand(SessionProcessingCommand):
         segments: SegmentSplitResultSet = SegmentSplitResultSet.load(session_dir / settings.paths.vad_segments)
         transcript: TranscriptionResult = TranscriptionResult.load_from_json(session_dir / settings.paths.transcript)
 
-        alignment: AlignmentResult = align_transcript(settings, session_dir, transcript, segments, self, self.logger)
+        alignment: AlignmentResult = align_transcript(
+            settings, session_dir, transcript, segments, self, self.logger, self.tracer
+        )
         self.save_alignment_result(alignment, session_dir, settings.paths.aligned_transcript)

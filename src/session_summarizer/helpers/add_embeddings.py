@@ -15,7 +15,7 @@ from ..protocols import (
     SessionSettings,
 )
 from ..speaker_embeddings import get_embeddings_factory
-from ..utils import flush_gpu_memory
+from ..utils import Tracer, flush_gpu_memory, silence_os_noise
 
 
 def add_embeddings(
@@ -24,6 +24,7 @@ def add_embeddings(
     clips: SpeechClipSet,
     gpu_logger: GpuLogger,
     logger: LoggingProtocol,
+    tracer: Tracer,
 ) -> SpeechClipSet:
     audio_path: Path = session_dir / settings.paths.cleaned_audio
     audio_data, sample_rate = sf.read(str(audio_path), dtype="float32")
@@ -32,7 +33,8 @@ def add_embeddings(
 
     embedding_factory: EmbeddingFactory
     with logger.status("Loading speaker embedding model."):
-        embedding_factory = get_embeddings_factory(settings.device)
+        with silence_os_noise():
+            embedding_factory = get_embeddings_factory(settings.device)
     gpu_logger.report_gpu_usage("after loading embedding model")
 
     max_embedding_duration_s = 30.0

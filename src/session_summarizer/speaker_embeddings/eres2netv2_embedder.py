@@ -7,8 +7,6 @@ from typing import Any
 
 import torch
 import torchaudio
-from modelscope.pipelines import pipeline
-from modelscope.utils.constant import Tasks
 
 from ..protocols import EmbeddingFactory, LoggingProtocol
 
@@ -56,6 +54,9 @@ class ERes2NetV2EmbeddingFactory(EmbeddingFactory):
     _pipe: Any = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
+        from modelscope.pipelines import pipeline
+        from modelscope.utils.constant import Tasks
+
         self._pipe = pipeline(task=Tasks.speaker_verification, model=self.model_id, device=self.device)
 
     def extract(self, audio_path: Path, logger: LoggingProtocol) -> list[float]:

@@ -24,6 +24,6 @@ class DiarizationLMCommand(SessionProcessingCommand):
 
     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
         clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.paths.base_diarization)
-        refined_clips: SpeechClipSet = apply_diarizationlm(settings, session_dir, clips, self, self.logger)
+        refined_clips: SpeechClipSet = apply_diarizationlm(settings, session_dir, clips, self, self.logger, self.tracer)
 
         self.save_speech_clip(refined_clips, session_dir, settings.paths.diarizationlm_processed)

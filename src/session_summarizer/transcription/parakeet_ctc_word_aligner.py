@@ -8,6 +8,7 @@ from typing import Any
 
 from ..processing_results import AlignmentResult, TranscriptionResult, WordAlignment
 from ..protocols import LoggingProtocol
+from ..utils import Tracer, silence_os_noise
 from ..vad.segment_splitter import SegmentSplitResultSet
 
 
@@ -37,27 +38,29 @@ class ParakeetCTCWordAligner:
         transcription: TranscriptionResult,
         segments: SegmentSplitResultSet,
         logger: LoggingProtocol,
+        tracer: Tracer,
     ) -> AlignmentResult:
         if not transcription.full_text.strip():
             logger.report_warning("[yellow]Empty transcript — skipping alignment.[/yellow]")
             return AlignmentResult(words=[])
 
         try:
-            import soundfile as sf
-            import torch
-            from nemo.collections.asr.models import ASRModel
-            from nemo.collections.asr.parts.utils.rnnt_utils import Hypothesis
-            from nemo.collections.asr.parts.utils.timestamp_utils import (
-                get_forced_aligned_timestamps_with_external_model,
-            )
+            with silence_os_noise():
+                import soundfile as sf
+                import torch
+                from nemo.collections.asr.models import ASRModel
+                from nemo.collections.asr.parts.utils.rnnt_utils import Hypothesis
+                from nemo.collections.asr.parts.utils.timestamp_utils import (
+                    get_forced_aligned_timestamps_with_external_model,
+                )
         except ImportError as e:
             raise ImportError("NeMo is required: pip install nemo_toolkit[asr]") from e
 
-        logger.report_message(f"[blue]Loading CTC model {self.model_name}...[/blue]")
-        ctc_model: Any = ASRModel.from_pretrained(model_name=self.model_name)
-        ctc_model.to(self.device)
-        ctc_model.eval()
-        ctc_model.bfloat16()
+        with logger.status(f"Loading model {self.model_name}..."):
+            ctc_model: Any = ASRModel.from_pretrained(model_name=self.model_name)
+            ctc_model.to(self.device)
+            ctc_model.eval()
+            ctc_model.bfloat16()
 
         try:
             audio_data, sample_rate = sf.read(str(audio_path), dtype="float32")
@@ -65,16 +68,19 @@ class ParakeetCTCWordAligner:
                 audio_data = audio_data.mean(axis=1)
 
             audio_segments = segments.long.segments
-            logger.report_message(f"[blue]Running forced alignment over {len(audio_segments)} VAD segments...[/blue]")
+            tracer.add_context("vad_segments", len(audio_segments))
 
             all_words: list[WordAlignment] = []
 
-            with torch.inference_mode():
+            total_segments = len(audio_segments)
+            with torch.inference_mode(), logger.progress("Aligning segments", total=total_segments) as prog:
                 for seg in audio_segments:
+                    prog.set_description(f"Aligning {seg.start:.1f}s–{seg.end:.1f}s")
                     chunk_text = " ".join(
                         ts.text for ts in transcription.segments if ts.end > seg.start and ts.start < seg.end
                     )
                     if not chunk_text.strip():
+                        prog.advance()
                         continue
 
                     start_sample = int(seg.start * sample_rate)
@@ -85,14 +91,15 @@ class ParakeetCTCWordAligner:
 
                     with tempfile.NamedTemporaryFile(suffix=".wav", delete=True) as tmp:
                         sf.write(tmp.name, chunk_audio, sample_rate)
-                        aligned: Any = get_forced_aligned_timestamps_with_external_model(
-                            audio=[tmp.name],
-                            external_ctc_model=ctc_model,
-                            main_model_predictions=[hypothesis],
-                            batch_size=self.batch_size,
-                            viterbi_device=torch.device(self.device),
-                            timestamp_type="all",
-                        )
+                        with silence_os_noise():
+                            aligned: Any = get_forced_aligned_timestamps_with_external_model(
+                                audio=[tmp.name],
+                                external_ctc_model=ctc_model,
+                                main_model_predictions=[hypothesis],
+                                batch_size=self.batch_size,
+                                viterbi_device=torch.device(self.device),
+                                timestamp_type="all",
+                            )
 
                     timestamp: Any = aligned[0].timestamp if aligned else None
                     if timestamp and "word" in timestamp:
@@ -104,12 +111,8 @@ class ParakeetCTCWordAligner:
                                     end_time=float(entry["end"]) + seg.start,
                                 )
                             )
-
-                    logger.report_message(
-                        f"[blue]Segment {seg.start:.0f}s–{seg.end:.0f}s: {len(all_words)} words aligned so far.[/blue]"
-                    )
-
-            logger.report_message(f"[green]Alignment complete: {len(all_words)} words aligned.[/green]")
+                    prog.advance()
+            tracer.add_context("aligned_word_count", len(all_words))
             return AlignmentResult(words=all_words)
 
         finally:

@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from ..protocols import LoggingProtocol
+from ..utils import Tracer, silence_os_noise
 
 
 def _patch_torchaudio_for_pyannote() -> None:
@@ -182,13 +183,16 @@ class DiarizenDiarizer:
 
     model_name: str = "BUT-FIT/diarizen-wavlm-large-s80-md-v2"
 
-    def diarize(self, audio_path: Path, num_speakers: int, logger: LoggingProtocol) -> MergedDiarizationResult:
+    def diarize(
+        self, audio_path: Path, num_speakers: int, logger: LoggingProtocol, tracer: Tracer
+    ) -> MergedDiarizationResult:
         _patch_torchaudio_for_pyannote()
 
         try:
-            import torch
-            import torch.torch_version
-            from diarizen.pipelines.inference import DiariZenPipeline
+            with silence_os_noise():
+                import torch
+                import torch.torch_version
+                from diarizen.pipelines.inference import DiariZenPipeline
         except ImportError as e:
             raise ImportError("diarizen is required: pip install diarizen") from e
 
@@ -196,30 +200,34 @@ class DiarizenDiarizer:
         # TorchVersion objects, so we need to add it to the safe-globals allowlist.
         torch.serialization.add_safe_globals([torch.torch_version.TorchVersion])
 
-        logger.report_message(f"[blue]Loading DiariZen diarization model {self.model_name}...[/blue]")
-        pipeline = DiariZenPipeline.from_pretrained(self.model_name)
-        pipeline.min_speakers = num_speakers
-        pipeline.max_speakers = num_speakers
+        with logger.status("Loading model..."):
+            with silence_os_noise():
+                pipeline = DiariZenPipeline.from_pretrained(self.model_name)
+            pipeline.min_speakers = num_speakers
+            pipeline.max_speakers = num_speakers
 
+        tracer.add_context("num_speakers", num_speakers)
         try:
-            logger.report_message(f"[blue]Running diarization (num_speakers={num_speakers})...[/blue]")
-            annotation = pipeline(str(audio_path.resolve()))
+            with logger.status("Running diarization..."):
+                with silence_os_noise():
+                    annotation = pipeline(str(audio_path.resolve()))
 
-            segments: list[DiarizationSegment] = []
-            for turn, _, speaker in annotation.itertracks(yield_label=True):  # pyright: ignore[reportAssignmentType]
-                segments.append(
-                    DiarizationSegment(
-                        speaker=str(speaker),
-                        start=float(turn.start),
-                        end=float(turn.end),
+                segments: list[DiarizationSegment] = []
+                for turn, _, speaker in annotation.itertracks(yield_label=True):  # pyright: ignore[reportAssignmentType]
+                    segments.append(
+                        DiarizationSegment(
+                            speaker=str(speaker),
+                            start=float(turn.start),
+                            end=float(turn.end),
+                        )
                     )
-                )
+                tracer.add_context("initial_segment_count", len(segments))
 
-            segments.sort(key=lambda s: s.start)
-            raw = DiarizationResult(segments=segments)
-            result = merge_overlapping_diarization(raw)
-            logger.report_message(f"[green]Diarization complete: {len(result.segments)} merged segments.[/green]")
-            return result
+                segments.sort(key=lambda s: s.start)
+                raw = DiarizationResult(segments=segments)
+                result = merge_overlapping_diarization(raw)
+                tracer.add_context("merged_segment_coun", len(result.segments))
+                return result
 
         finally:
             del pipeline

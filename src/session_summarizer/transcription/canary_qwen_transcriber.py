@@ -7,6 +7,7 @@ from pathlib import Path
 
 from ..processing_results import TranscriptionResult, TranscriptionSegment
 from ..protocols import LoggingProtocol
+from ..utils import Tracer
 from ..vad.segment_splitter import SegmentSplitResultSet
 
 _MAX_NEW_TOKENS: int = 512
@@ -65,7 +66,7 @@ class CanaryQwenTranscriber:
     device: str = "cuda"
 
     def transcribe(
-        self, audio_path: Path, segments: SegmentSplitResultSet, logger: LoggingProtocol
+        self, audio_path: Path, segments: SegmentSplitResultSet, logger: LoggingProtocol, tracer: Tracer
     ) -> TranscriptionResult:
         try:
             import soundfile as sf
@@ -75,7 +76,6 @@ class CanaryQwenTranscriber:
 
         import torch
 
-        logger.report_message(f"[blue]Loading Canary Qwen model {self.model_name}...[/blue]")
         model = SALM.from_pretrained(self.model_name)
         model.to(self.device)
         model.eval()
@@ -88,7 +88,7 @@ class CanaryQwenTranscriber:
                 audio_data = audio_data.mean(axis=1)
 
             audio_segments = segments.short.segments
-            logger.report_message(f"[blue]Transcribing {len(audio_segments)} VAD segments...[/blue]")
+            tracer.add_context("audio_segment_count", len(audio_segments))
 
             result_segments: list[TranscriptionSegment] = []
             texts: list[str] = []
@@ -116,7 +116,6 @@ class CanaryQwenTranscriber:
                     progress.advance(1)
 
             full_text = " ".join(texts)
-            logger.report_message("[green]Transcription complete[/green]")
             return TranscriptionResult(segments=result_segments, full_text=full_text)
 
         finally:

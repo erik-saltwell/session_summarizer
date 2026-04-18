@@ -1,53 +1,12 @@
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
-from ..processing_results import SpeechClip, SpeechClipSet
-from ..processing_results.alignment_result import WordAlignment
+from ..processing_results import SpeechClip, SpeechClipSet, WordAlignment
 from ..protocols import GpuLogger, LoggingProtocol
 from ..settings import SessionSettings
-
-# Edit this list to add/remove backchannel words (compared lowercase, punctuation ignored)
-BACKCHANNEL_WORDS: set[str] = {
-    "uh-huh",
-    "um",
-    "umm",
-    "ummm",
-    "hm",
-    "hmm",
-    "hmmm",
-    "mmm",
-    "yeah",
-    "yes",
-    "yep",
-    "yup",
-    "ok",
-    "okay",
-    "okey",
-    "gotcha",
-    "oh",
-    "alright",
-    "sure",
-    "huh",
-    "wow",
-    "really",
-    "indeed",
-    "exactly",
-    "ah",
-    "nope",
-    "no",
-}
-
-_PUNCTUATION_RE = re.compile(r"[^\w]")
-
-
-def _strip_punctuation(word: str) -> str:
-    return _PUNCTUATION_RE.sub("", word).lower()
-
-
-def _is_backchannel(word: str) -> bool:
-    return _strip_punctuation(word) in BACKCHANNEL_WORDS
+from ..utils import Tracer
+from .backchannel_marker import is_backchannel_word
 
 
 def _find_period_split(
@@ -76,11 +35,13 @@ def fix_dangling_sentences(
     clips: SpeechClipSet,
     gpu_logger: GpuLogger,
     logger: LoggingProtocol,
+    tracer: Tracer,
 ) -> SpeechClipSet:
     clips.sort_clips()
 
     result: SpeechClipSet = SpeechClipSet()
     prior_clip: SpeechClip | None = None
+    dangle_count: int = 0
 
     for clip in clips:
         if prior_clip is None or clip.words is None or len(clip.words) == 0:
@@ -99,12 +60,13 @@ def fix_dangling_sentences(
         words_before, words_after = split
 
         # Check that none of the pre-period words are backchannels
-        if any(_is_backchannel(w.word) for w in words_before):
+        if any(is_backchannel_word(w) for w in words_before):
             result.add_clip(clip)
             prior_clip = clip
             continue
 
         # Move dangling words to the prior clip
+        dangle_count += 1
         for w in words_before:
             prior_clip.merge_with_word(w)
 
@@ -118,4 +80,5 @@ def fix_dangling_sentences(
         prior_clip = clip
 
     result.sort_clips()
+    tracer.add_context("dangle_count", dangle_count)
     return result

@@ -53,6 +53,6 @@ class IdentifySpeakersCommand(SessionProcessingCommand):
             session_dir / settings.paths.clips_with_embeddings
         )
         identified_speaker_clips: SpeechClipSet = identify_speakers(
-            settings, session_dir, clips_with_embeddings, self, self.logger
+            settings, session_dir, clips_with_embeddings, self, self.logger, self.tracer
         )
         self.save_speech_clip(identified_speaker_clips, session_dir, settings.paths.identified_speakers)

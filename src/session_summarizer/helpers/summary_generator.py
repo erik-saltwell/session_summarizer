@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from pathlib import Path
 
 import anthropic
@@ -7,7 +8,7 @@ import anthropic
 from ..processing_results import SpeechClipFlags, SpeechClipSet
 from ..protocols import LoggingProtocol
 from ..settings.session_settings import CampaignInfo, SessionInfo, SessionSettings
-from ..utils import FragmentID, get_fragment
+from ..utils import FragmentID, Tracer, get_fragment
 
 
 def _construct_input(settings: SessionSettings, clips: SpeechClipSet, logger: LoggingProtocol) -> str:
@@ -71,12 +72,18 @@ def _log(input: str, title: str, logger: LoggingProtocol) -> None:
 
 
 def generate_summary(
-    settings: SessionSettings, session_dir: Path, clips: SpeechClipSet, logger: LoggingProtocol
+    settings: SessionSettings, session_dir: Path, clips: SpeechClipSet, logger: LoggingProtocol, tracer: Tracer
 ) -> str:
     system_prompt: str = get_fragment(FragmentID.SUMMARIZE_SESSION_SYSTEM_PROMPT)
     input: str = _construct_input(settings, clips, logger)
     _log(input, "Session Input", logger)
+    start: datetime = datetime.now()
     output: str = _get_output(settings, clips, system_prompt, input, logger)
-    _log(output, "Response Summary", logger)
+    end: datetime = datetime.now()
 
+    _log(output, "Response Summary", logger)
+    tracer.add_context("sys_prompt_len", len(system_prompt))
+    tracer.add_context("input_len", len(input))
+    tracer.add_context("output_len", len(output))
+    tracer.add_context("llm_duration", (end - start))
     return output

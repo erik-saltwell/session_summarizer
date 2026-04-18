@@ -9,6 +9,7 @@ from ..protocols import (
     LoggingProtocol,
     SessionSettings,
 )
+from ..utils import Tracer, silence_os_noise
 
 
 def apply_diarizationlm(
@@ -17,12 +18,17 @@ def apply_diarizationlm(
     diarized_clips: SpeechClipSet,
     gpu_logger: GpuLogger,
     logger: LoggingProtocol,
+    tracer: Tracer,
 ) -> SpeechClipSet:
     model = DiarizationLMModel(device=settings.device)
-    model.load()
+    with logger.status("Loading model..."):
+        with silence_os_noise():
+            model.load()
     try:
-        processor = DiarizationLMProcessor(model)
-        result = processor.process(diarized_clips, settings.epsilon)
+        with logger.status("Running diarizationlm..."):
+            processor = DiarizationLMProcessor(model)
+            result = processor.process(diarized_clips, settings.epsilon, tracer)
+
     finally:
         model.unload()
 

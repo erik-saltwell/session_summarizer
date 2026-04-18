@@ -36,5 +36,5 @@ class SummarizeSessionCommand(SessionProcessingCommand):
         input_clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.paths.punctuated_text)
         output_path: Path = session_dir / settings.paths.summary_path
         output_path = self.append_date_to_filename(output_path, settings.session_info.session_date)
-        summary_output: str = generate_summary(settings, session_dir, input_clips, self.logger)
+        summary_output: str = generate_summary(settings, session_dir, input_clips, self.logger, self.tracer)
         output_path.write_text(summary_output)

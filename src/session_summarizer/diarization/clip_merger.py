@@ -6,6 +6,7 @@ from typing import Protocol
 from ..processing_results import SpeechClip, SpeechClipSet
 from ..protocols.logging_protocol import LoggingProtocol
 from ..settings.session_settings import SessionSettings
+from ..utils import Tracer
 
 
 class MergeType(IntEnum):
@@ -78,6 +79,7 @@ def merge_clips(
     selector: MergeSelector,
     settings: SessionSettings,
     logger: LoggingProtocol,
+    tracer: Tracer,
 ) -> SpeechClipSet:
     if len(initial_clips) <= 1:
         return initial_clips
@@ -85,6 +87,7 @@ def merge_clips(
     merged_clips: SpeechClipSet = SpeechClipSet()
     merged_clips.add_clip(initial_clips[0])
     i: int = 1
+    merge_count: int = 0
     while i < len(initial_clips):
         prior_clip: SpeechClip = merged_clips[-1]
         current_clip: SpeechClip = initial_clips[i]
@@ -96,20 +99,24 @@ def merge_clips(
             i += 1
         elif merge_type == MergeType.MERGE_WITH_PRIOR:
             prior_clip.merge(current_clip)
+            merge_count += 1
             i += 1
         elif merge_type == MergeType.MERGE_WITH_NEXT:
             if next_clip is None:
                 raise RuntimeError("trying to merge with next but at last clip")
             current_clip.merge(next_clip)
             merged_clips.add_clip(current_clip)
-            i += 2
+            merge_count += 1
+            i += 1
         elif merge_type == MergeType.MERGE_ALL_THREE:
             if next_clip is None:
                 raise RuntimeError("trying to merge with previous and next but at last clip")
             prior_clip.merge(current_clip)
             prior_clip.merge(next_clip)
+            merge_count += 2
             i += 2
         else:
             raise RuntimeError("Unexpected Merge Type")
     merged_clips.sort_clips()
+    tracer.add_context("merge_count", merge_count)
     return merged_clips

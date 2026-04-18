@@ -7,6 +7,7 @@ from ..protocols import (
     LoggingProtocol,
     SessionSettings,
 )
+from ..utils import Tracer
 from ..vad import NemoVadDetector, SegmentSplitResult, SegmentSplitResultSet, compute_segments
 
 
@@ -15,6 +16,7 @@ def compute_vad_segments(
     session_dir: Path,
     gpu_logger: GpuLogger,
     logger: LoggingProtocol,
+    tracer: Tracer,
 ) -> SegmentSplitResultSet:
     """Run VAD on cleaned audio and compute optimal cut points for chunked processing.
 
@@ -27,7 +29,7 @@ def compute_vad_segments(
     gpu_logger.report_gpu_usage("before VAD")
 
     detector: NemoVadDetector
-    with logger.status("Loading VAD model."):
+    with logger.status("Loading VAD model..."):
         detector = NemoVadDetector(
             model_name=settings.vad.model_name,
             device=settings.device,
@@ -39,7 +41,9 @@ def compute_vad_segments(
             pad_offset=settings.vad.pad_offset,
         )
 
-    vad_result = detector.detect(session_dir / settings.paths.cleaned_audio, logger)
+    with logger.status("Segmenting with model"):
+        vad_result = detector.detect(session_dir / settings.paths.cleaned_audio, logger, tracer)
+
     gpu_logger.report_gpu_usage("after VAD")
 
     short_segments: SegmentSplitResult
@@ -56,6 +60,9 @@ def compute_vad_segments(
             max_length=settings.segmentation.long_max_seconds,
         )
 
-    logger.report_message("[blue]Comput segments complete.[/blue]")
+    tracer.add_context("short_segment_count", len(short_segments.segments))
+    tracer.add_context("long_segment_count", len(long_segments.segments))
+    tracer.add_context("longest_short_segment", max(segment.duration for segment in short_segments.segments))
+    tracer.add_context("longest_long_segment", max(segment.duration for segment in long_segments.segments))
 
     return SegmentSplitResultSet(short=short_segments, long=long_segments)

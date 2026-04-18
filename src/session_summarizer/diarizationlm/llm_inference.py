@@ -2,9 +2,6 @@ from __future__ import annotations
 
 from typing import Any, Protocol, cast
 
-import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
-
 DEFAULT_MODEL_NAME = "google/DiarizationLM-8b-Fisher-v2"
 
 
@@ -30,6 +27,9 @@ class DiarizationLMModel:
     def load(self) -> None:
         if self._model is not None:
             return
+        import torch
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+
         self._tokenizer = AutoTokenizer.from_pretrained(self._model_name)
         self._model = AutoModelForCausalLM.from_pretrained(
             self._model_name,
@@ -44,6 +44,8 @@ class DiarizationLMModel:
     def infer(self, prompt: str, max_new_tokens: int | None = None) -> str:
         if self._model is None or self._tokenizer is None:
             raise RuntimeError("Model not loaded. Call load() first.")
+
+        import torch
 
         inputs = self._tokenizer([prompt], return_tensors="pt").to(self._device)
         prompt_length = inputs.input_ids.shape[1]
@@ -72,4 +74,6 @@ class DiarizationLMModel:
         if self._tokenizer is not None:
             del self._tokenizer
             self._tokenizer = None
+        import torch
+
         torch.cuda.empty_cache()

@@ -7,6 +7,7 @@ from typing import Any
 
 from ..processing_results import TranscriptionResult, TranscriptionSegment
 from ..protocols import LoggingProtocol
+from ..utils import Tracer
 from ..vad.segment_splitter import SegmentSplitResultSet
 
 
@@ -26,7 +27,7 @@ class WhisperTranscriber:
     device: str = "cuda"
 
     def transcribe(
-        self, audio_path: Path, segments: SegmentSplitResultSet, logger: LoggingProtocol
+        self, audio_path: Path, segments: SegmentSplitResultSet, logger: LoggingProtocol, tracer: Tracer
     ) -> TranscriptionResult:
         try:
             import whisper
@@ -35,14 +36,14 @@ class WhisperTranscriber:
 
         import torch
 
-        logger.report_message(f"[blue]Loading Whisper model '{self.model_name}'...[/blue]")
-        model = whisper.load_model(self.model_name, device=self.device)
-        model.eval()
+        with logger.status(f"Loading model {self.model_name}..."):
+            logger.report_message(f"[blue]Loading Whisper model '{self.model_name}'...[/blue]")
+            model = whisper.load_model(self.model_name, device=self.device)
+            model.eval()
         gc.collect()
         torch.cuda.empty_cache()
 
         try:
-            logger.report_message(f"[blue]Transcribing {audio_path.name}...[/blue]")
             with torch.inference_mode():
                 raw = model.transcribe(
                     str(audio_path),
@@ -52,7 +53,7 @@ class WhisperTranscriber:
 
             raw_segments: Any = raw.get("segments", [])
             whisper_segments: list[dict] = list(raw_segments)
-            logger.report_message(f"[blue]Whisper returned {len(whisper_segments)} segments.[/blue]")
+            tracer.add_context("segment_count", len(whisper_segments))
 
             result_segments: list[TranscriptionSegment] = []
             texts: list[str] = []
@@ -71,7 +72,6 @@ class WhisperTranscriber:
                 )
 
             full_text = " ".join(texts)
-            logger.report_message("[green]Transcription complete[/green]")
             return TranscriptionResult(segments=result_segments, full_text=full_text)
 
         finally:

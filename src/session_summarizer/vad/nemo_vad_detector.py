@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Self
 
 from ..protocols import LoggingProtocol
+from ..utils import Tracer
 
 logger = logging.getLogger(__name__)
 
@@ -143,7 +144,7 @@ class NemoVadDetector:
     pad_onset: float = 0.1
     pad_offset: float = 0.1
 
-    def detect(self, audio_path: Path, app_logger: LoggingProtocol) -> VadResult:
+    def detect(self, audio_path: Path, logger: LoggingProtocol, tracer: Tracer) -> VadResult:
         """Run VAD on the given audio file and return speech/silence segments."""
         try:
             import soundfile as sf
@@ -152,46 +153,44 @@ class NemoVadDetector:
         except ImportError as e:
             raise ImportError("NeMo is required for VAD: pip install 'nemo_toolkit[asr]'") from e
 
-        app_logger.report_message(f"[blue]Loading VAD model: {self.model_name}[/blue]")
-        model = EncDecFrameClassificationModel.from_pretrained(model_name=self.model_name)
-        model = model.to(self.device)  # pyright: ignore
-        model.eval()
+        with logger.status(":oading model..."):
+            model = EncDecFrameClassificationModel.from_pretrained(model_name=self.model_name)
+            model = model.to(self.device)  # pyright: ignore
+            model.eval()
 
         try:
             info = sf.info(str(audio_path))
             total_duration = info.duration
             sample_rate = info.samplerate
+            tracer.add_context("total_duration_to_segment", total_duration)
+            with logger.status("running segmentation..."):
+                # Load audio as float32 tensor
+                audio_data, sr = sf.read(str(audio_path), dtype="float32")
+                if audio_data.ndim > 1:
+                    audio_data = audio_data.mean(axis=1)
 
-            app_logger.report_message(f"[blue]Running VAD on {total_duration:.1f}s audio ({audio_path.name})[/blue]")
+                # Process in chunks to avoid segfaults on long audio
+                chunk_seconds = 60
+                chunk_samples = chunk_seconds * sample_rate
+                total_samples = len(audio_data)
+                all_probs: list[float] = []
 
-            # Load audio as float32 tensor
-            audio_data, sr = sf.read(str(audio_path), dtype="float32")
-            if audio_data.ndim > 1:
-                audio_data = audio_data.mean(axis=1)
+                with torch.no_grad():
+                    for offset in range(0, total_samples, chunk_samples):
+                        chunk = audio_data[offset : offset + chunk_samples]
+                        audio_tensor = torch.tensor(chunk, dtype=torch.float32).unsqueeze(0).to(self.device)
+                        audio_length = torch.tensor([audio_tensor.shape[1]], dtype=torch.int64).to(self.device)
+                        log_probs = model(input_signal=audio_tensor, input_signal_length=audio_length)
+                        chunk_probs = torch.softmax(log_probs, dim=-1)[0, :, 1].cpu().tolist()
+                        all_probs.extend(chunk_probs)
 
-            # Process in chunks to avoid segfaults on long audio
-            chunk_seconds = 60
-            chunk_samples = chunk_seconds * sample_rate
-            total_samples = len(audio_data)
-            all_probs: list[float] = []
+                probs = all_probs
 
-            with torch.no_grad():
-                for offset in range(0, total_samples, chunk_samples):
-                    chunk = audio_data[offset : offset + chunk_samples]
-                    audio_tensor = torch.tensor(chunk, dtype=torch.float32).unsqueeze(0).to(self.device)
-                    audio_length = torch.tensor([audio_tensor.shape[1]], dtype=torch.int64).to(self.device)
-                    log_probs = model(input_signal=audio_tensor, input_signal_length=audio_length)
-                    chunk_probs = torch.softmax(log_probs, dim=-1)[0, :, 1].cpu().tolist()
-                    all_probs.extend(chunk_probs)
+                # Compute frame duration from input length and output length
+                frame_duration = total_duration / len(probs) if probs else 0.02
 
-            probs = all_probs
-
-            # Compute frame duration from input length and output length
-            frame_duration = total_duration / len(probs) if probs else 0.02
-
-            app_logger.report_message(
-                f"[blue]VAD produced {len(probs)} frames (frame duration: {frame_duration * 1000:.1f}ms)[/blue]"
-            )
+            tracer.add_context("frames_produced", len(probs))
+            tracer.add_context("frame_duration_ms", frame_duration * 1000)
 
             segments = _frames_to_segments(
                 probs=probs,
@@ -203,12 +202,6 @@ class NemoVadDetector:
                 pad_onset=self.pad_onset,
                 pad_offset=self.pad_offset,
                 total_duration=total_duration,
-            )
-
-            speech_total = sum(s.duration for s in segments if s.is_speech)
-            app_logger.report_message(
-                f"[blue]VAD detected {len([s for s in segments if s.is_speech])} speech regions "
-                f"({speech_total:.1f}s speech / {total_duration:.1f}s total)[/blue]"
             )
 
             return VadResult(segments=segments, audio_duration=total_duration)

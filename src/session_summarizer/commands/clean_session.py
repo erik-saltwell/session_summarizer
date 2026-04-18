@@ -46,6 +46,6 @@ class CleanSessionCommand(SessionProcessingCommand):
         if removed:
             self.logger.report_message(f"[green]Removed {len(removed)} item(s) from {session_dir}[/green]")
             for path in removed:
-                self.logger.report_message(f"[dim]  deleted: {path.name}[/dim]")
+                self.report_detailed_message(f"[dim]  deleted: {path.name}[/dim]")
         else:
             self.logger.report_message(f"[yellow]Nothing to remove in {session_dir}[/yellow]")

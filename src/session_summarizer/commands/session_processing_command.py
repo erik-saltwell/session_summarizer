@@ -124,9 +124,11 @@ class SessionProcessingCommand(ABC, CommmandProtocol):
             self.validate_clips()
             end = time.perf_counter()
             logger.report_message(f"[green]{self.name()} completed in {(end - start):.6f} seconds.[/green]")
+            self.tracer.add_context("success", "True")
             self.tracer.add_context("duration", (end - start))
             self.tracer.log(self.safe_name)
         except Exception as exc:
+            self.tracer.add_context("success", "False")
             logger.report_exception(f"Error processing {self.name()}", exc)
             self.tracer.log_exception(exc, self.safe_name)
             raise typer.Exit(code=1) from exc

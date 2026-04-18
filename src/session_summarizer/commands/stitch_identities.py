@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
 
 import session_summarizer.utils.common_paths as common_paths
@@ -10,7 +10,6 @@ from ..processing_results import SpeechClipSet
 from ..settings import SessionSettings
 from .identify_speakers import IdentifySpeakersCommand
 from .session_processing_command import SessionProcessingCommand
-from .stitch_results import StitchResults
 
 
 @dataclass
@@ -28,14 +27,10 @@ class StitichIdentitiesCommand(SessionProcessingCommand):
             session_dir / settings.paths.identified_speakers
         )
 
-        stitch_results: StitchResults = StitchResults()
-
         id_stitched_clips: SpeechClipSet = apply_identity_stitching(
-            settings, session_dir, identified_speaker_clips, self, self.logger
+            settings, session_dir, identified_speaker_clips, self, self.logger, self.tracer
         )
-
-        stitch_results.pre_stitching_segments = len(identified_speaker_clips)
-        stitch_results.post_stitching_segments = len(id_stitched_clips)
-        self.logger.report_table_message(asdict(stitch_results))
+        self.tracer.add_context("pre_stitch_segment_count", len(identified_speaker_clips))
+        self.tracer.add_context("post_stitch_segment_count", len(id_stitched_clips))
 
         self.save_speech_clip(id_stitched_clips, session_dir, settings.paths.identity_stitched)

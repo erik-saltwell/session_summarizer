@@ -8,10 +8,11 @@ if TYPE_CHECKING:
 
 
 from ..protocols.logging_protocol import LoggingProtocol
+from ..utils import Tracer
 from .transcription_result import TranscriptionResult
 
 
 class TranscriberProtocol(Protocol):
     def transcribe(
-        self, audio_path: Path, segments: SegmentSplitResultSet, logger: LoggingProtocol
+        self, audio_path: Path, segments: SegmentSplitResultSet, logger: LoggingProtocol, tracer: Tracer
     ) -> TranscriptionResult: ...

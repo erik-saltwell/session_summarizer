@@ -8,6 +8,7 @@ from ..processing_results import AlignmentResult, SpeechClip, SpeechClipSet, Wor
 from ..protocols import LoggingProtocol
 from ..settings.diarization_stitching_settings import ScoringMode
 from ..settings.session_settings import DiarizationStitchingSettings, SessionSettings
+from ..utils import Tracer
 from .anonymous_clips import AnonymousClips
 from .candidate_pool import CandidatePool
 from .candidate_score import CandidateScore, score_candidate
@@ -116,9 +117,10 @@ def create_speech_clips(
     alignment_result: AlignmentResult,
     settings: SessionSettings,
     logger: LoggingProtocol,
+    tracer: Tracer,
 ) -> SpeechClipSet:
     speech_clips = _create_initial_clips(diarization_result)
-    speech_clips = merge_clips(speech_clips, SimpleMergeSelector(), settings, logger)
+    speech_clips = merge_clips(speech_clips, SimpleMergeSelector(), settings, logger, tracer)
     pool: CandidatePool = CandidatePool()
     anonymous_clips: AnonymousClips = AnonymousClips([])
 
@@ -160,7 +162,7 @@ def create_speech_clips(
         for clip in speech_clips:
             clip.expand_bounds_to_include_words(epsilon, settings.stitching.expansion_limit_seconds)
 
-    speech_clips = merge_clips(speech_clips, SimpleMergeSelector(), settings, logger)
+    speech_clips = merge_clips(speech_clips, SimpleMergeSelector(), settings, logger, tracer)
     speech_clips = _remove_empty_clips(speech_clips)
     speech_clips.sort_clips()
 
