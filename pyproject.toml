@@ -22,24 +22,13 @@ dependencies = [
     "simplejson>=3.20.2",
     "mathspell",
     "jiwer>=3.1.0",
-    "openai>=1.0.0",
-    "google-cloud-speech>=2.0.0",
-    "google-cloud-storage>=2.0.0",
-    "en_core_web_sm",
     "pyannote-audio",
     "onnxruntime>=1.18.0",
-    "marimo[recommended]>=0.22.4",
-    "pandas>=2.3.3",
-    "matplotlib>=3.10.8",
-    "meeteval>=0.4.3",
     "pyannote-metrics>=3.2.1",
     "diarizationlm>=0.1.5",
-    "intervaltree>=3.2.1",
     "punctuators>=0.0.7",
-    "anthropic>=0.96.0",
     "structlog>=25.5.0",
-    "types-python-dateutil>=2.9.0.20260408",
-    "types-toml>=0.10.8.20260408",
+    "litellm>=1.83.0",
 ]
 
 [project.scripts]
@@ -51,12 +40,16 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "marimo[recommended]>=0.22.4",
+    "matplotlib>=3.10.8",
     "mypy>=1.19.1",
+    "pandas>=2.3.3",
     "pre-commit>=4.5.1",
     "pyright>=1.1.0",
     "pytest>=9.0.2",
     "ruff>=0.14.13",
     "ssort>=0.16.0",
+    "types-python-dateutil>=2.9.0.20260408",
     "types-pyyaml>=6.0.12.20250915",
 ]
 
@@ -70,7 +63,6 @@ torch = [{ index = "pytorch-cu128" }]
 torchvision = [{ index = "pytorch-cu128" }]
 torchaudio = [{ index = "pytorch-cu128" }]
 diarizen = { git = "https://github.com/BUTSpeechFIT/DiariZen.git" }
-en_core_web_sm = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" }
 pyannote-audio = { git = "https://github.com/BUTSpeechFIT/DiariZen.git", subdirectory = "pyannote-audio" }
 
 [[tool.uv.index]]

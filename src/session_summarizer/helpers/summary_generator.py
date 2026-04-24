@@ -3,8 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from pathlib import Path
 
-import anthropic
-
+from ..completions import ModelEffort, ModelString, PromptData
 from ..processing_results import SpeechClipFlags, SpeechClipSet
 from ..protocols import LoggingProtocol
 from ..settings.session_settings import CampaignInfo, SessionInfo, SessionSettings
@@ -50,18 +49,20 @@ def _construct_input(settings: SessionSettings, clips: SpeechClipSet, logger: Lo
 def _get_output(
     settings: SessionSettings, clips: SpeechClipSet, system_prompt: str, input: str, logger: LoggingProtocol
 ) -> str:
-    client = anthropic.Anthropic()  # reads ANTHROPIC_API_KEY from environment
+    prompt: PromptData = PromptData(system_prompt, input)
+    return prompt.get_completion(ModelString.OPUS_4_7, ModelEffort.MEDIUM)
+    # client = anthropic.Anthropic()  # reads ANTHROPIC_API_KEY from environment
 
-    with client.messages.stream(
-        model="claude-opus-4-6",
-        max_tokens=16000,
-        thinking={"type": "adaptive"},
-        system=system_prompt,
-        messages=[{"role": "user", "content": input}],
-    ) as stream:
-        final = stream.get_final_message()
+    # with client.messages.stream(
+    #     model="claude-opus-4-6",
+    #     max_tokens=16000,
+    #     thinking={"type": "adaptive"},
+    #     system=system_prompt,
+    #     messages=[{"role": "user", "content": input}],
+    # ) as stream:
+    #     final = stream.get_final_message()
 
-    return next((block.text for block in final.content if block.type == "text"), "")
+    # return next((block.text for block in final.content if block.type == "text"), "")
 
 
 def _log(input: str, title: str, logger: LoggingProtocol) -> None:
