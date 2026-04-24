@@ -128,9 +128,9 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol, TextPhraseSet):
                     hours = total_seconds // 3600
                     minutes = (total_seconds % 3600) // 60
                     seconds = total_seconds % 60
-                    f.write(f"**{speaker}** [{hours:02d}:{minutes:02d}:{seconds:02d}]\n\n")
+                    f.write(f"**{speaker}**: [{hours:02d}:{minutes:02d}:{seconds:02d}]\n")
                 else:
-                    f.write(f"**{speaker}**\n\n")
+                    f.write(f"**{speaker}**:\n")
 
                 f.write(f"{clip.text}\n\n")
 
