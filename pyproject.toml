@@ -29,6 +29,7 @@ dependencies = [
     "punctuators>=0.0.7",
     "structlog>=25.5.0",
     "litellm>=1.83.0",
+    "en-core-web-sm",
 ]
 
 [project.scripts]
@@ -64,6 +65,7 @@ torchvision = [{ index = "pytorch-cu128" }]
 torchaudio = [{ index = "pytorch-cu128" }]
 diarizen = { git = "https://github.com/BUTSpeechFIT/DiariZen.git" }
 pyannote-audio = { git = "https://github.com/BUTSpeechFIT/DiariZen.git", subdirectory = "pyannote-audio" }
+en-core-web-sm = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" }
 
 [[tool.uv.index]]
 name = "pytorch-cu128"
