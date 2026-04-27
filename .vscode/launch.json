@@ -244,6 +244,18 @@
             ]
         },
         {
+            "name": "simplify-transcript",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "simplify-transcript",
+                "--session",
+                "test",
+            ]
+        },
+        {
             "name": "summarize-session",
             "type": "debugpy",
             "request": "launch",

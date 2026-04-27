@@ -241,5 +241,3 @@ voice_samples/temp/
 
 # Smart Turn ONNX models (downloaded separately, not committed)
 models/smart-turn/*.onnx
-# Added by code-review-graph
-.code-review-graph/

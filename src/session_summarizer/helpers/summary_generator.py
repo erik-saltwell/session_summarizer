@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from datetime import datetime
 from pathlib import Path
 
-from ..completions import ModelEffort, ModelString, PromptData
+from ..completions import PromptData, get_completion
 from ..processing_results import SpeechClipFlags, SpeechClipSet
 from ..protocols import LoggingProtocol
 from ..settings.session_settings import CampaignInfo, SessionInfo, SessionSettings
@@ -46,45 +45,19 @@ def _construct_input(settings: SessionSettings, clips: SpeechClipSet, logger: Lo
     return result
 
 
-def _get_output(
-    settings: SessionSettings, clips: SpeechClipSet, system_prompt: str, input: str, logger: LoggingProtocol
-) -> str:
-    prompt: PromptData = PromptData(system_prompt, input)
-    return prompt.get_completion(ModelString.OPUS_4_7, ModelEffort.MEDIUM)
-    # client = anthropic.Anthropic()  # reads ANTHROPIC_API_KEY from environment
-
-    # with client.messages.stream(
-    #     model="claude-opus-4-6",
-    #     max_tokens=16000,
-    #     thinking={"type": "adaptive"},
-    #     system=system_prompt,
-    #     messages=[{"role": "user", "content": input}],
-    # ) as stream:
-    #     final = stream.get_final_message()
-
-    # return next((block.text for block in final.content if block.type == "text"), "")
-
-
-def _log(input: str, title: str, logger: LoggingProtocol) -> None:
-    # logger.report_message(f"{title.upper()}: \n")
-    # logger.report_message(input)
-    # logger.add_break()
-    return
-
-
 def generate_summary(
     settings: SessionSettings, session_dir: Path, clips: SpeechClipSet, logger: LoggingProtocol, tracer: Tracer
 ) -> str:
     system_prompt: str = get_fragment(FragmentID.SUMMARIZE_SESSION_SYSTEM_PROMPT)
     input: str = _construct_input(settings, clips, logger)
-    _log(input, "Session Input", logger)
-    start: datetime = datetime.now()
-    output: str = _get_output(settings, clips, system_prompt, input, logger)
-    end: datetime = datetime.now()
+    prompt = PromptData(system_prompt, input)
+    llm_settings = settings.llm.session_summary
 
-    _log(output, "Response Summary", logger)
-    tracer.add_context("sys_prompt_len", len(system_prompt))
-    tracer.add_context("input_len", len(input))
-    tracer.add_context("output_len", len(output))
-    tracer.add_context("llm_duration", (end - start))
+    output: str = get_completion(
+        prompt,
+        llm_settings.model,
+        llm_settings.effort,
+        tracer,
+    )
+
     return output

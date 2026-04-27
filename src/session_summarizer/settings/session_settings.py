@@ -6,6 +6,7 @@ from typing import Annotated, Literal, Self
 import yaml
 from pydantic import BaseModel, Field, ValidationInfo, field_validator, model_validator
 
+from ..completions.model_settings import ModelEffort, ModelString
 from .diarization_stitching_settings import DiarizationStitchingSettings
 from .vad_settings import VadSettings
 
@@ -157,7 +158,16 @@ class PipelinePaths(BaseModel, frozen=True):
             description=(
                 "Path to the final SpeechClipSet JSON after punctuation and capitalisation "
                 "have been restored to clip transcripts. "
-                "Written by: punctuate_text (terminal pipeline artifact)."
+                "Written by: punctuate_text. Read by: simplify_transcript and summarize_session."
+            )
+        ),
+    ]
+    simplified_transcript: Annotated[
+        Path,
+        Field(
+            description=(
+                "Path where the LLM-cleaned transcript generated from punctuated text is written. "
+                "Written by: simplify_transcript command."
             )
         ),
     ]
@@ -425,6 +435,32 @@ class SessionInfo(BaseModel, frozen=True):
         return v
 
 
+class LlmCallSettings(BaseModel, frozen=True):
+    """Model configuration for a single LLM call site."""
+
+    model: Annotated[
+        ModelString,
+        Field(description="Model identifier passed to LiteLLM for this LLM call."),
+    ]
+    effort: Annotated[
+        ModelEffort,
+        Field(description="Reasoning effort passed to LiteLLM for this LLM call."),
+    ]
+
+
+class LlmSettings(BaseModel, frozen=True):
+    """Per-call LLM model configuration."""
+
+    session_logs: Annotated[
+        LlmCallSettings,
+        Field(description="Model configuration for generating session logs."),
+    ]
+    session_summary: Annotated[
+        LlmCallSettings,
+        Field(description="Model configuration for generating the final session summary."),
+    ]
+
+
 class SessionSettings(BaseModel, frozen=True):
     attendees: Annotated[
         list[str],
@@ -444,6 +480,10 @@ class SessionSettings(BaseModel, frozen=True):
     campaign_info: Annotated[
         CampaignInfo,
         Field(description="Campaign context: player-to-character mapping and glossary of proper nouns"),
+    ]
+    llm: Annotated[
+        LlmSettings,
+        Field(description="Model and effort configuration for each LLM call in the pipeline"),
     ]
     paths: Annotated[
         PipelinePaths,

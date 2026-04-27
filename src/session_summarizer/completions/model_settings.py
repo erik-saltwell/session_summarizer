@@ -6,8 +6,9 @@ type LiteLLMReasoningEffort = Literal["minimal", "low", "medium", "high", "xhigh
 
 class ModelString(StrEnum):
     GPT_5_4 = "gpt-5.4"
-    OPUS_4_6 = "claude-opus-4-6-20260205"
-    SONNET_4_6 = "claude-sonnet-4-5-20250929"
+    GPT_5_5 = "gpt-5.5"
+    SONNET_4_6 = "claude-sonnet-4-6"
+    OPUS_4_6 = "claude-opus-4-6"
     OPUS_4_7 = "claude-opus-4-7"
     GEMINI_3_1_PRO = "gemini/gemini-3.1-pro-preview"
 

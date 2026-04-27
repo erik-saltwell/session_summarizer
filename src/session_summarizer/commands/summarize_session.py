@@ -10,8 +10,8 @@ import session_summarizer.utils.common_paths as common_paths
 from ..helpers.summary_generator import generate_summary
 from ..processing_results import SpeechClipSet
 from ..settings import SessionSettings
-from .punctuate_text import PunctuateTextCommand
 from .session_processing_command import SessionProcessingCommand
+from .simplify_transcript import SimplifyTranscriptCommand
 
 
 @dataclass
@@ -28,9 +28,9 @@ class SummarizeSessionCommand(SessionProcessingCommand):
         return input_path.with_name(f"{base_name}_{normalized_date}{suffix}")
 
     def add_dependencies(self, settings: SessionSettings, session_dir: Path) -> None:
-        self.inputs.append(session_dir / settings.paths.punctuated_text)
+        self.inputs.append(session_dir / settings.paths.simplified_transcript)
         self.outputs.append(session_dir / settings.paths.summary_path)
-        self.dependencies.append(PunctuateTextCommand(self.session_id, self.tracer))
+        self.dependencies.append(SimplifyTranscriptCommand(self.session_id, self.tracer))
 
     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
         input_clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.paths.punctuated_text)
