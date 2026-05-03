@@ -115,24 +115,28 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol, TextPhraseSet):
             return clip.identity
         return "+".join(sorted(clip.speakers))
 
-    def save_to_markdown(self, path: Path, include_timestamps: bool = False) -> None:
+    def to_markdown(self, include_timestamps: bool = False) -> str:
         self.sort_clips()
-        with path.open("w", encoding="utf-8") as f:
-            for clip in self:
-                if clip.has_flag(SpeechClipFlags.IS_BACKCHANNEL):
-                    continue
-                speaker = clip.identity if clip.identity else "+".join(sorted(clip.speakers))
+        result: list[str] = []
+        for clip in self:
+            if clip.has_flag(SpeechClipFlags.IS_BACKCHANNEL):
+                continue
+            speaker = clip.identity if clip.identity else "+".join(sorted(clip.speakers))
 
-                if include_timestamps:
-                    total_seconds = int(clip.start_time)
-                    hours = total_seconds // 3600
-                    minutes = (total_seconds % 3600) // 60
-                    seconds = total_seconds % 60
-                    f.write(f"**{speaker}**: [{hours:02d}:{minutes:02d}:{seconds:02d}]\n")
-                else:
-                    f.write(f"**{speaker}**:\n")
+            if include_timestamps:
+                total_seconds = int(clip.start_time)
+                hours = total_seconds // 3600
+                minutes = (total_seconds % 3600) // 60
+                seconds = total_seconds % 60
+                result.append(f"**{speaker}**: [{hours:02d}:{minutes:02d}:{seconds:02d}]\n")
+            else:
+                result.append(f"**{speaker}**:\n")
 
-                f.write(f"{clip.text}\n\n")
+            result.append(f"{clip.text}\n\n")
+        return "".join(result)
+
+    def save_to_markdown(self, path: Path, include_timestamps: bool = False) -> None:
+        path.write_text(self.to_markdown(include_timestamps), encoding="utf-8")
 
     def save_to_rttm(self, path: Path, file_id: str | None = None) -> None:
         fid = file_id if file_id is not None else path.stem

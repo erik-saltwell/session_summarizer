@@ -152,6 +152,15 @@ class PipelinePaths(BaseModel, frozen=True):
             )
         ),
     ]
+    inferred_speakers: Annotated[
+        Path,
+        Field(
+            description=(
+                "Path to the SpeechClipSet JSON with role-based speaker identities inferred from transcript text. "
+                "Written by: infer_speakers command."
+            )
+        ),
+    ]
     punctuated_text: Annotated[
         Path,
         Field(
@@ -458,6 +467,10 @@ class LlmSettings(BaseModel, frozen=True):
     session_summary: Annotated[
         LlmCallSettings,
         Field(description="Model configuration for generating the final session summary."),
+    ]
+    infer_players: Annotated[
+        LlmCallSettings,
+        Field(description="Model configuration for inferring player and character roles from transcript text."),
     ]
 
 

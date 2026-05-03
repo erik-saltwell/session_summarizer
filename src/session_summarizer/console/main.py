@@ -34,6 +34,7 @@ from ..commands.diarizationlm_command import DiarizationLMCommand
 from ..commands.diarize_audio import DiarizeAudioCommand
 from ..commands.document_dependencies import DocumentDependenciesCommand
 from ..commands.identify_speakers import IdentifySpeakersCommand
+from ..commands.infer_speakers import InferSpeakersCommand
 from ..commands.mark_backchannels import MarkBackchannelsCommand
 from ..commands.merge_speaker_clips import MergeSpeakerClipsCommand
 from ..commands.register_speakers import RegisterSpeakersCommand
@@ -373,6 +374,7 @@ attendees:
 # Model and effort configuration for each LLM call in the pipeline.
 #
 # Fields:
+#   infer_players    — Used by infer-speakers when inferring role labels.
 #   session_logs     — Used when generating session logs.
 #   session_summary  — Used by summarize_session when generating summary.md.
 #
@@ -388,6 +390,9 @@ attendees:
 #       model: claude-opus-4-7
 #       effort: medium
 llm:
+  infer_players:
+    model: claude-opus-4-7
+    effort: medium
   session_logs:
     model: claude-sonnet-4-5-20250929
     effort: medium
@@ -462,6 +467,10 @@ paths:
   # have been repaired.
   # Written by: dangling_sentence_fix command.
   dangling_sentence_fix: dangling_sentence_fix.json
+
+  # Path to the SpeechClipSet JSON with role-based speaker identities inferred from transcript text.
+  # Written by: infer-speakers command.
+  inferred_speakers: inferred_speakers.json
 
   # Path to the final SpeechClipSet JSON after punctuation and capitalisation
   # have been restored.
@@ -721,6 +730,19 @@ def identify_speakers(
     logger, tracer = initialize_logging()
 
     command: IdentifySpeakersCommand = IdentifySpeakersCommand(session, tracer, force=True)
+    command.execute(logger)
+
+
+@app.command("infer-speakers")
+def infer_speakers(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to process"),
+) -> None:
+    """Infer role-based speaker identities from transcript text."""
+    confirm_session(session)
+    _set_seed(session)
+    logger, tracer = initialize_logging()
+
+    command: InferSpeakersCommand = InferSpeakersCommand(session, tracer, force=True)
     command.execute(logger)
 
 

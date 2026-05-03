@@ -12,6 +12,7 @@ class FragmentID(StrEnum):
     NONE = "none.md"
     SUMMARIZE_SESSION_SYSTEM_PROMPT = "summarize_session_prompt.md"
     TRANSCRIPT_CLEANER_PROMPT = "transcript_cleaner.md"
+    INFER_PLAYERS_PROMPT = "infer_players_prompt.md"
 
 
 def get_fragment_path(fragment_id: FragmentID) -> Path:

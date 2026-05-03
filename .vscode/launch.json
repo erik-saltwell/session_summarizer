@@ -158,6 +158,18 @@
             ]
         },
         {
+            "name": "infer-speakers",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "infer-speakers",
+                "--session",
+                "test",
+            ]
+        },
+        {
             "name": "identity-stitch",
             "type": "debugpy",
             "request": "launch",
