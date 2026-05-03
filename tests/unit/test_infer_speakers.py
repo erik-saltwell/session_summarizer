@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 import yaml
 
@@ -107,7 +109,7 @@ def test_clipset_markdown_renderer_is_reused_for_prompt_format() -> None:
     assert clips.to_markdown() == "**Game Master**:\nhello\n\n"
 
 
-def test_update_session_inferred_speaker_settings_preserves_existing_settings(tmp_path) -> None:
+def test_update_session_inferred_speaker_settings_preserves_existing_settings(tmp_path: Path) -> None:
     settings_path = tmp_path / "settings.yaml"
     settings_path.write_text(
         """
@@ -138,7 +140,7 @@ campaign_info:
     assert data["campaign_info"]["glossary"] == [{"term": "Delta Green", "description": "The organization"}]
 
 
-def test_update_session_inferred_speaker_settings_creates_session_file(tmp_path) -> None:
+def test_update_session_inferred_speaker_settings_creates_session_file(tmp_path: Path) -> None:
     settings_path = tmp_path / "settings.yaml"
     participants = [
         InferredParticipant(input_speaker_labels=["1"], real_name="Speaker 1", role="Character 1", confidence="low")
