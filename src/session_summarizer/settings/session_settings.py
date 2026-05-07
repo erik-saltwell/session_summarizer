@@ -13,6 +13,16 @@ from .vad_settings import VadSettings
 _SETTINGS_FILE = "settings.yaml"
 
 
+def _deep_merge(base: dict, override: dict) -> dict:
+    result = dict(base)
+    for key, value in override.items():
+        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            result[key] = _deep_merge(result[key], value)
+        else:
+            result[key] = value
+    return result
+
+
 SUPPORTED_AUDIO_SUFFIXES: frozenset[str] = frozenset(
     {".m4a", ".mp3", ".wav", ".flac", ".ogg", ".opus", ".wma", ".aac", ".webm"}
 )
@@ -471,6 +481,13 @@ class SessionInfo(BaseModel, frozen=True):
         Field(description="Name of the overarching campaign this session belongs to."),
     ]
 
+    @field_validator("session_date", "session_id", "adventure_name", "campaign_name", mode="before")
+    @classmethod
+    def _coerce_to_str(cls, v: object) -> object:
+        if isinstance(v, int) or isinstance(v, float):
+            return str(v)
+        return v
+
     @field_validator("session_date", "session_id", "adventure_name", "campaign_name")
     @classmethod
     def _must_be_non_empty(cls, v: str, info: ValidationInfo) -> str:
@@ -654,7 +671,7 @@ class SessionSettings(BaseModel, frozen=True):
             with session_file.open("r", encoding="utf-8") as f:
                 override = yaml.safe_load(f) or {}
 
-        merged = {**base, **override}
+        merged = _deep_merge(base, override)
         cls._resolve_paths(merged, session_dir(session_id))
         return cls(**merged)
 
