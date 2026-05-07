@@ -32,8 +32,8 @@ def _patch_torchaudio_sox_effects() -> None:
         return tensor, sample_rate
 
     sox = types.ModuleType("torchaudio.sox_effects")
-    sox.apply_effects_tensor = apply_effects_tensor
-    torchaudio.sox_effects = sox
+    sox.apply_effects_tensor = apply_effects_tensor  # pyright: ignore[reportAttributeAccessIssue]  # ty: ignore[unresolved-attribute]
+    torchaudio.sox_effects = sox  # pyright: ignore[reportAttributeAccessIssue]  # ty: ignore[unresolved-attribute]
 
 
 _patch_torchaudio_sox_effects()

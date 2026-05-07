@@ -34,13 +34,6 @@ repos:
         pass_filenames: false
         stages: [pre-push]
 
-      - id: mypy
-        name: mypy
-        entry: uv run mypy src tests
-        language: system
-        pass_filenames: false
-        stages: [pre-push]
-
       - id: pyright
         name: pyright (type check)
         entry: uv run pyright

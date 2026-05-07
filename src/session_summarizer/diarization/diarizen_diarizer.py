@@ -46,7 +46,7 @@ def _patch_torchaudio_for_pyannote() -> None:
             kwargs["weights_only"] = False
         return _orig_torch_load(*args, **kwargs)
 
-    _torch.load = _patched_torch_load
+    _torch.load = _patched_torch_load  # pyright: ignore[reportAttributeAccessIssue]  # ty: ignore[invalid-assignment]
 
     import soundfile as sf
     import torch
@@ -59,12 +59,12 @@ def _patch_torchaudio_for_pyannote() -> None:
             self.bits_per_sample = bits_per_sample
             self.encoding = encoding
 
-    torchaudio.AudioMetaData = AudioMetaData
+    torchaudio.AudioMetaData = AudioMetaData  # pyright: ignore[reportAttributeAccessIssue]  # ty: ignore[unresolved-attribute]
 
     def list_audio_backends() -> list[str]:
         return ["soundfile"]
 
-    torchaudio.list_audio_backends = list_audio_backends
+    torchaudio.list_audio_backends = list_audio_backends  # pyright: ignore[reportAttributeAccessIssue]  # ty: ignore[unresolved-attribute]
 
     def info(path: str | Path, backend: str | None = None) -> AudioMetaData:
         meta = sf.info(str(path))
@@ -76,7 +76,7 @@ def _patch_torchaudio_for_pyannote() -> None:
             encoding="PCM_S",
         )
 
-    torchaudio.info = info
+    torchaudio.info = info  # pyright: ignore[reportAttributeAccessIssue]  # ty: ignore[unresolved-attribute]
 
     def load(
         uri: str | Path,
@@ -100,8 +100,8 @@ def _patch_torchaudio_for_pyannote() -> None:
             waveform = waveform.T
         return waveform, sr
 
-    torchaudio.load = load
-    torchaudio._patched_for_pyannote = True
+    torchaudio.load = load  # pyright: ignore[reportAttributeAccessIssue]  # ty: ignore[invalid-assignment]
+    torchaudio._patched_for_pyannote = True  # pyright: ignore[reportAttributeAccessIssue]  # ty: ignore[unresolved-attribute]
 
 
 @dataclass

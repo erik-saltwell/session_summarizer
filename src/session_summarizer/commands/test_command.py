@@ -9,21 +9,17 @@ from ..helpers.command_runner import CommandRunnerHost, process_sessions
 from ..protocols import CommmandProtocol, LoggingProtocol
 from ..settings.session_settings import SessionSettings
 from ..utils import Tracer
-from .infer_speakers import InferSpeakersCommand
+from .assign_utterance_ids import AssignUtteranceIdsCommand
 from .session_processing_command import SessionProcessingCommand
 
 
 @dataclass
 class TestCommand(SessionProcessingCommand, CommandRunnerHost):
     def should_run_command_agianst_session(self, session_id: str) -> bool:
-        if not session_id.startswith("Delta"):
-            return False
-        if session_id.endswith("01"):
-            return False
-        return True
+        return session_id.startswith("Delta") or session_id.startswith("2026")
 
     def get_command(self, session_id: str, logger: LoggingProtocol, tracer: Tracer) -> CommmandProtocol:
-        return InferSpeakersCommand(session_id, tracer, False, logger)
+        return AssignUtteranceIdsCommand(session_id, tracer, False, logger)
 
     def name(self) -> str:
         return "Test"

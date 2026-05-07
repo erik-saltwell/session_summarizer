@@ -43,7 +43,6 @@ build-backend = "uv_build"
 dev = [
     "marimo[recommended]>=0.22.4",
     "matplotlib>=3.10.8",
-    "mypy>=1.19.1",
     "pandas>=2.3.3",
     "pre-commit>=4.5.1",
     "pyright>=1.1.0",
@@ -100,25 +99,3 @@ exclude = ["notebooks"]
 [tool.ty.src]
 exclude = ["notebooks/**"]
 
-[tool.mypy]
-python_version = "3.12"
-warn_unused_configs = true
-exclude = ['(^|/)notebooks/']
-
-# Reasonable signal without going full-strict
-check_untyped_defs = true
-disallow_incomplete_defs = true
-disallow_untyped_defs = false
-
-no_implicit_optional = true
-warn_return_any = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_unreachable = true
-
-# Keep third-party stubs explicit (we'll add types-* as needed)
-ignore_missing_imports = true
-
-# Nice for CLI apps with a src/ layout
-mypy_path = ["src"]
-packages = ["session_summarizer"]
