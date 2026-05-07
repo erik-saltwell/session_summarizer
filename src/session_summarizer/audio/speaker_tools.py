@@ -173,7 +173,12 @@ def merge_speaker_clips_to_min_duration(
 
 
 def save_segment_as_speaker_audio_clip(
-    cleaned_audio_path: Path, clip: SpeechClip, speaker_label: str, lead_in: float, lead_out: float, temp_folder: Path
+    cleaned_audio_path: Path,
+    clip: SpeechClip,
+    speaker_label: str,
+    lead_in: float,
+    lead_out: float,
+    temp_folder: Path | None,
 ) -> None:
     file_path: Path = get_unique_voice_filepath(speaker_label, temp_folder)
     file_path.parent.mkdir(parents=True, exist_ok=True)

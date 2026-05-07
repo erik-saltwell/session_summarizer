@@ -6,14 +6,21 @@ from pathlib import Path
 
 from session_summarizer.utils import common_paths
 
-from ..audio.speaker_tools import save_segment_as_speaker_audio_clip
+from ..helpers.infer_speakers import (
+    UNKNOWN_SPEAKER_IDENTITY,
+    build_participant_map,
+    get_inferred_participants_path,
+    load_inferred_participants,
+)
+from ..helpers.speaker_clip_exporter import SpeakerClipExport, export_speaker_audio_clips
 from ..processing_results import SpeechClipSet
-from ..processing_results.speech_clip import SpeechClipFlags
+from ..processing_results.speech_clip import SpeechClip, SpeechClipFlags
 from ..protocols import (
     SessionSettings,
 )
 from .clean_audio import CleanAudioCommand
 from .identify_speakers import IdentifySpeakersCommand
+from .infer_speakers import InferSpeakersCommand
 from .session_processing_command import SessionProcessingCommand
 
 
@@ -41,13 +48,26 @@ def _empty_temp_folder(temp_folder: Path) -> bool:
     return True
 
 
+def should_export_known_speaker_clip(
+    clip: SpeechClip, min_similarity_residual: float, use_multi_speaker_clips: bool
+) -> bool:
+    similarity_residual = clip.similarity_residual if clip.similarity_residual is not None else 0.0
+    return (
+        (not clip.is_anonymous)
+        and (not clip.has_flag(SpeechClipFlags.IS_BACKCHANNEL))
+        and clip.identity is not None
+        and (use_multi_speaker_clips or (not clip.is_multispeaker))
+        and similarity_residual > min_similarity_residual
+    )
+
+
 @dataclass
-class CreateSpeakerClipsCommand(SessionProcessingCommand):
+class CreateKnownSpeakerClipsCommand(SessionProcessingCommand):
     temp_folder: Path = common_paths.voice_samples_dir()
     use_multi_speaker_clips: bool = False
 
     def name(self) -> str:
-        return "Create Speaker Clips"
+        return "Create Known Speaker Clips"
 
     def add_dependencies(self, settings: SessionSettings, session_dir: Path) -> None:
         self.inputs.append(session_dir / settings.paths.identified_speakers)
@@ -63,10 +83,8 @@ class CreateSpeakerClipsCommand(SessionProcessingCommand):
         cleaned_audio_path = session_dir / settings.paths.cleaned_audio
         identified_clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.paths.identified_speakers)
 
-        saved_count = 0
         skipped_count = 0
-        speaker_clip_counts: dict[str, int] = {}
-        speaker_durations: dict[str, float] = {}
+        exports: list[SpeakerClipExport] = []
 
         for clip in identified_clips:
             is_anonymous: bool = clip.is_anonymous
@@ -82,12 +100,10 @@ class CreateSpeakerClipsCommand(SessionProcessingCommand):
                 else 1.00
             )
 
-            should_save: bool = (
-                (not is_anonymous)
-                and (not is_backchannel)
-                and (not is_identity_none)
-                and (use_multi_speaker_clips or (not is_multispeaker))
-                and similarity_residual > target_residual
+            should_save = should_export_known_speaker_clip(
+                clip,
+                target_residual,
+                use_multi_speaker_clips,
             )
 
             self.report_message(
@@ -106,25 +122,73 @@ class CreateSpeakerClipsCommand(SessionProcessingCommand):
                 continue
 
             assert clip.identity is not None
+            exports.append(SpeakerClipExport(clip=clip, speaker_name=clip.identity))
 
-            save_segment_as_speaker_audio_clip(
-                cleaned_audio_path,
-                clip,
-                clip.identity,
-                settings.speaker_clips.lead_in_seconds,
-                settings.speaker_clips.lead_out_seconds,
-                temp_folder=self.temp_folder,
-            )
-            saved_count += 1
-            speaker_clip_counts[clip.identity] = speaker_clip_counts.get(clip.identity, 0) + 1
-            speaker_durations[clip.identity] = speaker_durations.get(clip.identity, 0.0) + clip.duration
+        export_speaker_audio_clips(
+            cleaned_audio_path,
+            exports,
+            skipped_count,
+            settings.speaker_clips.lead_in_seconds,
+            settings.speaker_clips.lead_out_seconds,
+            self.temp_folder,
+            self.logger,
+        )
 
-        self.report_message(f"Saved {saved_count} speaker clips, skipped {skipped_count}")
 
-        if speaker_clip_counts:
-            headers = ["Speaker", "Clips", "Duration (s)"]
-            rows = [
-                [speaker, str(speaker_clip_counts[speaker]), f"{speaker_durations[speaker]:.2f}"]
-                for speaker in sorted(speaker_clip_counts)
-            ]
-            self.logger.report_multicolumn_table(headers, rows)
+def _inferred_export_speaker_name(clip: SpeechClip, participant_by_label: dict[str, str]) -> str | None:
+    if clip.has_flag(SpeechClipFlags.IS_BACKCHANNEL):
+        return None
+    if clip.identity is None or clip.identity == UNKNOWN_SPEAKER_IDENTITY:
+        return None
+
+    participant_names: set[str] = set()
+    for speaker_label in clip.speakers:
+        participant_name = participant_by_label.get(speaker_label)
+        if participant_name is None:
+            return None
+        participant_names.add(participant_name)
+
+    if len(participant_names) != 1:
+        return None
+    return next(iter(participant_names))
+
+
+@dataclass
+class CreateSpeakerClipsFromInferredSpeakersCommand(SessionProcessingCommand):
+    def name(self) -> str:
+        return "Create Speaker Clips From Inferred Speakers"
+
+    def add_dependencies(self, settings: SessionSettings, session_dir: Path) -> None:
+        self.inputs.append(session_dir / settings.paths.inferred_speakers)
+        self.inputs.append(get_inferred_participants_path(session_dir, settings.paths.inferred_speakers))
+        self.inputs.append(session_dir / settings.paths.cleaned_audio)
+        self.dependencies.append(InferSpeakersCommand(self.session_id, self.tracer))
+        self.dependencies.append(CleanAudioCommand(self.session_id, self.tracer))
+
+    def process_session(self, settings: SessionSettings, session_dir: Path) -> None:
+        cleaned_audio_path = session_dir / settings.paths.cleaned_audio
+        inferred_clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.paths.inferred_speakers)
+        participants = load_inferred_participants(
+            get_inferred_participants_path(session_dir, settings.paths.inferred_speakers)
+        )
+        source_labels = {label for clip in inferred_clips for label in clip.speakers}
+        participant_by_label = build_participant_map(participants, source_labels)
+
+        skipped_count = 0
+        exports: list[SpeakerClipExport] = []
+        for clip in inferred_clips:
+            speaker_name = _inferred_export_speaker_name(clip, participant_by_label)
+            if speaker_name is None:
+                skipped_count += 1
+                continue
+            exports.append(SpeakerClipExport(clip=clip, speaker_name=speaker_name))
+
+        export_speaker_audio_clips(
+            cleaned_audio_path,
+            exports,
+            skipped_count,
+            settings.speaker_clips.lead_in_seconds,
+            settings.speaker_clips.lead_out_seconds,
+            None,
+            self.logger,
+        )

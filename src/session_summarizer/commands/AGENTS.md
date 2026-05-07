@@ -174,10 +174,10 @@ class PunctuateTextCommand(SessionProcessingCommand):
 
 ### Commands with extra options
 
-A command may declare additional `@dataclass` fields (with defaults, so they don't conflict with the inherited `session_id` / `tracer` / `force` fields that have no default). The CLI handler passes them as keyword args after `session, tracer`. Example — `CreateSpeakerClipsCommand` adds `temp_folder: Path` and `use_multi_speaker_clips: bool`, and its handler instantiates it as:
+A command may declare additional `@dataclass` fields (with defaults, so they don't conflict with the inherited `session_id` / `tracer` / `force` fields that have no default). The CLI handler passes them as keyword args after `session, tracer`. Example — `CreateKnownSpeakerClipsCommand` adds `temp_folder: Path` and `use_multi_speaker_clips: bool`, and its handler instantiates it as:
 
 ```python
-CreateSpeakerClipsCommand(session, tracer, use_multi_speaker_clips=False, temp_folder=Path(temp_folder))
+CreateKnownSpeakerClipsCommand(session, tracer, use_multi_speaker_clips=False, temp_folder=Path(temp_folder))
 ```
 
 ### Standalone commands — no session, no pipeline

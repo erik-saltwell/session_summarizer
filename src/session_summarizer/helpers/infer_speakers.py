@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import re
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
@@ -101,6 +101,22 @@ def build_role_map(participants: list[InferredParticipant], source_labels: set[s
     return role_by_label
 
 
+def build_participant_map(participants: list[InferredParticipant], source_labels: set[str]) -> dict[str, str]:
+    participant_by_label: dict[str, str] = {}
+    for participant in participants:
+        for label in participant.input_speaker_labels:
+            if label not in source_labels:
+                raise ValueError(f"Completion result included unknown input speaker label: {label!r}.")
+            existing_participant = participant_by_label.get(label)
+            if existing_participant is not None and existing_participant != participant.real_name:
+                raise ValueError(
+                    f"Completion result mapped input speaker label {label!r} to both "
+                    f"{existing_participant!r} and {participant.real_name!r}."
+                )
+            participant_by_label[label] = participant.real_name
+    return participant_by_label
+
+
 def build_participant_role_map(participants: list[InferredParticipant]) -> dict[str, str]:
     role_by_participant: dict[str, str] = {}
     for participant in participants:
@@ -113,6 +129,50 @@ def build_participant_role_map(participants: list[InferredParticipant]) -> dict[
             )
         role_by_participant[real_name] = role
     return role_by_participant
+
+
+def get_inferred_participants_path(session_dir: Path, inferred_speakers_path: Path) -> Path:
+    return session_dir / f"{inferred_speakers_path.stem}_participants.json"
+
+
+def save_inferred_participants(path: Path, participants: list[InferredParticipant]) -> None:
+    path.write_text(json.dumps([asdict(participant) for participant in participants], indent=2), encoding="utf-8")
+
+
+def load_inferred_participants(path: Path) -> list[InferredParticipant]:
+    try:
+        raw_participants: Any = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"Inferred participants file contained malformed JSON: {path}") from exc
+
+    if not isinstance(raw_participants, list):
+        raise ValueError(f"Inferred participants file must contain a JSON array: {path}")
+
+    participants: list[InferredParticipant] = []
+    for index, item in enumerate(raw_participants):
+        if not isinstance(item, dict):
+            raise ValueError(f"Inferred participant at index {index} must be an object.")
+        raw_labels = item.get("input_speaker_labels")
+        real_name = item.get("real_name")
+        role = item.get("role")
+        confidence = item.get("confidence")
+        if not isinstance(raw_labels, list) or not all(isinstance(label, str) for label in raw_labels):
+            raise ValueError(f"Inferred participant at index {index} has invalid input_speaker_labels.")
+        if not isinstance(real_name, str) or not real_name.strip():
+            raise ValueError(f"Inferred participant at index {index} has invalid real_name.")
+        if not isinstance(role, str) or not role.strip():
+            raise ValueError(f"Inferred participant at index {index} has invalid role.")
+        if confidence not in {"high", "medium", "low"}:
+            raise ValueError(f"Inferred participant at index {index} has invalid confidence.")
+        participants.append(
+            InferredParticipant(
+                input_speaker_labels=raw_labels,
+                real_name=real_name,
+                role=role,
+                confidence=confidence,
+            )
+        )
+    return participants
 
 
 def apply_inferred_roles(clips: SpeechClipSet, role_by_label: dict[str, str]) -> SpeechClipSet:

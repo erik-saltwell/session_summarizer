@@ -53,18 +53,29 @@
             ]
         },
         {
-            "name": "create-speaker-clips",
+            "name": "create-known-speaker-clips",
             "type": "debugpy",
             "request": "launch",
             "module": "session_summarizer",
             "console": "integratedTerminal",
             "args": [
-                "create-speaker-clips",
+                "create-known-speaker-clips",
                 "--session",
                 "test",
-                "--use-multi-speaker-clips",
                 "--temp-folder",
                 "temp"
+            ]
+        },
+        {
+            "name": "create-speaker-clips-from-inferred-speakers",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "create-speaker-clips-from-inferred-speakers",
+                "--session",
+                "test",
             ]
         },
         {

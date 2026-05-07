@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import copy
 import logging
+import sys
 
 from diarizationlm import utils as dlm_utils
 
@@ -19,6 +21,40 @@ _PROMPT_OPTIONS = dlm_utils.PromptOptions(
     prompt_suffix=" --> ",
     completion_suffix="",
 )
+
+
+def _segment_prompts(utt: dict) -> list[str]:
+    # Mirror dlm_utils.generate_prompts but skip its over-strict short-prompt guard.
+    # The library's recursive-halving segmentation can produce a short tail, which
+    # is valid inference input; raising emit_input_length to dodge the guard hurts
+    # TPST quality, so we call the underlying reader directly instead.
+    po_seg = copy.deepcopy(_PROMPT_OPTIONS)
+    po_seg.emit_target_length = sys.maxsize
+    reader = dlm_utils.JsonUtteranceReader(
+        json_files="",
+        text_field="hyp_text",
+        input_speaker_field="hyp_spk",
+        target_speaker_field="",
+        po=po_seg,
+        utt=utt,
+    )
+    prompts = [p for _, p, _ in reader.generate_data_tuple()]
+
+    threshold = _PROMPT_OPTIONS.emit_input_length / 3
+    if len(prompts) > 1 and len(prompts[-1]) < threshold:
+        tail = prompts.pop()
+        suffix = _PROMPT_OPTIONS.prompt_suffix
+        prev = prompts[-1]
+        if prev.endswith(suffix):
+            prev = prev[: -len(suffix)]
+        prompts[-1] = prev.rstrip() + " " + tail.lstrip()
+        logger.info(
+            "Merged short trailing segment (%d chars, threshold %d) into previous segment.",
+            len(tail),
+            int(threshold),
+        )
+
+    return prompts
 
 
 class DiarizationLMProcessor:
@@ -55,12 +91,7 @@ class DiarizationLMProcessor:
         }
 
         # Step 4: Generate segmented prompts.
-        prompts = dlm_utils.generate_prompts(
-            utt,
-            po=_PROMPT_OPTIONS,
-            text_field="hyp_text",
-            input_speaker_field="hyp_spk",
-        )
+        prompts = _segment_prompts(utt)
         tracer.add_context("input_segment_count", len(prompts))
 
         # Step 5: Run inference on each prompt.

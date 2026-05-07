@@ -63,5 +63,10 @@
     "**/.git/subtree-cache/**": true,
     "**/node_modules/*/**": true,
     "**/.venv/**": true
+  },
+  "workbench.colorCustomizations": {
+    "titleBar.activeBackground": "#563939",
+    "titleBar.activeForeground": "#ffffff",
+    "statusBar.background": "#563939"
   }
 }

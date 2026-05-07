@@ -25,6 +25,15 @@ def test_help() -> None:
     assert "Usage" in result.output
 
 
+def test_speaker_clip_command_names() -> None:
+    result = runner.invoke(app, ["--help"], color=False)
+
+    assert result.exit_code == 0
+    assert "create-known-speaker-clips" in result.output
+    assert "create-speaker-clips-from-inferred-speakers" in result.output
+    assert "create-speaker-clips " not in result.output
+
+
 def test_version() -> None:
     dist = _dist_name()
     expected_version = im.version(dist)

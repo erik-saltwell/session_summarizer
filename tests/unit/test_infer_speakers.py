@@ -11,7 +11,9 @@ from session_summarizer.helpers.infer_speakers import (
     apply_inferred_roles,
     build_participant_role_map,
     build_role_map,
+    load_inferred_participants,
     parse_inferred_participants,
+    save_inferred_participants,
     update_session_inferred_speaker_settings,
 )
 from session_summarizer.processing_results import SpeechClip, SpeechClipSet
@@ -152,3 +154,14 @@ def test_update_session_inferred_speaker_settings_creates_session_file(tmp_path:
         "campaign_info": {"players": {"Speaker 1": "Character 1"}},
         "attendees": ["Speaker 1"],
     }
+
+
+def test_save_and_load_inferred_participants_round_trips(tmp_path: Path) -> None:
+    path = tmp_path / "inferred_speakers_participants.json"
+    participants = [
+        InferredParticipant(input_speaker_labels=["1", "3"], real_name="Morgan", role="Game Master", confidence="high")
+    ]
+
+    save_inferred_participants(path, participants)
+
+    assert load_inferred_participants(path) == participants

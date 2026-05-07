@@ -97,6 +97,7 @@ class SessionProcessingCommand(ABC, CommmandProtocol):
 
     def execute(self, logger: LoggingProtocol) -> None:
         self.logger = logger
+        self.tracer.add_context("session", self.session_id)
         session_dir: Path = common_paths.session_dir(self.session_id)
         self.gpu_logging_enabled = self.should_log_gpu_load()
 

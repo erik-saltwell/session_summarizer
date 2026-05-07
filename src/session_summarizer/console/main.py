@@ -29,7 +29,10 @@ from ..commands.clean_session_step import CleanSessionStepCommand
 from ..commands.clear_logs import ClearLogsCommand
 from ..commands.compare_fulltext import CompareFullTextCommand
 from ..commands.compute_segments import ComputeSegmentsCommand
-from ..commands.create_speaker_clips import CreateSpeakerClipsCommand
+from ..commands.create_speaker_clips import (
+    CreateKnownSpeakerClipsCommand,
+    CreateSpeakerClipsFromInferredSpeakersCommand,
+)
 from ..commands.diarizationlm_command import DiarizationLMCommand
 from ..commands.diarize_audio import DiarizeAudioCommand
 from ..commands.document_dependencies import DocumentDependenciesCommand
@@ -46,7 +49,7 @@ from ..commands.test_command import TestCommand
 from ..commands.transcribe_audio import TranscribeAudioCommand
 from ..commands.validate_diarization import ValidateDiarizationCommand
 from ..commands.validate_transcribers import ValidateTranscribersCommand
-from ..logging import RichConsoleLogger
+from ..logging import CompositeLogger, FileLogger, RichConsoleLogger
 from ..protocols import LoggingProtocol
 from ..settings.session_settings import SessionSettings
 from ..utils import Tracer, configure_logging, flush_gpu_memory, initialize_request, initialize_tracing
@@ -91,11 +94,11 @@ def initialize_logging() -> tuple[LoggingProtocol, Tracer]:
     # error_console = Console(file=sys.__stderr__)
     console_logger: RichConsoleLogger = RichConsoleLogger(console)
 
-    # logfile_path = common_paths.generate_logfile_path()
-    # file_logger: FileLogger = FileLogger(logfile_path, verbose_training=True)
-    # logger = CompositeLogger([console_logger, file_logger])
+    logfile_path = common_paths.generate_logfile_path()
+    file_logger: FileLogger = FileLogger(logfile_path, verbose_training=True)
+    logger = CompositeLogger([console_logger, file_logger])
 
-    logger = console_logger
+    # logger = console_logger
     logger.report_message(f"[blue]Session id: {request_id}[/blue]")
     return logger, tracer
 
@@ -168,19 +171,33 @@ def compute_vad_segments(
     command.execute(logger)
 
 
-@app.command("create-speaker-clips")
-def create_speaker_clips(
+@app.command("create-known-speaker-clips")
+def create_known_speaker_clips(
     session: str = typer.Option(..., "--session", "-s", help="ID of the session to process"),
     temp_folder: str = typer.Option(
         ..., "--temp-folder", "-t", help="Name of temp folder inside voice samples to hold output"
     ),
 ) -> None:
-    """Save each identified speaker clip as an individual audio file."""
+    """Save known identified-speaker clips as individual audio files."""
     confirm_session(session)
     _set_seed(session)
     logger, tracer = initialize_logging()
-    command: CreateSpeakerClipsCommand = CreateSpeakerClipsCommand(
+    command: CreateKnownSpeakerClipsCommand = CreateKnownSpeakerClipsCommand(
         session, tracer, use_multi_speaker_clips=False, temp_folder=Path(temp_folder)
+    )
+    command.execute(logger)
+
+
+@app.command("create-speaker-clips-from-inferred-speakers")
+def create_speaker_clips_from_inferred_speakers(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to process"),
+) -> None:
+    """Save inferred-speaker clips into top-level voice sample folders."""
+    confirm_session(session)
+    _set_seed(session)
+    logger, tracer = initialize_logging()
+    command: CreateSpeakerClipsFromInferredSpeakersCommand = CreateSpeakerClipsFromInferredSpeakersCommand(
+        session, tracer, force=True
     )
     command.execute(logger)
 
@@ -391,10 +408,10 @@ attendees:
 #       effort: medium
 llm:
   infer_players:
-    model: claude-opus-4-7
+    model: gpt-5.5
     effort: medium
   session_logs:
-    model: claude-sonnet-4-5-20250929
+    model: claude-sonnet-4-6
     effort: medium
   session_summary:
     model: claude-opus-4-7
