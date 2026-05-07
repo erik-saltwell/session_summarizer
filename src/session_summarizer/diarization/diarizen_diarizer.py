@@ -59,12 +59,12 @@ def _patch_torchaudio_for_pyannote() -> None:
             self.bits_per_sample = bits_per_sample
             self.encoding = encoding
 
-    torchaudio.AudioMetaData = AudioMetaData  # pyright: ignore[reportAttributeAccessIssue]
+    torchaudio.AudioMetaData = AudioMetaData
 
     def list_audio_backends() -> list[str]:
         return ["soundfile"]
 
-    torchaudio.list_audio_backends = list_audio_backends  # pyright: ignore[reportAttributeAccessIssue]
+    torchaudio.list_audio_backends = list_audio_backends
 
     def info(path: str | Path, backend: str | None = None) -> AudioMetaData:
         meta = sf.info(str(path))
@@ -76,7 +76,7 @@ def _patch_torchaudio_for_pyannote() -> None:
             encoding="PCM_S",
         )
 
-    torchaudio.info = info  # pyright: ignore[reportAttributeAccessIssue]
+    torchaudio.info = info
 
     def load(
         uri: str | Path,
@@ -100,8 +100,8 @@ def _patch_torchaudio_for_pyannote() -> None:
             waveform = waveform.T
         return waveform, sr
 
-    torchaudio.load = load  # pyright: ignore[reportAttributeAccessIssue]
-    torchaudio._patched_for_pyannote = True  # pyright: ignore[reportAttributeAccessIssue]
+    torchaudio.load = load
+    torchaudio._patched_for_pyannote = True
 
 
 @dataclass

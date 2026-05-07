@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import json
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import yaml
 
@@ -38,7 +38,13 @@ class InferSpeakersResult:
 
 
 def _construct_input(clips: SpeechClipSet) -> str:
-    return clips.to_markdown()
+    return clips.to_markdown(include_speaker=True, include_timestamps=False, included_utterance_ids=False)
+
+
+def _require_json_object(value: Any, error_message: str) -> Mapping[str, Any]:
+    if not isinstance(value, Mapping):
+        raise ValueError(error_message)
+    return cast("Mapping[str, Any]", value)
 
 
 def parse_inferred_participants(output: str) -> list[InferredParticipant]:
@@ -56,13 +62,12 @@ def parse_inferred_participants(output: str) -> list[InferredParticipant]:
 
     participants: list[InferredParticipant] = []
     for index, item in enumerate(raw_results):
-        if not isinstance(item, dict):
-            raise ValueError(f"Completion result at index {index} must be an object.")
+        item_mapping = _require_json_object(item, f"Completion result at index {index} must be an object.")
 
-        raw_labels = item.get("input_speaker_labels")
-        real_name = item.get("real_name")
-        role = item.get("role")
-        confidence = item.get("confidence")
+        raw_labels = item_mapping.get("input_speaker_labels")
+        real_name = item_mapping.get("real_name")
+        role = item_mapping.get("role")
+        confidence = item_mapping.get("confidence")
 
         if not isinstance(raw_labels, list) or not all(isinstance(label, str) for label in raw_labels):
             raise ValueError(f"Completion result at index {index} has invalid input_speaker_labels.")
@@ -150,12 +155,11 @@ def load_inferred_participants(path: Path) -> list[InferredParticipant]:
 
     participants: list[InferredParticipant] = []
     for index, item in enumerate(raw_participants):
-        if not isinstance(item, dict):
-            raise ValueError(f"Inferred participant at index {index} must be an object.")
-        raw_labels = item.get("input_speaker_labels")
-        real_name = item.get("real_name")
-        role = item.get("role")
-        confidence = item.get("confidence")
+        item_mapping = _require_json_object(item, f"Inferred participant at index {index} must be an object.")
+        raw_labels = item_mapping.get("input_speaker_labels")
+        real_name = item_mapping.get("real_name")
+        role = item_mapping.get("role")
+        confidence = item_mapping.get("confidence")
         if not isinstance(raw_labels, list) or not all(isinstance(label, str) for label in raw_labels):
             raise ValueError(f"Inferred participant at index {index} has invalid input_speaker_labels.")
         if not isinstance(real_name, str) or not real_name.strip():

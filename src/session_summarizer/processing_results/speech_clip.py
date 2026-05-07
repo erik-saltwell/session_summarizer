@@ -32,6 +32,7 @@ class SpeechClip:
     embedding: list[float] | None = None
     flags: SpeechClipFlags = field(default=SpeechClipFlags.NONE)
     words: list[WordAlignment] | None = None
+    utterance_id: str | None = None
 
     @property
     def error_formatted_text(self) -> str:

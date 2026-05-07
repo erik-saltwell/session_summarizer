@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import gc
 import tempfile
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from ..processing_results import AlignmentResult, TranscriptionResult, WordAlignment
 from ..protocols import LoggingProtocol
@@ -102,8 +103,10 @@ class ParakeetCTCWordAligner:
                             )
 
                     timestamp: Any = aligned[0].timestamp if aligned else None
-                    if timestamp and "word" in timestamp:
-                        for entry in timestamp["word"]:
+                    if isinstance(timestamp, Mapping) and "word" in timestamp:
+                        timestamp_mapping = cast("Mapping[str, Any]", timestamp)
+                        word_entries = cast("list[Mapping[str, Any]]", timestamp_mapping["word"])
+                        for entry in word_entries:
                             all_words.append(
                                 WordAlignment(
                                     word=str(entry["word"]),

@@ -33,7 +33,7 @@ class SummarizeSessionCommand(SessionProcessingCommand):
         self.dependencies.append(SimplifyTranscriptCommand(self.session_id, self.tracer))
 
     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
-        input_clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.paths.punctuated_text)
+        input_clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.paths.utterance_ids_annotated)
         output_path: Path = session_dir / settings.paths.summary_path
         output_path = self.append_date_to_filename(output_path, settings.session_info.session_date)
         summary_output: str = generate_summary(settings, session_dir, input_clips, self.logger, self.tracer)

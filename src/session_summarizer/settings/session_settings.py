@@ -167,7 +167,17 @@ class PipelinePaths(BaseModel, frozen=True):
             description=(
                 "Path to the final SpeechClipSet JSON after punctuation and capitalisation "
                 "have been restored to clip transcripts. "
-                "Written by: punctuate_text. Read by: simplify_transcript and summarize_session."
+                "Written by: punctuate_text. Read by: assign_utterance_ids."
+            )
+        ),
+    ]
+    utterance_ids_annotated: Annotated[
+        Path,
+        Field(
+            description=(
+                "Path to the SpeechClipSet JSON after assign_utterance_ids stamps each clip with a "
+                "<campaign_id>_<session_id>_<n> utterance id. "
+                "Written by: assign_utterance_ids. Read by: simplify_transcript and summarize_session."
             )
         ),
     ]
@@ -400,6 +410,15 @@ class GlossaryEntry(BaseModel, frozen=True):
 class CampaignInfo(BaseModel, frozen=True):
     """Campaign-level context used when generating session summaries."""
 
+    campaign_id: Annotated[
+        str,
+        Field(
+            description=(
+                "Stable short identifier for the campaign, used as the first segment of utterance ids. "
+                "Used by: assign_utterance_ids."
+            )
+        ),
+    ]
     players: Annotated[
         dict[str, str],
         Field(description="Mapping of player names to their character names."),
@@ -408,6 +427,13 @@ class CampaignInfo(BaseModel, frozen=True):
         list[GlossaryEntry],
         Field(description="List of proper nouns (places, NPCs, items) that may appear in transcripts."),
     ]
+
+    @field_validator("campaign_id")
+    @classmethod
+    def _campaign_id_must_be_non_empty(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError(f"campaign_id must be a non-empty string, got {v!r}")
+        return v
 
     @field_validator("players")
     @classmethod
@@ -427,6 +453,15 @@ class SessionInfo(BaseModel, frozen=True):
         str,
         Field(description="Date of the recorded session in YYYY-MM-DD format."),
     ]
+    session_id: Annotated[
+        str,
+        Field(
+            description=(
+                "Stable short identifier for this session, used as the second segment of utterance ids. "
+                "Used by: assign_utterance_ids."
+            )
+        ),
+    ]
     adventure_name: Annotated[
         str,
         Field(description="Name of the adventure or module being played in this session."),
@@ -436,7 +471,7 @@ class SessionInfo(BaseModel, frozen=True):
         Field(description="Name of the overarching campaign this session belongs to."),
     ]
 
-    @field_validator("session_date", "adventure_name", "campaign_name")
+    @field_validator("session_date", "session_id", "adventure_name", "campaign_name")
     @classmethod
     def _must_be_non_empty(cls, v: str, info: ValidationInfo) -> str:
         if not v.strip():

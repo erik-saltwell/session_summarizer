@@ -4,6 +4,7 @@ import gc
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from ..processing_results import TranscriptionResult, TranscriptionSegment
 from ..protocols import LoggingProtocol
@@ -14,7 +15,7 @@ _MAX_NEW_TOKENS: int = 512
 
 
 def _transcribe_chunk(
-    model: object,
+    model: Any,
     chunk_audio: object,
     sample_rate: int,
 ) -> str:
@@ -26,19 +27,19 @@ def _transcribe_chunk(
     sf.write(tmp_path, chunk_audio, sample_rate, subtype="PCM_16")
 
     try:
-        answer_ids = model.generate(  # type: ignore[attr-defined]
+        answer_ids = model.generate(
             prompts=[
                 [
                     {
                         "role": "user",
-                        "content": f"Transcribe the following: {model.audio_locator_tag}",  # type: ignore[attr-defined]
+                        "content": f"Transcribe the following: {model.audio_locator_tag}",
                         "audio": [tmp_path],
                     }
                 ]
             ],
             max_new_tokens=_MAX_NEW_TOKENS,
         )
-        text: str = model.tokenizer.ids_to_text(answer_ids[0].tolist())  # type: ignore[attr-defined]
+        text: str = model.tokenizer.ids_to_text(answer_ids[0].tolist())
     finally:
         import os
 

@@ -21,4 +21,4 @@ class ModelEffort(StrEnum):
     XHIGH = "xhigh"
 
     def to_litellm_reasoning_effort(self) -> LiteLLMReasoningEffort:
-        return cast(LiteLLMReasoningEffort, self.value)  # type:ignore
+        return cast(LiteLLMReasoningEffort, self.value)

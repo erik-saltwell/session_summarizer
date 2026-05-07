@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import cast
 
 import jiwer
 from mathspell import analyze_text
@@ -21,7 +20,7 @@ class TranscriptionValidationResult:
 
 
 def _get_cleaned_text(result: TranscriptionResult) -> str:
-    return cast(str, analyze_text(result.full_text))
+    return analyze_text(result.full_text)
 
 
 def validate_transcriber(

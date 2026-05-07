@@ -108,7 +108,10 @@ def test_apply_inferred_roles_preserves_identity_for_multi_role_clip() -> None:
 def test_clipset_markdown_renderer_is_reused_for_prompt_format() -> None:
     clips = SpeechClipSet([_clip({"1"}, identity="Game Master")])
 
-    assert clips.to_markdown() == "**Game Master**:\nhello\n\n"
+    assert (
+        clips.to_markdown(include_speaker=True, include_timestamps=False, included_utterance_ids=False)
+        == "**Game Master** — hello\n\n"
+    )
 
 
 def test_update_session_inferred_speaker_settings_preserves_existing_settings(tmp_path: Path) -> None:

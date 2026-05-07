@@ -115,28 +115,43 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol, TextPhraseSet):
             return clip.identity
         return "+".join(sorted(clip.speakers))
 
-    def to_markdown(self, include_timestamps: bool = False) -> str:
+    def to_markdown(self, include_speaker: bool, include_timestamps: bool, included_utterance_ids: bool) -> str:
         self.sort_clips()
         result: list[str] = []
         for clip in self:
             if clip.has_flag(SpeechClipFlags.IS_BACKCHANNEL):
                 continue
             speaker = clip.identity if clip.identity else "+".join(sorted(clip.speakers))
-
             if include_timestamps:
                 total_seconds = int(clip.start_time)
                 hours = total_seconds // 3600
                 minutes = (total_seconds % 3600) // 60
                 seconds = total_seconds % 60
-                result.append(f"**{speaker}**: [{hours:02d}:{minutes:02d}:{seconds:02d}]\n")
-            else:
-                result.append(f"**{speaker}**:\n")
+                result.append(f"**[{hours:0d}:{minutes:0d}:{seconds:02d}]** ")
+
+            if include_speaker:
+                result.append(f"**{speaker}** ")
+
+            if included_utterance_ids and clip.utterance_id:
+                result.append(f"`{clip.utterance_id}` ")
+
+            if include_speaker or include_timestamps or included_utterance_ids:
+                result.append("— ")
 
             result.append(f"{clip.text}\n\n")
         return "".join(result)
 
-    def save_to_markdown(self, path: Path, include_timestamps: bool = False) -> None:
-        path.write_text(self.to_markdown(include_timestamps), encoding="utf-8")
+    def save_to_markdown(
+        self, path: Path, include_speakers: bool, include_timestamps: bool, include_utterance_ids: bool
+    ) -> None:
+        path.write_text(
+            self.to_markdown(
+                include_speaker=include_speakers,
+                include_timestamps=include_timestamps,
+                included_utterance_ids=include_utterance_ids,
+            ),
+            encoding="utf-8",
+        )
 
     def save_to_rttm(self, path: Path, file_id: str | None = None) -> None:
         fid = file_id if file_id is not None else path.stem
@@ -175,6 +190,7 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol, TextPhraseSet):
                 "flags": int(clip.flags),
                 "cosine_similarity": clip.cosine_similarity,
                 "similarity_residual": clip.similarity_residual,
+                "utterance_id": clip.utterance_id,
                 "words": [
                     {
                         "word": w.word,
@@ -251,6 +267,7 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol, TextPhraseSet):
                 similarity_residual=item.get("similarity_residual"),
                 flags=SpeechClipFlags(item.get("flags", 0)),
                 words=words,
+                utterance_id=item.get("utterance_id"),
             )
             instance.append(clip)
         return instance

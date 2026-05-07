@@ -69,7 +69,7 @@ def _try_instantiate(cls: type, session_id: str, tracer: Tracer) -> SessionProce
             continue
         kwargs[field.name] = _dummy_value_for(field.type)
     try:
-        return cls(**kwargs)  # type: ignore
+        return cls(**kwargs)
     except Exception:
         return None
 

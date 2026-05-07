@@ -3,9 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from session_summarizer.commands.session_processing_command import SessionProcessingCommand
 from session_summarizer.settings.session_settings import SessionSettings
-
-from .session_processing_command import SessionProcessingCommand
 
 
 @dataclass

@@ -17,6 +17,18 @@
             ]
         },
         {
+            "name": "assign-utterance-ids",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "assign-utterance-ids",
+                "--session",
+                "test",
+            ]
+        },
+        {
             "name": "clean-audio",
             "type": "debugpy",
             "request": "launch",

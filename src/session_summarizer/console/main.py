@@ -23,6 +23,7 @@ from session_summarizer.utils import common_paths
 
 from ..commands.add_embeddings import AddEmbeddingsCommand
 from ..commands.align_transcript import AlignTranscriptCommand
+from ..commands.assign_utterance_ids import AssignUtteranceIdsCommand
 from ..commands.clean_audio import CleanAudioCommand
 from ..commands.clean_session import CleanSessionCommand
 from ..commands.clean_session_step import CleanSessionStepCommand
@@ -145,6 +146,18 @@ def apply_identity_stitiching(
     _set_seed(session)
     logger, tracer = initialize_logging()
     command: StitichIdentitiesCommand = StitichIdentitiesCommand(session, tracer, force=True)
+    command.execute(logger)
+
+
+@app.command("assign-utterance-ids")
+def assign_utterance_ids(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to process"),
+) -> None:
+    """Stamp each speech clip with a stable <campaign_id>_<session_id>_<n> utterance id."""
+    confirm_session(session)
+    _set_seed(session)
+    logger, tracer = initialize_logging()
+    command: AssignUtteranceIdsCommand = AssignUtteranceIdsCommand(session, tracer, force=True)
     command.execute(logger)
 
 
@@ -323,16 +336,22 @@ _SAMPLE_SETTINGS = """\
 #
 # Fields:
 #   session_date    — Date of the recorded session (YYYY-MM-DD).
+#   session_id      — Stable short identifier for this session, used as the
+#                     second segment of utterance ids
+#                     (<campaign_id>_<session_id>_<n>).
+#                     Used by: assign_utterance_ids.
 #   adventure_name  — Name of the adventure or module being played.
 #   campaign_name   — Name of the overarching campaign.
 #
 # Example:
 #   session_info:
 #     session_date: "2026-04-13"
+#     session_id: "s07"
 #     adventure_name: "Curse of Strahd"
 #     campaign_name: "Ravenloft Chronicles"
 session_info:
   session_date: "2026-01-01"
+  session_id: "session-001"
   adventure_name: "My Adventure"
   campaign_name: "My Campaign"
 
@@ -343,6 +362,9 @@ session_info:
 # Campaign-level context provided to Claude when generating session summaries.
 #
 # Fields:
+#   campaign_id — Stable short identifier for the campaign, used as the first
+#                 segment of utterance ids (<campaign_id>_<session_id>_<n>).
+#                 Used by: assign_utterance_ids.
 #   players   — A mapping of player names (as they appear in the transcript)
 #               to their character names. Used to personalise the summary.
 #   glossary  — A list of proper nouns (NPCs, locations, factions, items)
@@ -351,6 +373,7 @@ session_info:
 #
 # Example:
 #   campaign_info:
+#     campaign_id: "ravenloft"
 #     players:
 #       Alice: Elara the Wise
 #       Bob: Grog the Strong
@@ -359,6 +382,7 @@ session_info:
 #         description: The vampire lord of Barovia
 #       - term: Barovia
 campaign_info:
+  campaign_id: "my-campaign"
   players:
     Player1: Character1
     Player2: Character2
@@ -491,8 +515,13 @@ paths:
 
   # Path to the final SpeechClipSet JSON after punctuation and capitalisation
   # have been restored.
-  # Written by: punctuate_text. Read by: simplify_transcript and summarize_session.
+  # Written by: punctuate_text. Read by: assign_utterance_ids.
   punctuated_text: punctuated_text.json
+
+  # Path to the SpeechClipSet JSON after assign_utterance_ids stamps each clip
+  # with a <campaign_id>_<session_id>_<n> utterance id.
+  # Written by: assign_utterance_ids. Read by: simplify_transcript and summarize_session.
+  utterance_ids_annotated: utterance_ids_annotated.json
 
   # Path where the LLM-cleaned transcript generated from punctuated text is written.
   # Written by: simplify_transcript command.
