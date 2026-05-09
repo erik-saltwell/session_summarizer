@@ -7,42 +7,11 @@ from ..audio import (
     convert_to_16k_mono,
     convert_to_48k_wav,
     enhance_with_mossformer2,
-    isolate_audio_eleven_labs,
     measure_loudness,
     normalize_and_export_16k_mono,
 )
 from ..protocols import GpuLogger, LoggingProtocol, SessionSettings
-from ..utils import Tracer, common_paths
-
-
-def clean_audio_eleven_labs(
-    settings: SessionSettings,
-    session_dir: Path,
-    normalize_volume: bool,
-    gpu_logger: GpuLogger,
-    logger: LoggingProtocol,
-    tracer: Tracer,
-) -> None:
-    original_path = session_dir / settings.paths.source_audio
-    final_path = session_dir / settings.paths.cleaned_audio
-    tracer.add_context("input_audio", original_path)
-    tracer.add_context("normalize_volume", normalize_volume)
-    if not original_path.exists():
-        raise FileNotFoundError(original_path)
-    common_paths.ensure_directory(final_path.parent)
-    with TemporaryDirectory() as tmpdir:
-        tmp_dir = Path(tmpdir)
-        input_file_16k = tmp_dir / "input_wav_16k.wav"
-        gpu_logger.report_gpu_usage("before processing")
-
-        with logger.status("Normalizing input to 16k mono..."):
-            convert_to_16k_mono(original_path, input_file_16k)
-
-        with logger.status("Cleaning Audio with Eleven Labs..."):
-            isolate_audio_eleven_labs(input_file_16k, final_path, normalize_volume)
-
-    gpu_logger.report_gpu_usage("after cleaning")
-    tracer.add_context("cleaned_audio", final_path)
+from ..utils import Tracer
 
 
 def clean_audio(

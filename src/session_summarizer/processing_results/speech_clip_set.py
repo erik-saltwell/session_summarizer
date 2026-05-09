@@ -34,33 +34,9 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol, TextPhraseSet):
             clip.sort_words()
             yield from clip.words
 
-    def no_empty_clips(self) -> SpeechClipSet:
-        result: SpeechClipSet = SpeechClipSet()
-        result.extend_clips([clip for clip in self if clip.words])
-        return result
-
     @property
     def character_count(self) -> int:
         return sum([clip.character_count for clip in self])
-
-    def iterate_clip_speakers(self, epsilon: float) -> Iterator[ClipWithSpeaker]:
-        self.sort_clips()
-        count: int = len(self)
-        if count == 0:
-            return
-
-        first: SpeechClip = self[0]
-        if count == 1:
-            yield ClipWithSpeaker(first, first.compute_speaker(None, None, epsilon))
-            return
-
-        yield ClipWithSpeaker(first, first.compute_speaker(None, self[1], epsilon))
-
-        for idx in range(1, count - 1):
-            yield ClipWithSpeaker(self[idx], self[idx].compute_speaker(self[idx - 1], self[idx + 1], epsilon))
-
-        last: SpeechClip = self[len(self) - 1]
-        yield ClipWithSpeaker(last, last.compute_speaker(self[len(self) - 2], None, epsilon))
 
     def phrase_separator_length(self) -> int:
         return 1
