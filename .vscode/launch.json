@@ -29,6 +29,18 @@
             ]
         },
         {
+            "name": "save-session-clipset",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "save-session-clipset",
+                "--session",
+                "test",
+            ]
+        },
+        {
             "name": "clean-audio",
             "type": "debugpy",
             "request": "launch",

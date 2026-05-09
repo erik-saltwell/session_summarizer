@@ -43,6 +43,7 @@ from ..commands.mark_backchannels import MarkBackchannelsCommand
 from ..commands.merge_speaker_clips import MergeSpeakerClipsCommand
 from ..commands.register_speakers import RegisterSpeakersCommand
 from ..commands.remove_outlier_speaker_clips import RemoveOutlierSpeakerClipsCommand
+from ..commands.save_session_clipset import SaveSessionClipsetCommand
 from ..commands.simplify_transcript import SimplifyTranscriptCommand
 from ..commands.stitch_identities import StitichIdentitiesCommand
 from ..commands.summarize_session import SummarizeSessionCommand
@@ -158,6 +159,18 @@ def assign_utterance_ids(
     _set_seed(session)
     logger, tracer = initialize_logging()
     command: AssignUtteranceIdsCommand = AssignUtteranceIdsCommand(session, tracer, force=True)
+    command.execute(logger)
+
+
+@app.command("save-session-clipset")
+def save_session_clipset(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to process"),
+) -> None:
+    """Save the utterance-id-stamped clipset under <session_id>.json."""
+    confirm_session(session)
+    _set_seed(session)
+    logger, tracer = initialize_logging()
+    command: SaveSessionClipsetCommand = SaveSessionClipsetCommand(session, tracer, force=True)
     command.execute(logger)
 
 

@@ -9,7 +9,7 @@ from ..helpers.command_runner import CommandRunnerHost, process_sessions
 from ..protocols import CommmandProtocol, LoggingProtocol
 from ..settings.session_settings import SessionSettings
 from ..utils import Tracer
-from .assign_utterance_ids import AssignUtteranceIdsCommand
+from .save_session_clipset import SaveSessionClipsetCommand
 from .session_processing_command import SessionProcessingCommand
 
 
@@ -19,7 +19,7 @@ class TestCommand(SessionProcessingCommand, CommandRunnerHost):
         return session_id.startswith("2026")  # or session_id.startswith("Delta")
 
     def get_command(self, session_id: str, logger: LoggingProtocol, tracer: Tracer) -> CommmandProtocol:
-        return AssignUtteranceIdsCommand(session_id, tracer, False, logger)
+        return SaveSessionClipsetCommand(session_id, tracer, False, logger)
 
     def name(self) -> str:
         return "Test"
