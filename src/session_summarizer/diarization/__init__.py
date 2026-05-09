@@ -1,6 +1,6 @@
 from .candidate_pool import CandidatePool
 from .clip_merger import MergeSelector, MergeType, merge_clips
-from .diarizen_diarizer import (
+from .merged_diarization_types import (
     MergedDiarizationResult,
     MergedDiarizationSegment,
     merge_overlapping_diarization,

@@ -13,7 +13,7 @@ from .anonymous_clips import AnonymousClips
 from .candidate_pool import CandidatePool
 from .candidate_score import CandidateScore, score_candidate
 from .clip_merger import MergeSelector, clips_are_close_enough, clips_are_same_speaker, merge_clips
-from .diarizen_diarizer import MergedDiarizationResult, MergedDiarizationSegment
+from .merged_diarization_types import MergedDiarizationResult, MergedDiarizationSegment
 
 
 def _is_acceptable_overlap(

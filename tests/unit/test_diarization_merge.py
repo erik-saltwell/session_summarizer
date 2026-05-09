@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from session_summarizer.diarization.diarizen_diarizer import (
+from session_summarizer.diarization.merged_diarization_types import (
     DiarizationResult,
     DiarizationSegment,
     MergedDiarizationSegment,
