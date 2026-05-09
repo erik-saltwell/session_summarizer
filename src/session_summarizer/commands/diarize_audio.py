@@ -14,7 +14,7 @@ from .session_processing_command import SessionProcessingCommand
 
 
 @dataclass
-class DiarizeAudioElevenLabsCommand(SessionProcessingCommand):
+class DiarizeAudioCommand(SessionProcessingCommand):
     def name(self) -> str:
         return "Diarize Audio Eleven Labs"
 

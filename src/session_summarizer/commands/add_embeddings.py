@@ -9,7 +9,7 @@ from ..helpers.add_embeddings import add_embeddings
 from ..processing_results import SpeechClipSet
 from ..settings import SessionSettings
 from .clean_audio import CleanAudioCommand
-from .diarize_audio_eleven_labs import DiarizeAudioElevenLabsCommand
+from .diarize_audio import DiarizeAudioCommand
 from .session_processing_command import SessionProcessingCommand
 
 
@@ -22,7 +22,7 @@ class AddEmbeddingsCommand(SessionProcessingCommand):
         self.inputs.append(session_dir / settings.paths.base_diarization)
         self.inputs.append(session_dir / settings.paths.cleaned_audio)
         self.outputs.append(session_dir / settings.paths.clips_with_embeddings)
-        self.dependencies.append(DiarizeAudioElevenLabsCommand(self.session_id, self.tracer))
+        self.dependencies.append(DiarizeAudioCommand(self.session_id, self.tracer))
         self.dependencies.append(CleanAudioCommand(self.session_id, self.tracer))
 
     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:

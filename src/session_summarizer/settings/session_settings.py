@@ -54,40 +54,6 @@ class PipelinePaths(BaseModel, frozen=True):
             )
         ),
     ]
-    transcript: Annotated[
-        Path,
-        Field(
-            description=("Path to the initial ASR transcript JSON. Written by: transcribe. Read by: align_transcript.")
-        ),
-    ]
-    aligned_transcript: Annotated[
-        Path,
-        Field(
-            description=(
-                "Path to the word-aligned transcript JSON with per-word timestamps. "
-                "Written by: align_transcript. Read by: score_confidence."
-            )
-        ),
-    ]
-    confidence_transcript: Annotated[
-        Path,
-        Field(
-            description=(
-                "Path to the transcript JSON annotated with per-word confidence scores (0.0–1.0). "
-                "Written by: score_confidence. Read by: diarize_audio."
-            )
-        ),
-    ]
-    vad_segments: Annotated[
-        Path,
-        Field(
-            description=(
-                "Path to the VAD segments JSON containing silence-aware cut points. "
-                "Written by: compute_vad_segments. Read by: transcription, diarization, "
-                "alignment, embedding, and other segment-aware commands."
-            )
-        ),
-    ]
     base_diarization: Annotated[
         Path,
         Field(
@@ -134,15 +100,6 @@ class PipelinePaths(BaseModel, frozen=True):
             )
         ),
     ]
-    diarizationlm_processed: Annotated[
-        Path,
-        Field(
-            description=(
-                "Path to the SpeechClipSet JSON after DiarizationLM post-processing. "
-                "Written by: diarizationlm. Read by: dangling_sentence_fix."
-            )
-        ),
-    ]
     indeterminate_speakers: Annotated[
         Path,
         Field(
@@ -150,16 +107,6 @@ class PipelinePaths(BaseModel, frozen=True):
                 "Path to the SpeechClipSet JSON with unidentifiable speakers assigned "
                 "an indeterminate label. "
                 "Written by: indeterminate_speaker_assignment."
-            )
-        ),
-    ]
-    dangling_sentence_fix: Annotated[
-        Path,
-        Field(
-            description=(
-                "Path to the SpeechClipSet JSON after mid-sentence clip boundaries "
-                "have been repaired. "
-                "Written by: dangling_sentence_fix command."
             )
         ),
     ]

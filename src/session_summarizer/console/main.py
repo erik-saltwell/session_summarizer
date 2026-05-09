@@ -24,17 +24,14 @@ from session_summarizer.utils import common_paths
 from ..commands.add_embeddings import AddEmbeddingsCommand
 from ..commands.assign_utterance_ids import AssignUtteranceIdsCommand
 from ..commands.clean_audio import CleanAudioCommand
-from ..commands.clean_audio_eleven_labs import CleanAudioElevenLabsCommand
 from ..commands.clean_session import CleanSessionCommand
 from ..commands.clean_session_step import CleanSessionStepCommand
 from ..commands.clear_logs import ClearLogsCommand
-from ..commands.compare_fulltext import CompareFullTextCommand
 from ..commands.create_speaker_clips import (
     CreateKnownSpeakerClipsCommand,
     CreateSpeakerClipsFromInferredSpeakersCommand,
 )
-from ..commands.diarizationlm_command import DiarizationLMCommand
-from ..commands.diarize_audio_eleven_labs import DiarizeAudioElevenLabsCommand
+from ..commands.diarize_audio import DiarizeAudioCommand
 from ..commands.document_dependencies import DocumentDependenciesCommand
 from ..commands.identify_speakers import IdentifySpeakersCommand
 from ..commands.infer_speakers import InferSpeakersCommand
@@ -48,7 +45,6 @@ from ..commands.stitch_identities import StitichIdentitiesCommand
 from ..commands.summarize_session import SummarizeSessionCommand
 from ..commands.test_command import TestCommand
 from ..commands.validate_diarization import ValidateDiarizationCommand
-from ..commands.validate_transcribers import ValidateTranscribersCommand
 from ..logging import CompositeLogger, FileLogger, RichConsoleLogger
 from ..protocols import LoggingProtocol
 from ..settings.session_settings import SessionSettings
@@ -161,17 +157,6 @@ def save_session_clipset(
     command.execute(logger)
 
 
-@app.command("compare-texts")
-def compare_texts(
-    session: str = typer.Option(..., "--session", "-s", help="ID of the session to transcribe"),
-) -> None:
-    confirm_session(session)
-    _set_seed(session)
-    logger, tracer = initialize_logging()
-    command: CompareFullTextCommand = CompareFullTextCommand(session, tracer, force=True)
-    command.execute(logger)
-
-
 @app.command("create-known-speaker-clips")
 def create_known_speaker_clips(
     session: str = typer.Option(..., "--session", "-s", help="ID of the session to process"),
@@ -215,19 +200,6 @@ def clean_audio(
     command.execute(logger)
 
 
-@app.command("clean-audio-eleven-labs")
-def clean_audio_eleven_labs(
-    session: str = typer.Option(..., "--session", "-s", help="ID of the session to clean"),
-) -> None:
-    """Clean session audio using ElevenLabs voice isolation."""
-    confirm_session(session)
-    _set_seed(session)
-    logger, tracer = initialize_logging()
-
-    command: CleanAudioElevenLabsCommand = CleanAudioElevenLabsCommand(session, tracer, force=True)
-    command.execute(logger)
-
-
 @app.command("clean-diarization")
 def clean_diarization(
     session: str = typer.Option(..., "--session", "-s", help="ID of the session to clean"),
@@ -257,18 +229,6 @@ def clear_logs() -> None:
     """Delete all files in the logs directory."""
     logger, tracer = initialize_logging()
     ClearLogsCommand().execute(logger)
-
-
-@app.command("diarizationlm")
-def diarizationlm(
-    session: str = typer.Option(..., "--session", "-s", help="ID of the session to process"),
-) -> None:
-    """Post-process diarization with DiarizationLM to correct speaker attribution errors."""
-    confirm_session(session)
-    _set_seed(session)
-    logger, tracer = initialize_logging()
-    command: DiarizationLMCommand = DiarizationLMCommand(session, tracer, force=True)
-    command.execute(logger)
 
 
 @app.command("merge-speaker-clips")
@@ -303,7 +263,7 @@ def remove_outlier_speaker_clips(
     command.execute(logger)
 
 
-@app.command("diarize-audio-eleven-labs")
+@app.command("diarize-audio")
 def diarize_audio_eleven_labs(
     session: str = typer.Option(..., "--session", "-s", help="ID of the session to diarize"),
 ) -> None:
@@ -311,7 +271,7 @@ def diarize_audio_eleven_labs(
     confirm_session(session)
     _set_seed(session)
     logger, tracer = initialize_logging()
-    command: DiarizeAudioElevenLabsCommand = DiarizeAudioElevenLabsCommand(session, tracer, force=True)
+    command: DiarizeAudioCommand = DiarizeAudioCommand(session, tracer, force=True)
     command.execute(logger)
 
 
@@ -460,22 +420,6 @@ paths:
   # Written by: clean_audio. Read by: most downstream commands.
   cleaned_audio: cleaned_audio.wav
 
-  # Path to the initial ASR transcript JSON.
-  # Written by: transcribe. Read by: align_transcript.
-  transcript: transcript.json
-
-  # Path to the word-aligned transcript JSON with per-word timestamps.
-  # Written by: align_transcript. Read by: score_confidence.
-  aligned_transcript: aligned_transcript.json
-
-  # Path to the transcript JSON annotated with per-word confidence scores.
-  # Written by: score_confidence. Read by: diarize_audio.
-  confidence_transcript: confidence_transcript.json
-
-  # Path to the VAD segments JSON containing silence-aware cut points.
-  # Written by: compute_vad_segments. Read by: transcription, diarization, etc.
-  vad_segments: segments.json
-
   # Path to the initial SpeechClipSet JSON from diarization + word assignment.
   # Written by: diarize_audio. Read by: add_embeddings, validate_diarization.
   base_diarization: base_diarization.json
@@ -496,19 +440,10 @@ paths:
   # Written by: mark_backchannels. Read by: punctuate_text.
   backchannel_marked: backchannel_marked.json
 
-  # Path to the SpeechClipSet JSON after DiarizationLM post-processing.
-  # Written by: diarizationlm. Read by: dangling_sentence_fix.
-  diarizationlm_processed: diarizationlm_processed.json
-
   # Path to the SpeechClipSet JSON with unidentifiable speakers assigned
   # an indeterminate label.
   # Written by: indeterminate_speaker_assignment.
   indeterminate_speakers: indeterminate_speakers.json
-
-  # Path to the SpeechClipSet JSON after mid-sentence clip boundaries
-  # have been repaired.
-  # Written by: dangling_sentence_fix command.
-  dangling_sentence_fix: dangling_sentence_fix.json
 
   # Path to the SpeechClipSet JSON with role-based speaker identities inferred from transcript text.
   # Written by: infer-speakers command.
@@ -614,16 +549,6 @@ speaker_identification:
 
 
 # ---------------------------------------------------------------------------
-# device  (REQUIRED)
-# ---------------------------------------------------------------------------
-# Compute device for model inference. Allowed values:
-#   cuda  — use the GPU (requires a CUDA-capable NVIDIA GPU)
-#   cpu   — use the CPU (much slower, but works everywhere)
-# Used by: all commands that load ML models.
-device: cuda
-
-
-# ---------------------------------------------------------------------------
 # vad  (VAD model hyperparameters)
 # ---------------------------------------------------------------------------
 # Controls the NeMo Voice Activity Detection model used to find speech and
@@ -725,6 +650,16 @@ stitching:
 
   # When two candidates score identically, prefer the shorter segment.
   prefer_shorter_on_tie: true
+
+
+# ---------------------------------------------------------------------------
+# device  (REQUIRED)
+# ---------------------------------------------------------------------------
+# Compute device for model inference. Allowed values:
+#   cuda  — use the GPU (requires a CUDA-capable NVIDIA GPU)
+#   cpu   — use the CPU (much slower, but works everywhere)
+# Used by: all commands that load ML models.
+device: cuda
 
 
 # ---------------------------------------------------------------------------
@@ -899,19 +834,6 @@ def validate_diarization(
     logger, tracer = initialize_logging()
 
     command: ValidateDiarizationCommand = ValidateDiarizationCommand(session, tracer, force=True)
-    command.execute(logger)
-
-
-@app.command("validate-transcribers")
-def validate_transcribers(
-    session: str = typer.Option(..., "--session", "-s", help="ID of the session to use for validation"),
-) -> None:
-    """Transcribe test audio with every registered transcriber and compare accuracy metrics."""
-    confirm_session(session)
-    _set_seed(session)
-    logger, tracer = initialize_logging()
-
-    command: ValidateTranscribersCommand = ValidateTranscribersCommand(session, tracer, force=True)
     command.execute(logger)
 
 

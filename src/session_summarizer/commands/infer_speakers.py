@@ -12,7 +12,7 @@ from ..helpers.infer_speakers import (
 )
 from ..processing_results import SpeechClipSet
 from ..protocols import SessionSettings
-from .dangling_sentece_fix import DanglingSentenceFixCommand
+from .diarize_audio import DiarizeAudioCommand
 from .session_processing_command import SessionProcessingCommand
 
 
@@ -22,13 +22,13 @@ class InferSpeakersCommand(SessionProcessingCommand):
         return "Infer Speakers"
 
     def add_dependencies(self, settings: SessionSettings, session_dir: Path) -> None:
-        self.inputs.append(session_dir / settings.paths.dangling_sentence_fix)
+        self.inputs.append(session_dir / settings.paths.base_diarization)
         self.outputs.append(session_dir / settings.paths.inferred_speakers)
         self.outputs.append(get_inferred_participants_path(session_dir, settings.paths.inferred_speakers))
-        self.dependencies.append(DanglingSentenceFixCommand(self.session_id, self.tracer))
+        self.dependencies.append(DiarizeAudioCommand(self.session_id, self.tracer))
 
     def process_session(self, settings: SessionSettings, session_dir: Path) -> None:
-        input_clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.paths.dangling_sentence_fix)
+        input_clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.paths.base_diarization)
         result: InferSpeakersResult = infer_speakers(settings, session_dir, input_clips, self.logger, self.tracer)
         self.save_speech_clip(result.clips, session_dir, settings.paths.inferred_speakers)
         save_inferred_participants(
