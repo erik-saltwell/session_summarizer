@@ -58,19 +58,6 @@ class Tracer:
     def add_context(self, name: str, value: Any) -> None:
         self.logger = self.logger.bind(**{name: value})
 
-    def add_multi_context(self, name: str, value: Any) -> None:
-        current_context = dict(structlog.get_context(self.logger))
-        existing_value = current_context.get(name)
-
-        if existing_value is None:
-            combined_value = [value]
-        elif isinstance(existing_value, list):
-            combined_value = [*existing_value, value]
-        else:
-            combined_value = [existing_value, value]
-
-        self.logger = self.logger.bind(**{name: combined_value})
-
     def log(self, event_name: str) -> None:
         self.logger.info(event_name)
 

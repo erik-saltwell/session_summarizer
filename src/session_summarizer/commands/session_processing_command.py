@@ -38,9 +38,6 @@ class SessionProcessingCommand(ABC, CommmandProtocol):
     def enable_clip_test(self, clips: SpeechClipSet) -> None:
         self.test_clips = clips
 
-    def set_detailed_logging(self, should_log: bool) -> None:
-        self.detailed_logging = should_log
-
     def initialize_for_processing(self, settings: SessionSettings, session_dir: Path) -> None: ...
 
     def validate_clips(self) -> None:

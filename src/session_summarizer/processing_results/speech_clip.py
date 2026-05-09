@@ -66,10 +66,6 @@ class SpeechClip:
         return len(self.words)
 
     @property
-    def midpoint(self) -> float:
-        return (self.start_time + self.end_time) / 2
-
-    @property
     def duration(self) -> float:
         return self.end_time - self.start_time
 

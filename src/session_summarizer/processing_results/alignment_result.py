@@ -26,10 +26,6 @@ class WordAlignment(TextPhraseBuilder):
     def duration(self) -> float:
         return self.end_time - self.start_time
 
-    @property
-    def midpoint(self) -> float:
-        return (self.start_time + self.end_time) / 2
-
     def overlap(self, other: SegmentProtocol, minimum_overlap: float = 0.0) -> float:
         return compute_overlap(self, other, minimum_overlap)
 
