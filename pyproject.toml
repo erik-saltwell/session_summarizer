@@ -25,7 +25,6 @@ dependencies = [
     "pyannote-audio",
     "onnxruntime>=1.18.0",
     "pyannote-metrics>=3.2.1",
-    "diarizationlm>=0.1.5",
     "punctuators>=0.0.7",
     "structlog>=25.5.0",
     "litellm>=1.83.0",

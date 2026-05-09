@@ -71,8 +71,6 @@ class ValidateDiarizationCommand(SessionProcessingCommand):
         )
 
     def process_session(self, settings: SessionSettings, session_dir: Path) -> None:
-        # DiarizationLMCommand(self.session_id).execute(self.logger)
-
         results: dict[str, DiarizationValidationResult] = {}
         failed: list[str] = []
 

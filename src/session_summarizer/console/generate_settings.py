@@ -418,7 +418,7 @@ eleven_labs:
 # ---------------------------------------------------------------------------
 # Small floating-point tolerance used when comparing time boundaries.
 # Used by: speech_clip_factory, candidate_pool, anonymous_clips,
-#          identity_stitch, diarizationlm_refiner, validate_diarization.
+#          identity_stitch, validate_diarization.
 # Allowed values: >= 0.0. Reasonable default: 0.000001
 epsilon: 0.000001
 

@@ -547,7 +547,7 @@ class SessionSettings(BaseModel, frozen=True):
             description=(
                 "Small floating-point tolerance for time-boundary comparisons. "
                 "Used by: speech_clip_factory, candidate_pool, anonymous_clips, "
-                "identity_stitch, diarizationlm_refiner, validate_diarization."
+                "identity_stitch, validate_diarization."
             )
         ),
     ]
