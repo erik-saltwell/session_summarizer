@@ -42,17 +42,3 @@ class CandidatePool:
     def iterate_candidates(self, all_clips: SpeechClipSet) -> Iterator[SpeechClip]:
         for candidate in self._candidates:
             yield all_clips[candidate.clip_id]
-
-    @property
-    def is_empty(self) -> bool:
-        return not self._candidates
-
-    # def get_nearest_candidate_to_midpoint(self, current_word: WordAlignment, all_clips: SpeechClipSet) -> SpeechClip:
-    #     if self.is_empty:
-    #         raise RuntimeError("No candidates available for word but also not creating anonymous segments.")
-    #     word_midpoint = current_word.midpoint
-    #     nearest_candidate = min(
-    #         self._candidates,
-    #         key=lambda candidate_info: abs(all_clips[candidate_info.clip_id].midpoint - word_midpoint),
-    #     )
-    #     return all_clips[nearest_candidate.clip_id]

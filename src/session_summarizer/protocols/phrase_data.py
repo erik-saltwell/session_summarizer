@@ -14,9 +14,6 @@ class TextPhrase:
     def end_offset(self) -> int:
         return self.start_offset + self.length
 
-    def contains_start(self, start_to_test: int) -> bool:
-        return start_to_test >= self.start_offset and start_to_test < self.end_offset
-
 
 class TextPhraseBuilder(Protocol):
     def build_phrase_data(self, start_offset: int) -> TextPhrase: ...

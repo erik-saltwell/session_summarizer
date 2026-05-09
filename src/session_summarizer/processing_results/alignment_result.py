@@ -42,10 +42,6 @@ class WordAlignment(TextPhraseBuilder):
     def build_phrase_data(self, start_offset: int) -> TextPhrase:
         return TextPhrase(start_offset, len(self.word))
 
-    @property
-    def has_ground_truth(self) -> bool:
-        return self.ground_truth is not None
-
 
 @dataclass
 class AlignmentResult(ProcessResultProtocol):

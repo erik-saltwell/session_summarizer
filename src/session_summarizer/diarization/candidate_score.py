@@ -18,10 +18,7 @@ class CandidateScore(NamedTuple):
     """
 
     overlap_score: float
-    neg_mid_dist: float
-    neg_gap: float
     shorter_bonus: float
-    neg_start: float
 
 
 def score_candidate(
@@ -38,8 +35,6 @@ def score_candidate(
     segment_duration = max(candidate_clip.duration, minimum_meaningful_length)
 
     overlap = 0.0 if ignore_overlap else word.overlap(candidate_clip, epsilon)
-    gap = word.gap_distance(candidate_clip, minimum_meaningful_length)
-    midpoint_distance = abs(word.midpoint - candidate_clip.midpoint)
     iou_overlap_ratio = overlap / max(word_duration + segment_duration - overlap, minimum_meaningful_length)
 
     overlap_score: float
@@ -54,8 +49,5 @@ def score_candidate(
 
     return CandidateScore(
         overlap_score=overlap_score,
-        neg_mid_dist=-midpoint_distance,
-        neg_gap=-gap,
         shorter_bonus=shorter_bonus,
-        neg_start=-candidate_clip.start_time,
     )

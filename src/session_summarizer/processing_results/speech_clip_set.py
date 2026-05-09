@@ -3,17 +3,11 @@ from __future__ import annotations
 import json
 from collections.abc import Iterator
 from pathlib import Path
-from typing import NamedTuple
 
 from ..protocols import TextPhraseBuilder, TextPhraseSet
 from .alignment_result import WordAlignment
 from .process_result_protocol import ProcessResultProtocol
 from .speech_clip import SpeechClip, SpeechClipFlags
-
-
-class ClipWithSpeaker(NamedTuple):
-    clip: SpeechClip
-    speaker: str
 
 
 class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol, TextPhraseSet):
