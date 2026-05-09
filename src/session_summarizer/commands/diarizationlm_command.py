@@ -8,7 +8,7 @@ import session_summarizer.utils.common_paths as common_paths
 from ..helpers.diarizationlm_refiner import apply_diarizationlm
 from ..processing_results import SpeechClipSet
 from ..settings import SessionSettings
-from .diarize_audio import DiarizeAudioCommand
+from .diarize_audio_eleven_labs import DiarizeAudioElevenLabsCommand
 from .session_processing_command import SessionProcessingCommand
 
 
@@ -20,7 +20,7 @@ class DiarizationLMCommand(SessionProcessingCommand):
     def add_dependencies(self, settings: SessionSettings, session_dir: Path) -> None:
         self.inputs.append(session_dir / settings.paths.base_diarization)
         self.outputs.append(session_dir / settings.paths.diarizationlm_processed)
-        self.dependencies.append(DiarizeAudioCommand(self.session_id, self.tracer))
+        self.dependencies.append(DiarizeAudioElevenLabsCommand(self.session_id, self.tracer))
 
     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
         clips: SpeechClipSet = SpeechClipSet.load_from_json(session_dir / settings.paths.base_diarization)

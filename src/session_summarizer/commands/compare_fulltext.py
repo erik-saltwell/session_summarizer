@@ -11,12 +11,9 @@ from ..evaluation import TranscriptionValidationResult, clean_text_for_evaluatio
 from ..processing_results import TranscriptionResult
 from ..settings.session_settings import SessionSettings
 from .add_embeddings import AddEmbeddingsCommand
-from .align_transcript import AlignTranscriptCommand
 from .diarizationlm_command import DiarizationLMCommand
-from .diarize_audio import DiarizeAudioCommand
 from .identify_speakers import IdentifySpeakersCommand
 from .session_processing_command import SessionProcessingCommand
-from .transcribe_audio import TranscribeAudioCommand
 
 _METRIC_LABELS: list[str] = [
     "Word Error Rate (WER)",
@@ -65,9 +62,6 @@ class CompareFullTextCommand(SessionProcessingCommand):
                 IdentifySpeakersCommand(self.session_id, self.tracer),
                 AddEmbeddingsCommand(self.session_id, self.tracer),
                 DiarizationLMCommand(self.session_id, self.tracer),
-                DiarizeAudioCommand(self.session_id, self.tracer),
-                AlignTranscriptCommand(self.session_id, self.tracer),
-                TranscribeAudioCommand(self.session_id, self.tracer),
             ]
         )
 

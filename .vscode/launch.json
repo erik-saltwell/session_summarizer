@@ -5,18 +5,6 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "align",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "session_summarizer",
-            "console": "integratedTerminal",
-            "args": [
-                "align-transcription",
-                "--session",
-                "test",
-            ]
-        },
-        {
             "name": "assign-utterance-ids",
             "type": "debugpy",
             "request": "launch",
@@ -137,13 +125,13 @@
             ]
         },
         {
-            "name": "diarize-audio",
+            "name": "diarize-audio-eleven-labs",
             "type": "debugpy",
             "request": "launch",
             "module": "session_summarizer",
             "console": "integratedTerminal",
             "args": [
-                "diarize-audio",
+                "diarize-audio-eleven-labs",
                 "--session",
                 "test",
             ]
@@ -291,18 +279,6 @@
             ]
         },
         {
-            "name": "segment",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "session_summarizer",
-            "console": "integratedTerminal",
-            "args": [
-                "compute-vad-segments",
-                "--session",
-                "test",
-            ]
-        },
-        {
             "name": "simplify-transcript",
             "type": "debugpy",
             "request": "launch",
@@ -334,18 +310,6 @@
             "console": "integratedTerminal",
             "args": [
                 "test",
-                "--session",
-                "test",
-            ]
-        },
-        {
-            "name": "transcribe",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "session_summarizer",
-            "console": "integratedTerminal",
-            "args": [
-                "transcribe",
                 "--session",
                 "test",
             ]

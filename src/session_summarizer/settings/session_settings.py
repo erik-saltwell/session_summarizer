@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field, ValidationInfo, field_validator, model_va
 
 from ..completions.model_settings import ModelEffort, ModelString
 from .diarization_stitching_settings import DiarizationStitchingSettings
+from .eleven_labs_diarization_settings import ElevenLabsDiarizationSettings
 from .vad_settings import VadSettings
 
 _SETTINGS_FILE = "settings.yaml"
@@ -573,6 +574,15 @@ class SessionSettings(BaseModel, frozen=True):
     stitching: Annotated[
         DiarizationStitchingSettings,
         Field(description="Policy knobs for assigning ASR words to diarized speaker segments"),
+    ]
+    eleven_labs: Annotated[
+        ElevenLabsDiarizationSettings,
+        Field(
+            description=(
+                "Settings for the ElevenLabs Scribe v2 diarization path. "
+                "Used by: helpers/audio_diarizaer_eleven_labs.py."
+            )
+        ),
     ]
     device: Annotated[
         Literal["cpu", "cuda"],

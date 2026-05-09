@@ -22,7 +22,6 @@ from session_summarizer.commands.punctuate_text import PunctuateTextCommand
 from session_summarizer.utils import common_paths
 
 from ..commands.add_embeddings import AddEmbeddingsCommand
-from ..commands.align_transcript import AlignTranscriptCommand
 from ..commands.assign_utterance_ids import AssignUtteranceIdsCommand
 from ..commands.clean_audio import CleanAudioCommand
 from ..commands.clean_audio_eleven_labs import CleanAudioElevenLabsCommand
@@ -30,13 +29,12 @@ from ..commands.clean_session import CleanSessionCommand
 from ..commands.clean_session_step import CleanSessionStepCommand
 from ..commands.clear_logs import ClearLogsCommand
 from ..commands.compare_fulltext import CompareFullTextCommand
-from ..commands.compute_segments import ComputeSegmentsCommand
 from ..commands.create_speaker_clips import (
     CreateKnownSpeakerClipsCommand,
     CreateSpeakerClipsFromInferredSpeakersCommand,
 )
 from ..commands.diarizationlm_command import DiarizationLMCommand
-from ..commands.diarize_audio import DiarizeAudioCommand
+from ..commands.diarize_audio_eleven_labs import DiarizeAudioElevenLabsCommand
 from ..commands.document_dependencies import DocumentDependenciesCommand
 from ..commands.identify_speakers import IdentifySpeakersCommand
 from ..commands.infer_speakers import InferSpeakersCommand
@@ -49,7 +47,6 @@ from ..commands.simplify_transcript import SimplifyTranscriptCommand
 from ..commands.stitch_identities import StitichIdentitiesCommand
 from ..commands.summarize_session import SummarizeSessionCommand
 from ..commands.test_command import TestCommand
-from ..commands.transcribe_audio import TranscribeAudioCommand
 from ..commands.validate_diarization import ValidateDiarizationCommand
 from ..commands.validate_transcribers import ValidateTranscribersCommand
 from ..logging import CompositeLogger, FileLogger, RichConsoleLogger
@@ -128,17 +125,6 @@ def add_embeddings(
     command.execute(logger)
 
 
-@app.command("align-transcription")
-def align_transcription(
-    session: str = typer.Option(..., "--session", "-s", help="ID of the session to transcribe"),
-) -> None:
-    confirm_session(session)
-    _set_seed(session)
-    logger, tracer = initialize_logging()
-    command: AlignTranscriptCommand = AlignTranscriptCommand(session, tracer, force=True)
-    command.execute(logger)
-
-
 @app.command("apply-identity-stitching")
 def apply_identity_stitiching(
     session: str = typer.Option(..., "--session", "-s", help="ID of the session to process"),
@@ -183,18 +169,6 @@ def compare_texts(
     _set_seed(session)
     logger, tracer = initialize_logging()
     command: CompareFullTextCommand = CompareFullTextCommand(session, tracer, force=True)
-    command.execute(logger)
-
-
-@app.command("compute-vad-segments")
-def compute_vad_segments(
-    session: str = typer.Option(..., "--session", "-s", help="ID of the session to segment"),
-) -> None:
-    """Run VAD on cleaned audio and compute optimal cut points for chunked processing."""
-    confirm_session(session)
-    _set_seed(session)
-    logger, tracer = initialize_logging()
-    command: ComputeSegmentsCommand = ComputeSegmentsCommand(session, tracer, force=True)
     command.execute(logger)
 
 
@@ -263,7 +237,6 @@ def clean_diarization(
     _set_seed(session)
     logger, tracer = initialize_logging()
     command: CleanSessionStepCommand = CleanSessionStepCommand(session, tracer, force=True)
-    command.commands_to_clean.append(DiarizeAudioCommand(session, tracer, force=True))
     command.execute(logger)
 
 
@@ -330,14 +303,15 @@ def remove_outlier_speaker_clips(
     command.execute(logger)
 
 
-@app.command("diarize-audio")
-def diarize_audio(
-    session: str = typer.Option(..., "--session", "-s", help="ID of the session to transcribe"),
+@app.command("diarize-audio-eleven-labs")
+def diarize_audio_eleven_labs(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to diarize"),
 ) -> None:
+    """Diarize session audio using ElevenLabs speaker diarization."""
     confirm_session(session)
     _set_seed(session)
     logger, tracer = initialize_logging()
-    command: DiarizeAudioCommand = DiarizeAudioCommand(session, tracer, force=True)
+    command: DiarizeAudioElevenLabsCommand = DiarizeAudioElevenLabsCommand(session, tracer, force=True)
     command.execute(logger)
 
 
@@ -754,6 +728,32 @@ stitching:
 
 
 # ---------------------------------------------------------------------------
+# eleven_labs  (REQUIRED)
+# ---------------------------------------------------------------------------
+# Settings for the ElevenLabs Scribe v2 diarization path. Used by the
+# diarize-audio-eleven-labs command, which calls ElevenLabs' speech-to-text
+# API with diarization enabled and builds a SpeechClipSet directly from the
+# returned word-level speaker assignments. This path bypasses the DiariZen
+# diarizer and the word-to-segment stitching pipeline entirely — speaker
+# assignments come straight from ElevenLabs at word granularity.
+# Used by: helpers/audio_diarizaer_eleven_labs.py.
+eleven_labs:
+
+  # Maximum gap (seconds) between two consecutive same-speaker words that
+  # will still be kept inside a single SpeechClip. Pauses longer than this
+  # split the clip in two even when the speaker_id is unchanged. Without
+  # this, one speaker's extended monologue (e.g. a Game Master narration
+  # block between player questions) would collapse into a single
+  # multi-minute clip and frustrate downstream per-utterance steps such as
+  # backchannel detection and identity stitching. A speaker change always
+  # splits, regardless of this value.
+  # Used by: diarize_audio_eleven_labs to decide intra-speaker clip
+  #          boundaries when grouping ElevenLabs words into clips.
+  # Allowed values: >= 0.0 (seconds). Reasonable default: 2.0
+  clip_gap_seconds: 2.0
+
+
+# ---------------------------------------------------------------------------
 # epsilon  (REQUIRED)
 # ---------------------------------------------------------------------------
 # Small floating-point tolerance used when comparing time boundaries.
@@ -886,18 +886,6 @@ def test(
     logger, tracer = initialize_logging()
 
     command: TestCommand = TestCommand(session, tracer, force=True)
-    command.execute(logger)
-
-
-@app.command("transcribe")
-def transcribe(
-    session: str = typer.Option(..., "--session", "-s", help="ID of the session to transcribe"),
-) -> None:
-    confirm_session(session)
-    _set_seed(session)
-    logger, tracer = initialize_logging()
-
-    command: TranscribeAudioCommand = TranscribeAudioCommand(session, tracer, force=True)
     command.execute(logger)
 
 
