@@ -55,9 +55,6 @@ class SpeechClip:
     def is_backchannel(self) -> bool:
         return self.has_flag(SpeechClipFlags.IS_BACKCHANNEL)
 
-    def set_backchannel(self, is_backchannel: bool) -> None:
-        self.set_flag(SpeechClipFlags.IS_BACKCHANNEL, is_backchannel)
-
     @property
     def character_count(self) -> int:
         return len(self.text)

@@ -66,14 +66,3 @@ class DiarizationLMModel:
         completion_tokens = outputs[:, prompt_length:]
         decoded = cast(list[str], self._tokenizer.batch_decode(completion_tokens, skip_special_tokens=True))
         return decoded[0]
-
-    def unload(self) -> None:
-        if self._model is not None:
-            del self._model
-            self._model = None
-        if self._tokenizer is not None:
-            del self._tokenizer
-            self._tokenizer = None
-        import torch
-
-        torch.cuda.empty_cache()

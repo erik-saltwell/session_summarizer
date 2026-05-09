@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import shutil
 from datetime import datetime
 from pathlib import Path
 
@@ -57,16 +56,6 @@ def voice_samples_dir() -> Path:
     return _VOICE_SAMPLES
 
 
-def write_file_at_root(filename: str, text: str) -> None:
-    output_path: Path = data_dir() / filename
-    output_path.write_text(text)
-
-
-def load_file_from_root(filename: str) -> str:
-    input_path: Path = data_dir() / filename
-    return input_path.read_text()
-
-
 def voice_samples_for_speaker(speaker: str, root_folder: Path | None = None) -> Path:
     if root_folder:
         return voice_samples_dir() / root_folder / speaker
@@ -85,30 +74,12 @@ def build_speakers_file_path() -> Path:
     return voice_samples_dir() / _REGISTERED_SPEAKERS_FILE
 
 
-# def voice_sample_wav_file(speaker_name: str) -> Path:
-#     return voice_samples_dir() / (speaker_name + ".wav")
-
-
-def ensure_session(session_id: str) -> None:
-    path: Path = session_dir(session_id)
-    ensure_directory(path)
-
-
-def delete_session(session_id: str) -> None:
-    path = session_dir(session_id)
-    shutil.rmtree(path, ignore_errors=True)
-
-
 def test_data_dir() -> Path:
     return _TEST_DATA
 
 
 def test_transcript_path() -> Path:
     return test_data_dir() / _TEST_TRANSCRIPT_FILENAME
-
-
-# def test_recording_path() -> Path:
-#     return test_data_dir() / _TEST_ORIGINAL_FILEPATH
 
 
 def is_test_session(session_id: str) -> bool:

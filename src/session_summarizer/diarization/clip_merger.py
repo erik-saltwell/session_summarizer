@@ -50,30 +50,6 @@ def clips_are_same_speaker(
     return first.speakers == second.speakers
 
 
-def clips_have_subset_superset_relationship(
-    first: SpeechClip,
-    second: SpeechClip,
-    settings: SessionSettings,
-    exempt_anonymous: bool,
-    logger: LoggingProtocol,
-) -> bool:
-    if exempt_anonymous and (first.is_anonymous or second.is_anonymous):
-        return True
-    return first.speakers <= second.speakers or second.speakers <= first.speakers
-
-
-def second_clip_is_superset(
-    first: SpeechClip,
-    second: SpeechClip,
-    settings: SessionSettings,
-    exempt_anonymous: bool,
-    logger: LoggingProtocol,
-) -> bool:
-    if exempt_anonymous and (first.is_anonymous or second.is_anonymous):
-        return True
-    return first.speakers <= second.speakers
-
-
 def merge_clips(
     initial_clips: SpeechClipSet,
     selector: MergeSelector,

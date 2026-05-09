@@ -34,43 +34,6 @@ def _get_audio_duration(audio_path: Path) -> float:
     return float(result.stdout.strip())
 
 
-def create_combined_speaker_audio_file(speaker_label: str, gap_length: float, temp_folder: Path | None) -> None:
-    audio_directory: Path = common_paths.voice_samples_for_speaker(speaker_label, root_folder=temp_folder)
-    audio_extension: str = ".wav"
-    output_filepath: Path = common_paths.voice_samples_dir() / (speaker_label + audio_extension)
-
-    input_files = sorted(audio_directory.glob(f"*{audio_extension}"))
-    if not input_files:
-        raise FileNotFoundError(f"No {audio_extension} files found in {audio_directory}")
-
-    output_filepath.parent.mkdir(parents=True, exist_ok=True)
-
-    cmd: list[str] = ["ffmpeg", "-y"]
-    for f in input_files:
-        cmd += ["-i", str(f)]
-
-    filter_parts: list[str] = []
-    concat_inputs: list[str] = []
-
-    for i in range(len(input_files)):
-        label = f"a{i}"
-        filter_parts.append(f"[{i}]aresample=16000,aformat=sample_fmts=s16:channel_layouts=mono[{label}]")
-        concat_inputs.append(f"[{label}]")
-
-        if i < len(input_files) - 1 and gap_length > 0:
-            gap_label = f"g{i}"
-            filter_parts.append(f"aevalsrc=0:d={gap_length}:s=16000:c=mono[{gap_label}]")
-            concat_inputs.append(f"[{gap_label}]")
-
-    total_segments = len(concat_inputs)
-    filter_parts.append(f"{''.join(concat_inputs)}concat=n={total_segments}:v=0:a=1[out]")
-
-    cmd += ["-filter_complex", ";".join(filter_parts)]
-    cmd += ["-map", "[out]", "-c:a", "pcm_s16le", str(output_filepath)]
-
-    run_command(cmd)
-
-
 def _concat_audio_files(left: Path, right: Path, output: Path, gap_length: float = 0.0) -> None:
     """Concatenate two WAV files into one using ffmpeg with an optional silence gap."""
     if gap_length > 0:

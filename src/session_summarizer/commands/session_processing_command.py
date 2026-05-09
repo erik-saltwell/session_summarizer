@@ -10,7 +10,7 @@ import torch
 import typer
 
 from ..evaluation import clean_text_for_evaluation
-from ..processing_results import AlignmentResult, SpeechClipSet
+from ..processing_results import SpeechClipSet
 from ..protocols import CommmandProtocol, LoggingProtocol, NullLogger, SessionSettings
 from ..utils import Tracer, common_paths, flush_gpu_memory, silence_python_noise
 
@@ -137,9 +137,6 @@ class SessionProcessingCommand(ABC, CommmandProtocol):
             flush_gpu_memory()
             self.report_gpu_usage(f"After Processing {self.name()}")
 
-    def postpend_text(self, input: Path, tag: str, suffix: str) -> Path:
-        return input.with_name(f"{input.stem}{tag}{suffix}")
-
     def save_cleaned_text(self, text_container: PlainTextContainer, session_dir: Path, json_filename: Path) -> None:
         text: str = text_container.plain_text()
         cleaned_text = clean_text_for_evaluation(text)
@@ -163,7 +160,3 @@ class SessionProcessingCommand(ABC, CommmandProtocol):
             markdown_path, include_speakers=True, include_timestamps=True, include_utterance_ids=True
         )
         self.save_cleaned_text(clips, session_dir, json_filename)
-
-    def save_alignment_result(self, alignment_result: AlignmentResult, session_dir: Path, json_filename: Path) -> None:
-        alignment_result.save_to_json(session_dir / json_filename)
-        self.save_cleaned_text(alignment_result, session_dir, json_filename)
