@@ -7,9 +7,9 @@ if TYPE_CHECKING:
     from ..vad.segment_splitter import SegmentSplitResultSet
 
 
-from ..protocols.logging_protocol import LoggingProtocol
+from ..processing_results.transcription_result import TranscriptionResult
 from ..utils import Tracer
-from .transcription_result import TranscriptionResult
+from .logging_protocol import LoggingProtocol
 
 
 class TranscriberProtocol(Protocol):

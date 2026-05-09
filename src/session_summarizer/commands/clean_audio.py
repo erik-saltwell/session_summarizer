@@ -5,7 +5,7 @@ from pathlib import Path
 
 import session_summarizer.utils.common_paths as common_paths
 
-from ..helpers.audio_cleaner import clean_audio_eleven_labs
+from ..helpers.audio_cleaner import clean_audio
 from ..settings.session_settings import SessionSettings
 from .session_processing_command import SessionProcessingCommand
 
@@ -20,5 +20,4 @@ class CleanAudioCommand(SessionProcessingCommand):
         self.outputs.append(session_dir / settings.paths.cleaned_audio)
 
     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
-        clean_audio_eleven_labs(settings, session_dir, True, self, self.logger, self.tracer)
-        # clean_audio(settings, session_dir, True, self, self.logger, self.tracer)
+        clean_audio(settings, session_dir, False, self, self.logger, self.tracer)

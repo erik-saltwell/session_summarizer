@@ -4,8 +4,9 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-from ..processing_results.transcriber_protocol import TranscriberProtocol, TranscriptionResult
+from ..processing_results.transcription_result import TranscriptionResult
 from ..protocols import SessionSettings
+from ..protocols.transcriber_protocol import TranscriberProtocol
 from ..transcription import CanaryQwenTranscriber, WhisperTranscriber
 from ..transcription.transcription_validator import TranscriptionValidationResult, validate_transcriber
 from ..vad import SegmentSplitResultSet

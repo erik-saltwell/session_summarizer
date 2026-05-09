@@ -6,7 +6,7 @@ from pathlib import Path
 import session_summarizer.utils.common_paths as common_paths
 
 from ..helpers.audio_transcriber import transcribe_from_cleaned_audio
-from ..processing_results.transcriber_protocol import TranscriptionResult
+from ..processing_results.transcription_result import TranscriptionResult
 from ..settings.session_settings import SessionSettings
 from ..vad.segment_splitter import SegmentSplitResultSet
 from .clean_audio import CleanAudioCommand
