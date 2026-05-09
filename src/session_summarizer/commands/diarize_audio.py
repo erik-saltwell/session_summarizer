@@ -5,7 +5,7 @@ from pathlib import Path
 
 import session_summarizer.utils.common_paths as common_paths
 
-from ..helpers.audio_diarizaer_eleven_labs import diarize_audio_eleven_labs
+from ..helpers.audio_diarizer import diarize_audio
 from ..helpers.ground_truth_adder import enhance_words_with_ground_truth
 from ..processing_results import SpeechClipSet
 from ..settings.session_settings import SessionSettings
@@ -24,7 +24,7 @@ class DiarizeAudioCommand(SessionProcessingCommand):
         self.dependencies.append(CleanAudioCommand(self.session_id, self.tracer))
 
     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
-        clips: SpeechClipSet = diarize_audio_eleven_labs(settings, session_dir, self, self.logger, self.tracer)
+        clips: SpeechClipSet = diarize_audio(settings, session_dir, self, self.logger, self.tracer)
 
         if common_paths.is_test_session(self.session_id):
             self.tracer.add_context("has_ground_truth", True)
