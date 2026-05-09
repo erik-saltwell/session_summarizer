@@ -1,13 +1,9 @@
 from __future__ import annotations
 
-import gc
 import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
-
-from ..protocols import LoggingProtocol
-from ..utils import Tracer, silence_os_noise
 
 
 def _patch_torchaudio_for_pyannote() -> None:
@@ -169,70 +165,3 @@ def merge_overlapping_diarization(raw: DiarizationResult) -> MergedDiarizationRe
             merged.append(MergedDiarizationSegment(start_time=t_start, end_time=t_end, speakers=active))
 
     return MergedDiarizationResult(segments=merged)
-
-
-@dataclass
-class DiarizenDiarizer:
-    """Speaker diarizer using BUT-FIT/diarizen-wavlm-large-s80-md-v2.
-
-    Speaker count is pinned via diarize(num_speakers=...) — min and max clusters
-    are both set to that value. Supports up to 4 overlapping speakers.
-
-    VRAM discipline: model is loaded and fully unloaded within each diarize() call.
-    """
-
-    model_name: str = "BUT-FIT/diarizen-wavlm-large-s80-md-v2"
-
-    def diarize(
-        self, audio_path: Path, num_speakers: int, logger: LoggingProtocol, tracer: Tracer
-    ) -> MergedDiarizationResult:
-        _patch_torchaudio_for_pyannote()
-
-        try:
-            with silence_os_noise():
-                import torch
-                import torch.torch_version
-                from diarizen.pipelines.inference import DiariZenPipeline
-        except ImportError as e:
-            raise ImportError("diarizen is required: pip install diarizen") from e
-
-        # PyTorch 2.6+ defaults weights_only=True; the diarizen checkpoint stores
-        # TorchVersion objects, so we need to add it to the safe-globals allowlist.
-        torch.serialization.add_safe_globals([torch.torch_version.TorchVersion])
-
-        with logger.status("Loading model..."):
-            with silence_os_noise():
-                pipeline = DiariZenPipeline.from_pretrained(self.model_name)
-            pipeline.min_speakers = num_speakers
-            pipeline.max_speakers = num_speakers
-
-        tracer.add_context("num_speakers", num_speakers)
-        try:
-            with logger.status("Running diarization..."):
-                with silence_os_noise():
-                    annotation = pipeline(str(audio_path.resolve()))
-
-                segments: list[DiarizationSegment] = []
-                for turn, _, speaker in annotation.itertracks(yield_label=True):  # pyright: ignore[reportAssignmentType]
-                    segments.append(
-                        DiarizationSegment(
-                            speaker=str(speaker),
-                            start=float(turn.start),
-                            end=float(turn.end),
-                        )
-                    )
-                tracer.add_context("initial_segment_count", len(segments))
-
-                segments.sort(key=lambda s: s.start)
-                raw = DiarizationResult(segments=segments)
-                result = merge_overlapping_diarization(raw)
-                tracer.add_context("merged_segment_coun", len(result.segments))
-                return result
-
-        finally:
-            del pipeline
-            gc.collect()
-            try:
-                torch.cuda.empty_cache()
-            except Exception:
-                pass

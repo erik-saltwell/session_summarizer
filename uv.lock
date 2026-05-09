@@ -502,11 +502,6 @@ wheels = [
 ]
 
 [[package]]
-name = "diarizen"
-version = "0.0.1"
-source = { git = "https://github.com/BUTSpeechFIT/DiariZen.git#510d2fe39cbf02e38b9e87ef2154e274d5ef9af0" }
-
-[[package]]
 name = "dill"
 version = "0.4.1"
 source = { registry = "https://pypi.org/simple" }
@@ -3199,7 +3194,6 @@ source = { editable = "." }
 dependencies = [
     { name = "addict", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "clearvoice", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
-    { name = "diarizen", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "elevenlabs", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "en-core-web-sm", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "jiwer", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
@@ -3241,7 +3235,6 @@ dev = [
 requires-dist = [
     { name = "addict", specifier = ">=2.4.0" },
     { name = "clearvoice", specifier = ">=0.1.2" },
-    { name = "diarizen", git = "https://github.com/BUTSpeechFIT/DiariZen.git" },
     { name = "elevenlabs", specifier = ">=2.46.0" },
     { name = "en-core-web-sm", url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" },
     { name = "jiwer", specifier = ">=3.1.0" },

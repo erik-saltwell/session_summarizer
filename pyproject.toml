@@ -12,7 +12,6 @@ dependencies = [
     "typer>=0.21.1",
     "openai-whisper>=20250625",
     "nemo_toolkit[asr]",
-    "diarizen",
     "torch==2.10.0",
     "torchvision==0.25.0",
     "torchaudio==2.10.0",
@@ -62,7 +61,6 @@ environments = [
 torch = [{ index = "pytorch-cu128" }]
 torchvision = [{ index = "pytorch-cu128" }]
 torchaudio = [{ index = "pytorch-cu128" }]
-diarizen = { git = "https://github.com/BUTSpeechFIT/DiariZen.git" }
 pyannote-audio = { git = "https://github.com/BUTSpeechFIT/DiariZen.git", subdirectory = "pyannote-audio" }
 en-core-web-sm = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" }
 
