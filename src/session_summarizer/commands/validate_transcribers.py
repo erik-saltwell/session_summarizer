@@ -7,7 +7,7 @@ from pathlib import Path
 from ..processing_results.transcription_result import TranscriptionResult
 from ..protocols import SessionSettings
 from ..protocols.transcriber_protocol import TranscriberProtocol
-from ..transcription import CanaryQwenTranscriber, WhisperTranscriber
+from ..transcription import CanaryQwenTranscriber, ElevenLabsTranscriber, WhisperTranscriber
 from ..transcription.transcription_validator import TranscriptionValidationResult, validate_transcriber
 from ..vad import SegmentSplitResultSet
 from .clean_audio import CleanAudioCommand
@@ -26,6 +26,7 @@ TranscriberFactory = Callable[[str], TranscriberProtocol]
 TRANSCRIBER_REGISTRY: list[tuple[str, TranscriberFactory]] = [
     ("Canary Qwen", lambda device: CanaryQwenTranscriber(device=device)),
     ("Whisper", lambda device: WhisperTranscriber(device=device)),
+    ("ElevenLabs Scribe v2", lambda device: ElevenLabsTranscriber()),
 ]
 
 _METRIC_LABELS: list[str] = [
