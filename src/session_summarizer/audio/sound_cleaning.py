@@ -91,6 +91,30 @@ def measure_loudness(
     return {k: str(v) for k, v in data.items()}
 
 
+def convert_to_16k_mono(input_path: Path, output_wav: Path) -> None:
+    """Convert audio to 16 kHz mono PCM WAV without loudness normalization."""
+    output_wav.parent.mkdir(parents=True, exist_ok=True)
+
+    cmd = [
+        "ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-y",
+        "-i",
+        str(input_path),
+        "-vn",
+        "-ac",
+        "1",
+        "-ar",
+        "16000",
+        "-c:a",
+        "pcm_s16le",
+        str(output_wav),
+    ]
+    run_command(cmd)
+
+
 def normalize_and_export_16k_mono(
     input_wav: Path,
     output_wav: Path,
