@@ -11,7 +11,6 @@ from .logging_protocol import (
     _NullStatus,
 )
 from .phrase_data import TextPhrase, TextPhraseBuilder, TextPhraseSet
-from .transcriber_protocol import TranscriberProtocol
 
 __all__ = [
     "LoggingProtocol",
@@ -27,5 +26,4 @@ __all__ = [
     "TextPhrase",
     "TextPhraseBuilder",
     "TextPhraseSet",
-    "TranscriberProtocol",
 ]
