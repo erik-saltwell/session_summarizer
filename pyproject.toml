@@ -30,6 +30,7 @@ dependencies = [
     "structlog>=25.5.0",
     "litellm>=1.83.0",
     "en-core-web-sm",
+    "elevenlabs>=2.46.0",
 ]
 
 [project.scripts]

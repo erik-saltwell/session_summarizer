@@ -634,6 +634,23 @@ wheels = [
 ]
 
 [[package]]
+name = "elevenlabs"
+version = "2.46.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "httpx", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+    { name = "pydantic", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+    { name = "pydantic-core", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+    { name = "requests", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+    { name = "typing-extensions", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+    { name = "websockets", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1b/71/62b97757dd3ad34d62d3c1cdbf8f66a5052585213d63ba436bd656f68f81/elevenlabs-2.46.0.tar.gz", hash = "sha256:63f5403ca094ca6a06812216ad89a7299aaac4422973581cfd31187e8c57cf33", size = 572607, upload-time = "2026-05-07T11:28:49.661Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/71/79/e5457ebd3e78093960399f819c51c49f52d3bcea04977f9847725aae9e83/elevenlabs-2.46.0-py3-none-any.whl", hash = "sha256:cc9e8b06c3e2adf2ec075bbe3042e18c7e29e3d42b017556af33e7155ff5b004", size = 1567634, upload-time = "2026-05-07T11:28:47.312Z" },
+]
+
+[[package]]
 name = "en-core-web-sm"
 version = "3.8.0"
 source = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" }
@@ -3329,6 +3346,7 @@ dependencies = [
     { name = "clearvoice", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "diarizationlm", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "diarizen", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
+    { name = "elevenlabs", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "en-core-web-sm", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "jiwer", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
     { name = "litellm", marker = "implementation_name == 'cpython' and sys_platform == 'linux'" },
@@ -3371,6 +3389,7 @@ requires-dist = [
     { name = "clearvoice", specifier = ">=0.1.2" },
     { name = "diarizationlm", specifier = ">=0.1.5" },
     { name = "diarizen", git = "https://github.com/BUTSpeechFIT/DiariZen.git" },
+    { name = "elevenlabs", specifier = ">=2.46.0" },
     { name = "en-core-web-sm", url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" },
     { name = "jiwer", specifier = ">=3.1.0" },
     { name = "litellm", specifier = ">=1.83.0" },
