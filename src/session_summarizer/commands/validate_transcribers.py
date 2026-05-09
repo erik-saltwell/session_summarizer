@@ -4,8 +4,6 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-from ..helpers.audio_cleaner import clean_audio
-from ..helpers.audio_segmenter import compute_vad_segments
 from ..processing_results.transcriber_protocol import TranscriberProtocol, TranscriptionResult
 from ..protocols import SessionSettings
 from ..transcription import CanaryQwenTranscriber, WhisperTranscriber
@@ -62,9 +60,8 @@ class ValidateTranscribersCommand(SessionProcessingCommand):
         self.dependencies.append(CleanAudioCommand(self.session_id, self.tracer))
 
     def process_session(self, settings: SessionSettings, session_dir: Path) -> None:
-        clean_audio(settings, session_dir, self, self.logger, self.tracer)
         audio_path: Path = session_dir / settings.paths.cleaned_audio
-        seg_results: SegmentSplitResultSet = compute_vad_segments(settings, session_dir, self, self.logger, self.tracer)
+        seg_results: SegmentSplitResultSet = SegmentSplitResultSet.load(session_dir / settings.paths.vad_segments)
 
         results: dict[str, TranscriptionValidationResult] = {}
 

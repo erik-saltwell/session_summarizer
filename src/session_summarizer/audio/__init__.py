@@ -1,3 +1,4 @@
+from .eleven_labs_isolation import isolate_audio_eleven_labs
 from .sound_cleaning import (
     convert_to_16k_mono,
     convert_to_48k_wav,
@@ -14,4 +15,5 @@ __all__ = [
     "measure_loudness",
     "normalize_and_export_16k_mono",
     "save_segment_as_speaker_audio_clip",
+    "isolate_audio_eleven_labs",
 ]

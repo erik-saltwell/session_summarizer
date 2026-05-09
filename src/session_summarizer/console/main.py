@@ -25,6 +25,7 @@ from ..commands.add_embeddings import AddEmbeddingsCommand
 from ..commands.align_transcript import AlignTranscriptCommand
 from ..commands.assign_utterance_ids import AssignUtteranceIdsCommand
 from ..commands.clean_audio import CleanAudioCommand
+from ..commands.clean_audio_eleven_labs import CleanAudioElevenLabsCommand
 from ..commands.clean_session import CleanSessionCommand
 from ..commands.clean_session_step import CleanSessionStepCommand
 from ..commands.clear_logs import ClearLogsCommand
@@ -237,6 +238,19 @@ def clean_audio(
     logger, tracer = initialize_logging()
 
     command: CleanAudioCommand = CleanAudioCommand(session, tracer, force=True)
+    command.execute(logger)
+
+
+@app.command("clean-audio-eleven-labs")
+def clean_audio_eleven_labs(
+    session: str = typer.Option(..., "--session", "-s", help="ID of the session to clean"),
+) -> None:
+    """Clean session audio using ElevenLabs voice isolation."""
+    confirm_session(session)
+    _set_seed(session)
+    logger, tracer = initialize_logging()
+
+    command: CleanAudioElevenLabsCommand = CleanAudioElevenLabsCommand(session, tracer, force=True)
     command.execute(logger)
 
 

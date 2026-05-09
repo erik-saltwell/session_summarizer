@@ -3,17 +3,16 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-import session_summarizer.utils.common_paths as common_paths
-
 from ..helpers.audio_cleaner import clean_audio_eleven_labs
-from ..settings.session_settings import SessionSettings
+from ..settings import SessionSettings
+from ..utils import common_paths
 from .session_processing_command import SessionProcessingCommand
 
 
 @dataclass
-class CleanAudioCommand(SessionProcessingCommand):
+class CleanAudioElevenLabsCommand(SessionProcessingCommand):
     def name(self) -> str:
-        return "Clean Audio"
+        return "Clean Audio (ElevenLabs)"
 
     def add_dependencies(self, settings: SessionSettings, session_dir: Path) -> None:
         self.inputs.append(session_dir / settings.paths.source_audio)
@@ -21,4 +20,3 @@ class CleanAudioCommand(SessionProcessingCommand):
 
     def process_session(self, settings: SessionSettings, session_dir: common_paths.Path) -> None:
         clean_audio_eleven_labs(settings, session_dir, True, self, self.logger, self.tracer)
-        # clean_audio(settings, session_dir, True, self, self.logger, self.tracer)

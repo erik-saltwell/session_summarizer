@@ -53,6 +53,18 @@
             ]
         },
         {
+            "name": "clean-audio-eleven-labs",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "session_summarizer",
+            "console": "integratedTerminal",
+            "args": [
+                "clean-audio-eleven-labs",
+                "--session",
+                "test",
+            ]
+        },
+        {
             "name": "clean-session",
             "type": "debugpy",
             "request": "launch",
