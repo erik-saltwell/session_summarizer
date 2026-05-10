@@ -66,6 +66,7 @@ def diarize_audio(
                 tag_audio_events=False,
                 timestamps_granularity="word",
                 num_speakers=len(settings.attendees),
+                request_options={"timeout_in_seconds": 900},
             )
 
     raw_words = getattr(response, "words", None) or []
