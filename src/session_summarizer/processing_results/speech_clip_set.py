@@ -181,9 +181,6 @@ class SpeechClipSet(list["SpeechClip"], ProcessResultProtocol, TextPhraseSet):
     def add_clip(self, clip: SpeechClip) -> None:
         self.append(clip)
 
-    def extend_clips(self, clips: list[SpeechClip]) -> None:
-        self.extend(clips)
-
     def sort_clips(self) -> None:
         self.sort(key=lambda c: (c.start_time, c.end_time))
 

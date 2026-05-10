@@ -9,7 +9,6 @@ from ..protocols import TextPhrase, TextPhraseBuilder
 from .process_result_protocol import ProcessResultProtocol
 from .segment_protocol import (
     SegmentProtocol,
-    compute_duration_inside_meaningful_boundaries,
     compute_gap_distance,
     compute_overlap,
 )
@@ -31,9 +30,6 @@ class WordAlignment(TextPhraseBuilder):
 
     def gap_distance(self, other: SegmentProtocol, minimum_overlap: float = 0.0) -> float:
         return compute_gap_distance(self, other, minimum_overlap)
-
-    def duration_inside_meaningful_boundaries(self, epsilon: float) -> float:
-        return compute_duration_inside_meaningful_boundaries(self, epsilon)
 
     def build_phrase_data(self, start_offset: int) -> TextPhrase:
         return TextPhrase(start_offset, len(self.word))

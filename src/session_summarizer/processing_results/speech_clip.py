@@ -6,7 +6,6 @@ from enum import IntFlag
 from .alignment_result import WordAlignment
 from .segment_protocol import (
     SegmentProtocol,
-    compute_duration_inside_meaningful_boundaries,
     compute_gap_distance,
     compute_overlap,
 )
@@ -158,27 +157,6 @@ class SpeechClip:
         else:
             self.flags &= ~flag
 
-    def duration_inside_meaningful_boundaries(self, epsilon: float) -> float:
-        return compute_duration_inside_meaningful_boundaries(self, epsilon)
-
-    @classmethod
-    def create_from_word(cls, word: WordAlignment, speakers: set[str] | None = None) -> SpeechClip:
-        result: SpeechClip = cls(
-            start_time=word.start_time,
-            end_time=word.end_time,
-            speakers={_ANONYMOUS_SPEAKER},
-            text="",
-            words=[word],
-        )
-        if speakers:
-            result.speakers = speakers
-        return result
-
-    def merge_with_word(self, word: WordAlignment) -> None:
-        self.start_time = min(self.start_time, word.start_time)
-        self.end_time = max(self.end_time, word.end_time)
-        self.add_word(word)
-
     def _set_merge_start_properties(self, first: SpeechClip) -> None:
         self.start_time = first.start_time
 
@@ -237,20 +215,6 @@ class SpeechClip:
 
     def gap_distance(self, other: SegmentProtocol, minimum_overlap: float) -> float:
         return compute_gap_distance(self, other, minimum_overlap)
-
-    def expand_bounds_to_include_words(self, epsilon: float, expansion_limit_seconds: float) -> None:
-        if self.words is None:
-            return
-        min_start = min(min(word.start_time for word in self.words), self.start_time)
-        max_end = max(max(word.end_time for word in self.words), self.end_time)
-
-        expand_left = self.start_time - min_start
-        expand_right = max_end - self.end_time
-
-        if expand_left > epsilon:
-            self.start_time = self.start_time - min(expand_left, expansion_limit_seconds)
-        if expand_right > epsilon:
-            self.end_time = self.end_time + min(expand_right, expansion_limit_seconds)
 
     def sort_words(self) -> None:
         if self.words is not None:
