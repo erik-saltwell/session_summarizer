@@ -23,7 +23,3 @@ def compute_gap_distance(first: SegmentProtocol, second: SegmentProtocol, minimu
     if first.end_time <= (second.start_time + minimum_overlap):
         return second.start_time - first.end_time
     return 0.0
-
-
-def compute_duration_inside_meaningful_boundaries(segment: SegmentProtocol, epsilon: float) -> float:
-    return max(0.0, segment.end_time - segment.start_time - 2 * epsilon)

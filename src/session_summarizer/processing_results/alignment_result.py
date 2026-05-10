@@ -10,7 +10,6 @@ from .process_result_protocol import ProcessResultProtocol
 from .segment_protocol import (
     SegmentProtocol,
     compute_gap_distance,
-    compute_overlap,
 )
 
 
@@ -24,9 +23,6 @@ class WordAlignment(TextPhraseBuilder):
     @property
     def duration(self) -> float:
         return self.end_time - self.start_time
-
-    def overlap(self, other: SegmentProtocol, minimum_overlap: float = 0.0) -> float:
-        return compute_overlap(self, other, minimum_overlap)
 
     def gap_distance(self, other: SegmentProtocol, minimum_overlap: float = 0.0) -> float:
         return compute_gap_distance(self, other, minimum_overlap)
