@@ -249,72 +249,16 @@ speaker_identification:
 
 
 # ---------------------------------------------------------------------------
-# stitching  (word-to-speaker-segment assignment)
+# stitching  (identity stitching)
 # ---------------------------------------------------------------------------
-# Controls how ASR words are assigned to diarized speaker segments.
-# See .research/speaker_segment_assignment.md for the full design rationale.
-# Used by: speech_clip_factory.py, candidate_pool.py, anonymous_clips.py,
-#          identity_stitch.py, candidate_score.py.
+# Controls how same-speaker clips are merged during identity stitching.
+# Used by: identity_stitch.py.
 stitching:
-
-  # ── Overlap acceptance thresholds ──────────────────────────────────
-
-  # Minimum fraction of the word's duration that must be overlapped.
-  # Allowed values: 0.0–1.0. Reasonable default: 0.20
-  min_overlap_fraction_word: 0.20
-
-  # Absolute floor: overlaps shorter than this (seconds) are ignored.
-  # Allowed values: >= 0.0 (seconds). Reasonable default: 0.02
-  min_overlap_seconds: 0.02
-
-  # ── Fallback: nearest-segment assignment ─────────────────────────────
-
-  # Whether to enable nearest-segment fallback.
-  fill_nearest: true
-
-  # Maximum gap (seconds) between a word and a non-overlapping segment
-  # for nearest-assignment to apply.
-  # Allowed values: >= 0.0 (seconds). Reasonable default: 0.25
-  max_nearest_gap_seconds: 0.25
-
-  # ── Fallback: anonymous segments ─────────────────────────────────────
-
-  # Maximum gap (seconds) between consecutive anonymous words that will
-  # be merged into the same anonymous segment.
-  # Allowed values: >= 0.0 (seconds). Reasonable default: 0.15
-  anonymous_join_gap_seconds: 0.15
-
-  # ── Post-processing ──────────────────────────────────────────────────
-
-  # Maximum gap (seconds) between same-speaker adjacent segments that
-  # will be merged.
-  # Allowed values: >= 0.0 (seconds). Reasonable default: 0.20
-  merge_gap_seconds: 0.20
 
   # Maximum gap (seconds) between two clips with the same identified
   # speaker that can still be merged during identity stitching.
   # Allowed values: >= 0.0 (seconds). Reasonable default: 10.0
   identity_merge_max_gap_seconds: 10.0
-
-  # Widen each segment's time boundaries to fully contain its assigned
-  # words.
-  expand_segments_to_fit_words: false
-
-  # Cap on how far (seconds) a segment boundary may be expanded.
-  # Allowed values: >= 0.0 (seconds). Reasonable default: 300
-  expansion_limit_seconds: 300
-
-  # ── Candidate scoring ────────────────────────────────────────────────
-
-  # How to rank candidate segments that overlap a word.
-  # Allowed values:
-  #   overlap_seconds_then_midpoint
-  #   overlap_fraction_word_then_midpoint
-  #   iou_then_midpoint
-  scoring_mode: overlap_seconds_then_midpoint
-
-  # When two candidates score identically, prefer the shorter segment.
-  prefer_shorter_on_tie: true
 
 
 # ---------------------------------------------------------------------------

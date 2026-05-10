@@ -504,11 +504,6 @@ class SessionSettings(BaseModel, frozen=True):
                 raise ValueError(f"attendee name is blank — every name must be a non-empty string, got {name!r}")
         return v
 
-    @property
-    def number_of_speakers(self) -> int:
-        """Derived from the length of attendees; used by the diarizer."""
-        return len(self.attendees)
-
     @staticmethod
     def _resolve_paths(data: dict, base_dir: Path) -> None:
         paths_dict = data.get("paths")
@@ -558,7 +553,3 @@ class SessionSettings(BaseModel, frozen=True):
         merged = _deep_merge(base, override)
         cls._resolve_paths(merged, session_dir(session_id))
         return cls(**merged)
-
-
-# Backwards-compatible alias
-session_settings = SessionSettings
