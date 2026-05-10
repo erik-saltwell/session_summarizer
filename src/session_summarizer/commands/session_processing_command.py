@@ -3,6 +3,7 @@ from __future__ import annotations
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 from typing import Protocol
 
@@ -115,9 +116,14 @@ class SessionProcessingCommand(ABC, CommmandProtocol):
         self.report_gpu_usage(f"Before Processing {self.name()}")
 
         start = time.perf_counter()
+        started_at = datetime.now().strftime("%H:%M:%S")
         try:
             with silence_python_noise():
-                with logger.status(f"[green]{self.name()}...[/green]", spinner="toggle6", spinner_style="green"):
+                with logger.status(
+                    f"[green]{self.name()} started at {started_at}...[/green]",
+                    spinner="toggle6",
+                    spinner_style="green",
+                ):
                     self.process_session(settings, session_dir)
             self.validate_clips()
             end = time.perf_counter()
