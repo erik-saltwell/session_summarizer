@@ -20,9 +20,15 @@ def punctuate_text(
 ) -> SpeechClipSet:
     from punctuators.models import PunctCapSegModelONNX
 
-    segments: list[str] = [clean_text_for_evaluation(clip.text) for clip in clips]
-    model = PunctCapSegModelONNX.from_pretrained("pcs_en")
-    results = cast(list[str], model.infer(texts=segments, apply_sbd=False))
-    for idx, result in enumerate(results):
-        clips[idx].text = result
+    indexed_segments: list[tuple[int, str]] = [
+        (i, clean_text_for_evaluation(clip.text)) for i, clip in enumerate(clips) if clip.words
+    ]
+    non_empty: list[tuple[int, str]] = [(i, s) for i, s in indexed_segments if s]
+    if non_empty:
+        clip_indices, segments = zip(*non_empty, strict=True)
+        model = PunctCapSegModelONNX.from_pretrained("pcs_en")
+        results_tmp = model.infer(texts=list(segments), apply_sbd=False)
+        results = cast(list[str], results_tmp)
+        for clip_idx, result in zip(clip_indices, results, strict=True):
+            clips[clip_idx].text = result
     return clips

@@ -5,10 +5,22 @@ from typing import cast
 import jiwer
 from mathspell import analyze_text
 
+_AT_TOKEN = "{[at]}"
+
+
+def wrap_for_mathspell_issues(text: str) -> str:
+    return text.replace("@", _AT_TOKEN)
+
+
+def unwrap_for_mathspell_issues(text: str) -> str:
+    return text.replace(_AT_TOKEN, "@")
+
 
 def clean_text_for_evaluation(text: str) -> str:
     retVal: str = text
+    retVal = wrap_for_mathspell_issues(retVal)
     retVal = analyze_text(retVal)
+    retVal = unwrap_for_mathspell_issues(retVal)
 
     transform: jiwer.Compose
 

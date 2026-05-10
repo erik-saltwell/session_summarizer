@@ -19,7 +19,8 @@ class TestCommand(SessionProcessingCommand, CommandRunnerHost):
         return session_id.startswith("2026")  # or session_id.startswith("Delta")
 
     def get_command(self, session_id: str, logger: LoggingProtocol, tracer: Tracer) -> CommmandProtocol:
-        return SaveSessionClipsetCommand(session_id, tracer, False, logger)
+        return SaveSessionClipsetCommand(session_id=session_id, tracer=tracer, force=True, logger=logger)
+        # return SaveSessionClipsetCommand(session_id, tracer, False, logger)
 
     def name(self) -> str:
         return "Test"
