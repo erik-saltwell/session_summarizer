@@ -1,15 +1,14 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Annotated, Literal, Self
+from typing import Annotated, Literal
 
 import yaml
-from pydantic import BaseModel, Field, ValidationInfo, field_validator, model_validator
+from pydantic import BaseModel, Field, ValidationInfo, field_validator
 
 from ..completions.model_settings import ModelEffort, ModelString
 from .diarization_stitching_settings import DiarizationStitchingSettings
 from .eleven_labs_diarization_settings import ElevenLabsDiarizationSettings
-from .vad_settings import VadSettings
 
 _SETTINGS_FILE = "settings.yaml"
 
@@ -164,70 +163,6 @@ class PipelinePaths(BaseModel, frozen=True):
         if v.suffix.lower() not in SUPPORTED_AUDIO_SUFFIXES:
             raise ValueError(f"Unsupported audio format {v.suffix!r}. Supported: {sorted(SUPPORTED_AUDIO_SUFFIXES)}")
         return v
-
-
-class SegmentationSettings(BaseModel, frozen=True):
-    """Duration bounds for VAD-based audio chunking.
-
-    Two chunking modes exist — short (for ASR transcription) and long
-    (for GPU-heavy operations like diarization).  Each mode has a min/max
-    bound in seconds.
-    """
-
-    short_min_seconds: Annotated[
-        float,
-        Field(
-            description=(
-                "Minimum audio segment length in seconds for short VAD-based chunking. "
-                "Chunks shorter than this are merged with neighbours. "
-                "Used by: audio_segmenter.py for Canary transcription segments."
-            )
-        ),
-    ]
-    short_max_seconds: Annotated[
-        float,
-        Field(
-            description=(
-                "Maximum audio segment length in seconds for short VAD-based chunking. "
-                "Continuous speech longer than this is hard-cut. "
-                "Used by: audio_segmenter.py for Canary transcription segments."
-            )
-        ),
-    ]
-    long_min_seconds: Annotated[
-        float,
-        Field(
-            description=(
-                "Minimum audio segment length in seconds for long VAD-based chunking. "
-                "Chunks shorter than this are merged with neighbours. "
-                "Used by: audio_segmenter.py for OOM-sensitive operations (diarization)."
-            )
-        ),
-    ]
-    long_max_seconds: Annotated[
-        float,
-        Field(
-            description=(
-                "Maximum audio segment length in seconds for long VAD-based chunking. "
-                "Continuous speech longer than this is hard-cut. "
-                "Used by: audio_segmenter.py for OOM-sensitive operations (diarization)."
-            )
-        ),
-    ]
-
-    @model_validator(mode="after")
-    def _validate_bounds(self) -> Self:
-        if self.short_min_seconds >= self.short_max_seconds:
-            raise ValueError(
-                f"short_min_seconds ({self.short_min_seconds}) must be less than "
-                f"short_max_seconds ({self.short_max_seconds})"
-            )
-        if self.long_min_seconds >= self.long_max_seconds:
-            raise ValueError(
-                f"long_min_seconds ({self.long_min_seconds}) must be less than "
-                f"long_max_seconds ({self.long_max_seconds})"
-            )
-        return self
 
 
 class SpeakerClipSettings(BaseModel, frozen=True):
@@ -502,10 +437,6 @@ class SessionSettings(BaseModel, frozen=True):
         PipelinePaths,
         Field(description="File paths for all processing artifacts in the pipeline"),
     ]
-    segmentation: Annotated[
-        SegmentationSettings,
-        Field(description="Duration bounds for VAD-based audio chunking (short and long modes)"),
-    ]
     speaker_clips: Annotated[
         SpeakerClipSettings,
         Field(description="Settings for speaker clip creation, filtering, and merging"),
@@ -513,10 +444,6 @@ class SessionSettings(BaseModel, frozen=True):
     speaker_identification: Annotated[
         SpeakerIdentificationSettings,
         Field(description="Thresholds for assigning speaker identities to clips"),
-    ]
-    vad: Annotated[
-        VadSettings,
-        Field(description="VAD model and post-processing hyperparameters"),
     ]
     stitching: Annotated[
         DiarizationStitchingSettings,

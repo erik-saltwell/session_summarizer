@@ -194,31 +194,6 @@ paths:
 
 
 # ---------------------------------------------------------------------------
-# segmentation  (REQUIRED)
-# ---------------------------------------------------------------------------
-# Duration bounds (in seconds) for VAD-based audio chunking.
-# Two modes exist: short (for Canary ASR) and long (for GPU-heavy ops).
-# Used by: audio_segmenter.py.
-segmentation:
-
-  # Minimum segment length for short chunks (Canary transcription).
-  # Chunks shorter than this are merged with neighbours.
-  short_min_seconds: 10
-
-  # Maximum segment length for short chunks (Canary transcription).
-  # Continuous speech longer than this is hard-cut.
-  short_max_seconds: 38
-
-  # Minimum segment length for long chunks (diarization, embedding).
-  # Chunks shorter than this are merged with neighbours.
-  long_min_seconds: 120
-
-  # Maximum segment length for long chunks (diarization, embedding).
-  # Tune down if you see CUDA OOM errors.
-  long_max_seconds: 300
-
-
-# ---------------------------------------------------------------------------
 # speaker_clips  (REQUIRED)
 # ---------------------------------------------------------------------------
 # Settings for speaker clip creation, filtering, and merging.
@@ -271,41 +246,6 @@ speaker_identification:
   # Used by: indeterminate_speakers.py.
   # Allowed values: 0.0–1.0. Reasonable default: 0.08
   assignment_threshold: 0.08
-
-
-# ---------------------------------------------------------------------------
-# vad  (VAD model hyperparameters)
-# ---------------------------------------------------------------------------
-# Controls the NeMo Voice Activity Detection model used to find speech and
-# silence boundaries. Used by: audio_segmenter.py.
-vad:
-
-  # Pretrained NeMo VAD model to load.
-  model_name: vad_multilingual_frame_marblenet
-
-  # Probability threshold to START a speech region.
-  # Allowed values: 0.0–1.0. Reasonable default: 0.7
-  onset: 0.7
-
-  # Probability threshold to END a speech region.
-  # Allowed values: 0.0–1.0. Reasonable default: 0.4
-  offset: 0.4
-
-  # Speech regions shorter than this (seconds) are discarded.
-  # Reasonable default: 0.3
-  min_duration_on: 0.3
-
-  # Silence regions shorter than this (seconds) are bridged.
-  # Reasonable default: 0.3
-  min_duration_off: 0.3
-
-  # Seconds of audio to include BEFORE each speech onset.
-  # Reasonable default: 0.1
-  pad_onset: 0.1
-
-  # Seconds of audio to include AFTER each speech offset.
-  # Reasonable default: 0.1
-  pad_offset: 0.1
 
 
 # ---------------------------------------------------------------------------

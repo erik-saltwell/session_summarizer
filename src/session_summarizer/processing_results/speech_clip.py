@@ -7,7 +7,6 @@ from .alignment_result import WordAlignment
 from .segment_protocol import (
     SegmentProtocol,
     compute_gap_distance,
-    compute_overlap,
 )
 
 _ANONYMOUS_SPEAKER = "anonymous"
@@ -209,9 +208,6 @@ class SpeechClip:
         else:
             sorted_words = sorted(self.words, key=lambda w: (w.start_time, w.end_time))
             self.text = " ".join(w.word for w in sorted_words)
-
-    def overlap(self, other: SegmentProtocol, minimum_overlap: float) -> float:
-        return compute_overlap(self, other, minimum_overlap)
 
     def gap_distance(self, other: SegmentProtocol, minimum_overlap: float) -> float:
         return compute_gap_distance(self, other, minimum_overlap)
