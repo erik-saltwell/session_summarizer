@@ -38,18 +38,6 @@ def clips_are_close_enough(
     return gap <= (maximum_gap + epsilon)
 
 
-def clips_are_same_speaker(
-    first: SpeechClip,
-    second: SpeechClip,
-    settings: SessionSettings,
-    exempt_anonymous: bool,
-    logger: LoggingProtocol,
-) -> bool:
-    if exempt_anonymous and (first.is_anonymous or second.is_anonymous):
-        return True
-    return first.speakers == second.speakers
-
-
 def merge_clips(
     initial_clips: SpeechClipSet,
     selector: MergeSelector,

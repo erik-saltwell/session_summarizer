@@ -10,8 +10,6 @@ class SegmentProtocol(Protocol):
     @property
     def end_time(self) -> float: ...  # seconds
 
-    def duration_inside_meaningful_boundaries(self, epsilon: float) -> float: ...
-
 
 def compute_overlap(first: SegmentProtocol, second: SegmentProtocol, minimum_overlap: float) -> float:
     # Treat near-zero intersections as zero to stabilize boundary ties.
