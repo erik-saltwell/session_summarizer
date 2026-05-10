@@ -45,7 +45,7 @@ _backchannel_strings: set[str] = {
 
 
 def is_backchannel_word(word: WordAlignment) -> bool:
-    text = clean_text_for_evaluation(word.word)
+    text = clean_text_for_evaluation(word.word, do_mathspell=False)
     return text in _backchannel_strings
 
 

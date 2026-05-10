@@ -21,7 +21,7 @@ def punctuate_text(
     from punctuators.models import PunctCapSegModelONNX
 
     indexed_segments: list[tuple[int, str]] = [
-        (i, clean_text_for_evaluation(clip.text)) for i, clip in enumerate(clips) if clip.words
+        (i, clean_text_for_evaluation(clip.text, do_mathspell=False)) for i, clip in enumerate(clips) if clip.words
     ]
     non_empty: list[tuple[int, str]] = [(i, s) for i, s in indexed_segments if s]
     if non_empty:

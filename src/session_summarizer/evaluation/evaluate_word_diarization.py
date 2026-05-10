@@ -19,7 +19,7 @@ def _ref_words(clips: SpeechClipSet) -> list[tuple[str, str]]:
     for clip in clips:
         speaker = clip.identity or ""
         for raw in clip.text.split():
-            cleaned = clean_text_for_evaluation(raw)
+            cleaned = clean_text_for_evaluation(raw, do_mathspell=False)
             if cleaned:
                 result.append((cleaned, speaker))
     return result
@@ -36,12 +36,12 @@ def _hyp_words(clips: SpeechClipSet) -> list[tuple[str, str]]:
         speaker = clip.identity or ""
         if clip.words is not None:
             for wa in clip.words:
-                cleaned = clean_text_for_evaluation(wa.word)
+                cleaned = clean_text_for_evaluation(wa.word, do_mathspell=False)
                 if cleaned:
                     result.append((cleaned, speaker))
         else:
             for raw in clip.text.split():
-                cleaned = clean_text_for_evaluation(raw)
+                cleaned = clean_text_for_evaluation(raw, do_mathspell=False)
                 if cleaned:
                     result.append((cleaned, speaker))
     return result

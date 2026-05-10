@@ -18,6 +18,8 @@ _LANGUAGE_CODE = "eng"
 _MODEL_ID = "scribe_v2"
 _SPEAKER_ID_PATTERN = re.compile(r"^speaker_(\d+)$")
 
+_REQUEST_TIMEOUT: int = 7200
+
 
 def _normalize_speaker_id(eleven_labs_speaker_id: str) -> str:
     """Convert an ElevenLabs ``speaker_<n>`` id into the pipeline-wide
@@ -53,7 +55,7 @@ def diarize_audio(
     if not api_key:
         raise RuntimeError("ELEVENLABS_API_KEY is not set in the environment.")
 
-    client = ElevenLabs(api_key=api_key)
+    client = ElevenLabs(api_key=api_key, timeout=_REQUEST_TIMEOUT)
 
     logger.report_message("[blue]Submitting audio to ElevenLabs Scribe v2 with diarization...[/blue]")
     with logger.status("ElevenLabs diarizing..."):
@@ -66,7 +68,7 @@ def diarize_audio(
                 tag_audio_events=False,
                 timestamps_granularity="word",
                 num_speakers=len(settings.attendees),
-                request_options={"timeout_in_seconds": 1900},
+                request_options={"timeout_in_seconds": _REQUEST_TIMEOUT},
             )
 
     raw_words = getattr(response, "words", None) or []

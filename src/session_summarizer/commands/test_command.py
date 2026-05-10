@@ -16,7 +16,7 @@ from .session_processing_command import SessionProcessingCommand
 @dataclass
 class TestCommand(SessionProcessingCommand, CommandRunnerHost):
     def should_run_command_agianst_session(self, session_id: str) -> bool:
-        return session_id.startswith("Delta")  # or session_id.startswith("2026")
+        return session_id.startswith("Delta") and session_id.endswith("07")  # or session_id.startswith("2026")
 
     def get_command(self, session_id: str, logger: LoggingProtocol, tracer: Tracer) -> CommmandProtocol:
         return InferSpeakersCommand(session_id=session_id, tracer=tracer, force=True, logger=logger)

@@ -133,7 +133,7 @@ class SessionProcessingCommand(ABC, CommmandProtocol):
             self.tracer.log(self.safe_name)
         except Exception as exc:
             self.tracer.add_context("success", "False")
-            logger.report_exception(f"Error processing {self.name()}", exc)
+            logger.report_exception(f"Error processing {self.name()} at {datetime.now().strftime('%H:%M:%S')}", exc)
             self.tracer.log_exception(exc, self.safe_name)
             raise typer.Exit(code=1) from exc
         finally:
@@ -142,7 +142,7 @@ class SessionProcessingCommand(ABC, CommmandProtocol):
 
     def save_cleaned_text(self, text_container: PlainTextContainer, session_dir: Path, json_filename: Path) -> None:
         text: str = text_container.plain_text()
-        cleaned_text = clean_text_for_evaluation(text)
+        cleaned_text = clean_text_for_evaluation(text, do_mathspell=False)
         saved_text = cleaned_text.replace(" ", "\n")
         full_text_path = session_dir / Path(json_filename.stem + "_fulltext.txt")
         with open(full_text_path, "w") as f:

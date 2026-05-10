@@ -16,11 +16,12 @@ def unwrap_for_mathspell_issues(text: str) -> str:
     return text.replace(_AT_TOKEN, "@")
 
 
-def clean_text_for_evaluation(text: str) -> str:
+def clean_text_for_evaluation(text: str, do_mathspell: bool) -> str:
     retVal: str = text
-    retVal = wrap_for_mathspell_issues(retVal)
-    retVal = analyze_text(retVal)
-    retVal = unwrap_for_mathspell_issues(retVal)
+    if do_mathspell:
+        retVal = wrap_for_mathspell_issues(retVal)
+        retVal = analyze_text(retVal)
+        retVal = unwrap_for_mathspell_issues(retVal)
 
     transform: jiwer.Compose
 
