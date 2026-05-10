@@ -162,9 +162,94 @@ PY
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
+Run any command via the CLI module:
 
-_For more examples, please refer to the [Documentation](https://example.com)_
+```bash
+uv run python -m session_summarizer <command> [options]
+```
+
+Most commands operate on a single session and require `--session/-s <session_id>`. A session is a directory under `data/<session_id>/` containing a `settings.yaml` and the source audio file. Pipeline commands write their outputs **into that session directory** at the paths declared by `settings.paths.*` (see `src/session_summarizer/settings/session_settings.py`). Commands that write outside the session directory are flagged below.
+
+## Commands
+
+### Pipeline commands (operate on `--session`)
+
+These run as ordered pipeline steps. Each one re-runs upstream dependencies if their outputs are stale, and writes a single artifact (typically a `SpeechClipSet` JSON) into the session directory.
+
+- **`clean-audio`** — Runs noise reduction on the source recording.
+  Output: `<session_dir>/<paths.cleaned_audio>` (WAV).
+
+- **`diarize-audio`** — Sends cleaned audio to ElevenLabs Scribe v2 to produce the initial diarized `SpeechClipSet`. For the `test` session it also enhances words with ground truth.
+  Output: `<session_dir>/<paths.base_diarization>` (JSON).
+
+- **`add-embeddings`** — Computes a speaker embedding vector for each speech clip.
+  Output: `<session_dir>/<paths.clips_with_embeddings>` (JSON).
+
+- **`identify-speakers`** — Matches each clip's embedding against attendee centroids in `registered_speakers.yaml` and assigns identities. Requires `attendees` in session settings and that each attendee is registered.
+  Output: `<session_dir>/<paths.identified_speakers>` (JSON).
+
+- **`apply-identity-stitching`** — Merges adjacent clips that share an identity into single utterances.
+  Output: `<session_dir>/<paths.identity_stitched>` (JSON).
+
+- **`mark-backchannels`** — Flags short acknowledgement clips ("uh huh", "yeah") as backchannels.
+  Output: `<session_dir>/<paths.backchannel_marked>` (JSON).
+
+- **`punctuate-text`** — Restores punctuation and capitalization on each clip's transcript.
+  Output: `<session_dir>/<paths.punctuated_text>` (JSON).
+
+- **`infer-speakers`** — Uses transcript text to infer role-based speaker identities (e.g., GM vs. player). Also writes an inferred-participants sidecar and patches the session's `settings.yaml` with the inferred mapping.
+  Outputs: `<session_dir>/<paths.inferred_speakers>` (JSON), an `_inferred_participants` companion file alongside it, and an in-place update to `<session_dir>/settings.yaml`.
+
+- **`assign-utterance-ids`** — Stamps each clip with a stable `<campaign_id>_<session_id>_<n>` utterance id.
+  Output: `<session_dir>/<paths.utterance_ids_annotated>` (JSON).
+
+- **`save-session-clipset`** — Saves the utterance-id-stamped clipset under the canonical session filename.
+  Output: `<session_dir>/<session_id>.json`.
+
+- **`simplify-transcript`** — Generates an LLM-cleaned narrative transcript from the punctuated clipset.
+  Output: `<session_dir>/<paths.simplified_transcript>`.
+
+- **`summarize-session`** — Generates the final session summary with Claude. The output filename has the session date appended (e.g. `summary_2026_05_09.md`).
+  Output: `<session_dir>/<paths.summary_path>` with the session date appended to the filename.
+
+- **`validate-diarization`** — Evaluates diarization quality (DER, JER, WDER) across pipeline stages and prints a comparison table. Console output only — does not write files.
+
+### Session-management commands
+
+- **`clean-session --session <id>`** — Deletes every file in `<session_dir>` except `settings.yaml` and the configured source audio. Affects only that session directory.
+
+- **`clean-diarization --session <id>`** — Deletes outputs of selected upstream pipeline steps inside `<session_dir>` so they re-run on next invocation.
+
+### Speaker registration commands
+
+These manage the on-disk speaker library and write **outside the session directory**, under `voice_samples/` at the project root.
+
+- **`create-known-speaker-clips --session <id> --temp-folder <name>`** — Extracts per-speaker audio clips for clips with confidently identified speakers.
+  Output: WAV files written to `voice_samples/<temp_folder>/` (the temp folder is emptied first). This is **outside** the session directory.
+
+- **`create-speaker-clips-from-inferred-speakers --session <id>`** — Extracts per-speaker audio clips using the inferred-speaker mapping.
+  Output: WAV files written into the top-level per-speaker folders under `voice_samples/<speaker>/`. **Outside** the session directory.
+
+- **`merge-speaker-clips --speaker <name> --output-folder <path>`** — Concatenates short clips for a speaker (with a small silence gap) until each merged clip meets `speaker_clips.min_duration_seconds`.
+  Output: merged WAV files written to the user-supplied `--output-folder`.
+
+- **`remove-outlier-speaker-clips --speaker <name> --output-folder <path>`** — Removes clips whose embedding is too far from the speaker's centroid.
+  Output: filtered WAV files written to the user-supplied `--output-folder`.
+
+- **`register-speakers`** — For every per-speaker folder in `voice_samples/`, merges + filters the clips, computes a centroid embedding, and registers it.
+  Output: updates `voice_samples/registered_speakers.yaml` (project root, **outside** any session directory).
+
+### Utility commands
+
+- **`generate-sample-settings`** — Writes a documented sample settings file.
+  Output: `data/settings.yaml` at the project root (**outside** any session directory).
+
+- **`document-dependencies`** — Inspects all pipeline commands and emits a Mermaid file/command dependency graph.
+  Output: `data/command_dependencies.mmd` at the project root (**outside** any session directory).
+
+- **`clear-logs`** — Deletes every file in the project-level `logs/` directory (**outside** any session directory).
+
+- **`test --session <id>`** — Developer scratch command for re-running an arbitrary command across a filtered set of sessions. Outputs depend on the inner command being driven.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
